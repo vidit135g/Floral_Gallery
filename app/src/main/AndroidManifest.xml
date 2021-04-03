@@ -4,7 +4,8 @@
     package="com.absolute.floral">
     <!-- to read & write images ... -->
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
-    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" /> <!-- to set Wallpaper -->
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"
+        tools:ignore="ScopedStorage" /> <!-- to set Wallpaper -->
     <uses-permission android:name="android.permission.SET_WALLPAPER" /> <!-- to show FileOperation progress as a notification -->
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
 
@@ -14,6 +15,7 @@
         android:icon="@drawable/floral"
         android:label="Floral"
         android:roundIcon="@drawable/floral"
+        android:requestLegacyExternalStorage="true"
         android:supportsRtl="true"
         android:theme="@style/CameraRoll.Theme">
         <activity android:name="com.absolute.floral.ui.FirstActivity"
@@ -144,7 +146,7 @@
         </activity>
 
         <provider
-            android:name="android.support.v4.content.FileProvider"
+            android:name="androidx.core.content.FileProvider"
             android:authorities="${applicationId}.provider"
             android:exported="false"
             android:grantUriPermissions="true">

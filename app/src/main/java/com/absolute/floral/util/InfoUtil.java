@@ -6,7 +6,7 @@ import android.location.Address;
 import android.location.Geocoder;
 import android.net.Uri;
 import android.provider.OpenableColumns;
-import android.support.media.ExifInterface;
+import androidx.exifinterface.media.ExifInterface;
 
 import java.io.IOException;
 import java.text.ParseException;

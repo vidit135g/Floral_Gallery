@@ -3,6 +3,7 @@ package com.absolute.floral.ui;
 import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
 import android.app.PictureInPictureParams;
+import android.content.Context;
 import android.content.Intent;
 import android.content.res.Configuration;
 import android.graphics.Typeface;
@@ -11,10 +12,10 @@ import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
-import android.support.annotation.Nullable;
-import android.support.annotation.RequiresApi;
-import android.support.v7.app.ActionBar;
-import android.support.v7.widget.Toolbar;
+import androidx.annotation.Nullable;
+import androidx.annotation.RequiresApi;
+import androidx.appcompat.app.ActionBar;
+import androidx.appcompat.widget.Toolbar;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
@@ -28,6 +29,7 @@ import android.widget.TextView;
 import com.google.android.exoplayer2.DefaultLoadControl;
 import com.google.android.exoplayer2.DefaultRenderersFactory;
 import com.google.android.exoplayer2.ExoPlaybackException;
+import com.google.android.exoplayer2.ExoPlayer;
 import com.google.android.exoplayer2.ExoPlayerFactory;
 import com.google.android.exoplayer2.PlaybackParameters;
 import com.google.android.exoplayer2.Player;
@@ -41,8 +43,9 @@ import com.google.android.exoplayer2.source.TrackGroupArray;
 import com.google.android.exoplayer2.trackselection.AdaptiveTrackSelection;
 import com.google.android.exoplayer2.trackselection.DefaultTrackSelector;
 import com.google.android.exoplayer2.trackselection.TrackSelectionArray;
-import com.google.android.exoplayer2.ui.PlaybackControlView;
-import com.google.android.exoplayer2.ui.SimpleExoPlayerView;
+import com.google.android.exoplayer2.trackselection.TrackSelector;
+import com.google.android.exoplayer2.ui.PlayerControlView;
+import com.google.android.exoplayer2.ui.PlayerView;
 import com.google.android.exoplayer2.upstream.DataSource;
 import com.google.android.exoplayer2.upstream.DefaultDataSourceFactory;
 import com.google.android.exoplayer2.util.Util;
@@ -111,44 +114,44 @@ public class VideoPlayerActivity extends ThemeableActivity {
         setWindowInsets();
 
         //hide & show Nav-/StatusBar together with controls
-        final PlaybackControlView playbackControlView = (PlaybackControlView)
+        final PlayerControlView playbackControlView = (PlayerControlView)
                 findViewById(R.id.playback_control_view).getParent();
         final View bottomBarControls = findViewById(R.id.controls);
-        playbackControlView.setVisibilityListener(
-                new PlaybackControlView.VisibilityListener() {
-                    @Override
-                    public void onVisibilityChange(final int i) {
-                        //animate Toolbar & controls
-                        if (i != View.VISIBLE) {
-                            //make view visible again, so the Animation is visible
-                            playbackControlView.setVisibility(View.VISIBLE);
-                        }
+        playbackControlView.addVisibilityListener(new PlayerControlView.VisibilityListener() {
+            @Override
+            public void onVisibilityChange(int i) {
+                if (i != View.VISIBLE) {
+                    //make view visible again, so the Animation is visible
+                    playbackControlView.setVisibility(View.VISIBLE);
+                }
 
-                        float toolbar_translationY = i == View.VISIBLE ? 0
-                                : -(toolbar.getHeight());
-                        toolbar.animate()
-                                .translationY(toolbar_translationY)
-                                .setInterpolator(new AccelerateDecelerateInterpolator())
-                                .setListener(new AnimatorListenerAdapter() {
-                                    @Override
-                                    public void onAnimationEnd(Animator animation) {
-                                        super.onAnimationEnd(animation);
-                                        playbackControlView.setVisibility(i);
-                                    }
-                                })
-                                .start();
+                float toolbar_translationY = i == View.VISIBLE ? 0
+                        : -(toolbar.getHeight());
+                toolbar.animate()
+                        .translationY(toolbar_translationY)
+                        .setInterpolator(new AccelerateDecelerateInterpolator())
+                        .setListener(new AnimatorListenerAdapter() {
+                            @Override
+                            public void onAnimationEnd(Animator animation) {
+                                super.onAnimationEnd(animation);
+                                playbackControlView.setVisibility(i);
+                            }
+                        })
+                        .start();
 
-                        float controls_translationY = i == View.VISIBLE ? 0
-                                : bottomBarControls.getHeight();
-                        bottomBarControls.animate()
-                                .translationY(controls_translationY)
-                                .setInterpolator(new AccelerateDecelerateInterpolator())
-                                .start();
+                float controls_translationY = i == View.VISIBLE ? 0
+                        : bottomBarControls.getHeight();
+                bottomBarControls.animate()
+                        .translationY(controls_translationY)
+                        .setInterpolator(new AccelerateDecelerateInterpolator())
+                        .start();
 
-                        //show/hide Nav-/StatusBar
-                        showOrHideSystemUi(i == View.VISIBLE);
-                    }
-                });
+                //show/hide Nav-/StatusBar
+                showOrHideSystemUi(i == View.VISIBLE);
+            }
+
+        });
+
     }
 
 
@@ -264,12 +267,18 @@ public class VideoPlayerActivity extends ThemeableActivity {
         DefaultRenderersFactory renderersFactory = new DefaultRenderersFactory(this);
 
         // Create the player
-        player = ExoPlayerFactory.newSimpleInstance(renderersFactory,
-                new DefaultTrackSelector(new AdaptiveTrackSelection.Factory(null)),
-                new DefaultLoadControl());
+        Context context;
+        TrackSelector trackSelector;
+
+        player=ExoPlayerFactory.newSimpleInstance(getApplicationContext(), new DefaultTrackSelector(new AdaptiveTrackSelection.Factory()),new DefaultLoadControl());
+
+
+//        player = ExoPlayerFactory.newSimpleInstance(renderersFactory,
+//                new DefaultTrackSelector(new AdaptiveTrackSelection.Factory(null)),
+//                new DefaultLoadControl());
 
         // Bind the player to the view.
-        SimpleExoPlayerView simpleExoPlayerView = findViewById(R.id.simpleExoPlayerView);
+        PlayerView simpleExoPlayerView = findViewById(R.id.simpleExoPlayerView);
         simpleExoPlayerView.setPlayer(player);
 
         // Prepare the player with the source.
@@ -317,7 +326,7 @@ public class VideoPlayerActivity extends ThemeableActivity {
     @Override
     public void onPictureInPictureModeChanged(boolean isInPictureInPictureMode) {
         super.onPictureInPictureModeChanged(isInPictureInPictureMode);
-        SimpleExoPlayerView simpleExoPlayerView = findViewById(R.id.simpleExoPlayerView);
+        PlayerView simpleExoPlayerView = findViewById(R.id.simpleExoPlayerView);
         if (isInPictureInPictureMode) {
             // Hide the controls in picture-in-picture mode.
             simpleExoPlayerView.hideController();
@@ -357,8 +366,9 @@ public class VideoPlayerActivity extends ThemeableActivity {
 
     public static class SimpleEventListener implements Player.EventListener {
 
+
         @Override
-        public void onTimelineChanged(Timeline timeline, Object manifest) {
+        public void onTimelineChanged(Timeline timeline, Object manifest, int reason) {
 
         }
 
@@ -383,17 +393,28 @@ public class VideoPlayerActivity extends ThemeableActivity {
         }
 
         @Override
+        public void onShuffleModeEnabledChanged(boolean shuffleModeEnabled) {
+
+        }
+
+        @Override
         public void onPlayerError(ExoPlaybackException error) {
 
         }
 
         @Override
-        public void onPositionDiscontinuity() {
+        public void onPositionDiscontinuity(int reason) {
+
+        }
+
+
+        @Override
+        public void onPlaybackParametersChanged(PlaybackParameters playbackParameters) {
 
         }
 
         @Override
-        public void onPlaybackParametersChanged(PlaybackParameters playbackParameters) {
+        public void onSeekProcessed() {
 
         }
     }

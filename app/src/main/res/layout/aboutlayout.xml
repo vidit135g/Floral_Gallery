@@ -26,7 +26,7 @@
             android:layout_gravity="center"
             android:id="@+id/appname"
             android:textColor="#424242"
-            android:text="Floral 1.0 Beta"/>
+            android:text="Floral 1.0"/>
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
@@ -68,7 +68,7 @@
             <!--&lt;!&ndash;</LinearLayout>&ndash;&gt;-->
         <!--</RelativeLayout>-->
 
-    <android.support.v7.widget.AppCompatButton
+    <androidx.appcompat.widget.AppCompatButton
         android:layout_width="wrap_content"
         android:layout_height="40dp"
         android:theme="@style/AppTheme.Button"

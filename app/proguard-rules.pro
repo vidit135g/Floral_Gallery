@@ -17,7 +17,6 @@
 #}
 
 -keep public class * implements com.bumptech.glide.module.GlideModule
--keep public class * extends com.bumptech.glide.AppGlideModule
 -keep public enum com.bumptech.glide.load.resource.bitmap.ImageHeaderParser$** {
   **[] $VALUES;
   public *;
@@ -29,10 +28,9 @@
 -dontwarn com.bumptech.glide.**
 -dontwarn com.zhihu.matisse.**
 -dontwarn okhttp3.internal.platform.*
-
+-dontwarn *
+-ignorewarnings
 -dontwarn okio.**
 -dontwarn com.squareup.okhttp3.**
--keep class com.squareup.okhttp3.** { *; }
--keep interface com.squareup.okhttp3.** { *; }
 -dontwarn javax.annotation.Nullable
 -dontwarn javax.annotation.ParametersAreNonnullByDefault

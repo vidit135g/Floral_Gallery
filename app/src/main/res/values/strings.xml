@@ -9,4 +9,5 @@
     <string name="button_sure_default">Done</string>
     <string name="button_sure">Exit</string>
     <string name="button_preview">Pin</string>
+    <string name="button_apply">Exit</string>
 </resources>
