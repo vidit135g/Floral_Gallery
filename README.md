@@ -40,5 +40,6 @@ Virtual Albums Create Virtual Albums to join multiple directories in one album u
 
 Design All new material design with the modal menu option to make the UI look more intuitive.
 
-
-<a href="https://play.google.com/store/apps/details?id=com.absolute.floral&hl=en"><img src="https://raw.githubusercontent.com/vidit135g/Notes-Central/master/screenshots/google-play-badge.png" width="300" height="120"/></a>
+Downloads
+<a href="https://play.google.com/store/apps/details?id=com.absolute.floral&hl=en"><img src="https://raw.githubusercontent.com/vidit135g/Notes-Central/master/screenshots/google-play-badge.png" width="300" height="120"/></a><br>
+<a href="https://github.com/vidit135g/Floral_Gallery/raw/c47eb5aad9b256e3ea762f8e9b901b9ade106fd8/app/release/app-release.apk">Beta version</a>
