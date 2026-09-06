@@ -80,6 +80,17 @@ public class MediaStoreRetriever extends Retriever {
 
                     do {
                         path = cursor.getString(pathColumn);
+                        if (path == null) continue;
+                        File file = new File(path);
+                        if (!file.exists() || file.length() == 0) {
+                            try {
+                                long deadId = cursor.getLong(idColumn);
+                                Uri deadUri = ContentUris.withAppendedId(
+                                        MediaStore.Files.getContentUri("external"), deadId);
+                                context.getContentResolver().delete(deadUri, null, null);
+                            } catch (Exception ignored) {}
+                            continue;
+                        }
                         AlbumItem albumItem = AlbumItem.getInstance(context, path);
                         if (albumItem != null) {
                             //set dateTaken

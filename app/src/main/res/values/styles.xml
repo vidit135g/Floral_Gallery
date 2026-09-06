@@ -125,14 +125,14 @@
     <style name="CameraRoll.Theme.Settings" parent="CameraRoll.Theme">
         <item name="android:windowBackground">@null</item>
         <item name="android:typeface">monospace</item>
-        <item name="preferenceTheme">@style/PreferenceThemeOverlay.v14.Material</item>
+        <item name="preferenceTheme">@style/PreferenceThemeOverlay</item>
 
     </style>
 
     <style name="CameraRoll.Theme.Light.Settings" parent="CameraRoll.Theme.Light">
         <item name="android:windowBackground">@color/white</item>
         <item name="android:typeface">monospace</item>
-        <item name="preferenceTheme">@style/PreferenceThemeOverlay.v14.Material</item>
+        <item name="preferenceTheme">@style/PreferenceThemeOverlay</item>
     </style>
 
     <!--AboutActivity Theme-->
@@ -193,8 +193,8 @@
     <!-- Style for a DialogPreference Entry -->
     <style name="CameraRoll.Theme.DialogPreference">
         <item name="android:typeface">monospace</item>
-        <item name="positiveButtonText">@android:string/ok</item>
-        <item name="negativeButtonText">@android:string/cancel</item>
+        <item name="android:positiveButtonText">@android:string/ok</item>
+        <item name="android:negativeButtonText">@android:string/cancel</item>
     </style>
 
     <!--View Styles-->

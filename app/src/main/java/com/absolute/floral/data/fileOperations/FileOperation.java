@@ -84,7 +84,11 @@ public abstract class FileOperation extends IntentService implements Parcelable 
         notifBuilder = createNotificationBuilder();
         notifBuilder.setProgress(1, 0, false);
         Notification notification = notifBuilder.build();
-        startForeground(NOTIFICATION_ID, notification);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            startForeground(NOTIFICATION_ID, notification, android.content.pm.ServiceInfo.FOREGROUND_SERVICE_TYPE_DATA_SYNC);
+        } else {
+            startForeground(NOTIFICATION_ID, notification);
+        }
         NotificationManager manager =
                 (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
         if (manager != null) {

@@ -139,8 +139,14 @@ public abstract class BaseActivity extends AppCompatActivity {
     public void onRequestPermissionsResult(int requestCode, @NonNull String permissions[], @NonNull int[] grantResults) {
         switch (requestCode) {
             case MediaProvider.PERMISSION_REQUEST_CODE: {
-                // If request is cancelled, the result arrays are empty.
-                if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                boolean anyGranted = false;
+                for (int res : grantResults) {
+                    if (res == PackageManager.PERMISSION_GRANTED) {
+                        anyGranted = true;
+                        break;
+                    }
+                }
+                if (anyGranted) {
                     //permission granted
                     onPermissionGranted();
                 } else {

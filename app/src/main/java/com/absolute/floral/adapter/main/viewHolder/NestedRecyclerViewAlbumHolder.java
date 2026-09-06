@@ -384,12 +384,16 @@ public class NestedRecyclerViewAlbumHolder extends AlbumHolder
     }
 
     private void deleteItems(String[] paths) {
-        File_POJO[] filesToDelete = new File_POJO[paths.length];
-        for (int i = 0; i < filesToDelete.length; i++) {
-            filesToDelete[i] = new File_POJO(paths[i], true);
+        if (getContext() instanceof com.absolute.floral.ui.MainActivity) {
+            ((com.absolute.floral.ui.MainActivity) getContext()).deleteAlbum(getAlbum());
+        } else {
+            File_POJO[] filesToDelete = new File_POJO[paths.length];
+            for (int i = 0; i < filesToDelete.length; i++) {
+                filesToDelete[i] = new File_POJO(paths[i], true);
+            }
+            getContext().startService(FileOperation
+                    .getDefaultIntent(getContext(), FileOperation.DELETE, filesToDelete));
         }
-        getContext().startService(FileOperation
-                .getDefaultIntent(getContext(), FileOperation.DELETE, filesToDelete));
     }
 
     private static class NestedAdapter extends AlbumAdapter {

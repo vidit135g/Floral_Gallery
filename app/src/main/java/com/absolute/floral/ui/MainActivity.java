@@ -69,6 +69,7 @@ public class MainActivity extends ThemeableActivity implements CheckRefreshClick
     public static final int REFRESH_PHOTOS_REQUEST_CODE = 7;
     public static final int REMOVABLE_STORAGE_PERMISSION_REQUEST_CODE = 8;
     public static final int SETTINGS_REQUEST_CODE = 9;
+    public static final int REQUEST_CODE_DELETE_ALBUM = 891;
 
     //needed for sharedElement-Transition in Nested RecyclerView Style
     private NestedRecyclerViewAlbumHolder sharedElementViewHolder;
@@ -452,6 +453,34 @@ public class MainActivity extends ThemeableActivity implements CheckRefreshClick
         }
     }
 
+
+    public void deleteAlbum(Album album) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            java.util.ArrayList<android.net.Uri> uris = new java.util.ArrayList<>();
+            for (com.absolute.floral.data.models.AlbumItem item : album.getAlbumItems()) {
+                android.net.Uri u = item.getUri(this);
+                if (u != null) {
+                    uris.add(u);
+                }
+            }
+            if (!uris.isEmpty()) {
+                try {
+                    android.app.PendingIntent pi = android.provider.MediaStore.createDeleteRequest(getContentResolver(), uris);
+                    startIntentSenderForResult(pi.getIntentSender(), REQUEST_CODE_DELETE_ALBUM, null, 0, 0, 0);
+                    return;
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+        com.absolute.floral.data.models.File_POJO[] filesToDelete = new com.absolute.floral.data.models.File_POJO[album.getAlbumItems().size()];
+        for (int i = 0; i < filesToDelete.length; i++) {
+            filesToDelete[i] = new com.absolute.floral.data.models.File_POJO(album.getAlbumItems().get(i).getPath(), true);
+        }
+        startService(com.absolute.floral.data.fileOperations.FileOperation
+                .getDefaultIntent(this, com.absolute.floral.data.fileOperations.FileOperation.DELETE, filesToDelete));
+    }
+
     public void refreshPhotos() {
         if (mediaProvider != null) {
             mediaProvider.onDestroy();
@@ -633,6 +662,11 @@ public class MainActivity extends ThemeableActivity implements CheckRefreshClick
                         && data.getAction() != null
                         && (data.getAction().equals(AlbumActivity.ALBUM_ITEM_REMOVED)
                         || data.getAction().equals(REFRESH_MEDIA))) {
+                    refreshPhotos();
+                }
+                break;
+            case REQUEST_CODE_DELETE_ALBUM:
+                if (resultCode == RESULT_OK) {
                     refreshPhotos();
                 }
                 break;

@@ -1,6 +1,9 @@
 package com.absolute.floral.adapter.album.viewHolder;
 
 import android.graphics.Bitmap;
+import android.content.Context;
+import java.io.File;
+import com.absolute.floral.ui.AlbumActivity;
 import android.graphics.drawable.Drawable;
 import androidx.annotation.Nullable;
 import androidx.core.content.ContextCompat;
@@ -71,14 +74,33 @@ public abstract class AlbumItemHolder extends RecyclerView.ViewHolder {
     }
 
     public void loadImage(final ImageView imageView, final AlbumItem albumItem) {
+        Object loadTarget = albumItem.getUri(imageView.getContext());
+        if (loadTarget == null) {
+            loadTarget = albumItem.getPath();
+        }
         Glide.with(imageView.getContext())
                 .asBitmap()
-                .load(albumItem.getPath())
+                .load(loadTarget)
                 .listener(new RequestListener<Bitmap>() {
                     @Override
                     public boolean onLoadFailed(@Nullable GlideException e, Object model,
                                                 Target<Bitmap> target, boolean isFirstResource) {
                         albumItem.error = true;
+                        String p = albumItem.getPath();
+                        if (p != null && !p.equals("N/A")) {
+                            File f = new File(p);
+                            if (!f.exists()) {
+                                imageView.post(new Runnable() {
+                                    @Override
+                                    public void run() {
+                                        Context ctx = imageView.getContext();
+                                        if (ctx instanceof AlbumActivity) {
+                                            ((AlbumActivity) ctx).removeAlbumItem(albumItem.getPath());
+                                        }
+                                    }
+                                });
+                            }
+                        }
                         return false;
                     }
 

@@ -1,13 +1,18 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:tools="http://schemas.android.com/tools"
-    package="com.absolute.floral">
+    xmlns:tools="http://schemas.android.com/tools">
     <!-- to read & write images ... -->
-    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" android:maxSdkVersion="32" />
+    <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
+    <uses-permission android:name="android.permission.READ_MEDIA_VIDEO" />
+    <uses-permission android:name="android.permission.READ_MEDIA_VISUAL_USER_SELECTED" />
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"
+        android:maxSdkVersion="29"
         tools:ignore="ScopedStorage" /> <!-- to set Wallpaper -->
     <uses-permission android:name="android.permission.SET_WALLPAPER" /> <!-- to show FileOperation progress as a notification -->
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC" />
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
 
     <application
         android:name="com.absolute.floral.ui.CustomFontApp"
@@ -19,7 +24,8 @@
         android:supportsRtl="true"
         android:theme="@style/CameraRoll.Theme">
         <activity android:name="com.absolute.floral.ui.FirstActivity"
-            android:theme="@style/SplashTheme">
+            android:theme="@style/SplashTheme"
+            android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
@@ -83,7 +89,8 @@
             android:label="@string/wallpaper"
             android:launchMode="singleTop"
             android:screenOrientation="portrait"
-            android:theme="@style/CameraRoll.Theme.SetWallpaper">
+            android:theme="@style/CameraRoll.Theme.SetWallpaper"
+            android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.ATTACH_DATA" />
 
@@ -102,7 +109,8 @@
             android:label="@string/virtual_albums"
             android:launchMode="singleTop"
             android:theme="@style/CameraRoll.Theme.VirtualDirectories" />
-        <activity android:name="com.absolute.floral.IntentReceiver">
+        <activity android:name="com.absolute.floral.IntentReceiver"
+            android:exported="true">
             <intent-filter tools:ignore="AppLinkUrlError">
                 <action android:name="android.intent.action.VIEW" />
 
@@ -157,18 +165,23 @@
 
         <service
             android:name="com.absolute.floral.data.fileOperations.Copy"
+            android:foregroundServiceType="dataSync"
             tools:ignore="InnerclassSeparator" />
         <service
             android:name="com.absolute.floral.data.fileOperations.Delete"
+            android:foregroundServiceType="dataSync"
             tools:ignore="InnerclassSeparator" />
         <service
             android:name="com.absolute.floral.data.fileOperations.Move"
+            android:foregroundServiceType="dataSync"
             tools:ignore="InnerclassSeparator" />
         <service
             android:name="com.absolute.floral.data.fileOperations.NewDirectory"
+            android:foregroundServiceType="dataSync"
             tools:ignore="InnerclassSeparator" />
         <service
             android:name="com.absolute.floral.data.fileOperations.Rename"
+            android:foregroundServiceType="dataSync"
             tools:ignore="InnerclassSeparator" />
     </application>
 

@@ -3,6 +3,8 @@ package com.absolute.floral.ui;
 import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
 import android.app.Activity;
+import android.app.PendingIntent;
+import android.provider.MediaStore;
 import android.content.BroadcastReceiver;
 import android.content.ClipData;
 import android.content.Context;
@@ -45,7 +47,9 @@ import android.view.ViewTreeObserver;
 import android.view.WindowInsets;
 import android.view.animation.AccelerateDecelerateInterpolator;
 import android.widget.TextView;
+import android.widget.Toast;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -75,6 +79,18 @@ import com.absolute.floral.util.Util;
 
 public class AlbumActivity extends ThemeableActivity
         implements SwipeBackCoordinatorLayout.OnSwipeListener, SelectorModeManager.Callback {
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        pruneDeletedItems();
+    }
+
+
+    private static final int REQUEST_CODE_DELETE_MEDIA = 889;
+    private AlbumItem[] pendingDeleteItems;
+    private int[] pendingDeleteIndices;
+
 
     public static final int FILE_OP_DIALOG_REQUEST = 1;
     public static final String ALBUM_PATH = "ALBUM_PATH";
@@ -630,6 +646,32 @@ public class AlbumActivity extends ThemeableActivity
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
+        if (requestCode == REQUEST_CODE_DELETE_MEDIA) {
+            if (resultCode == RESULT_OK) {
+                Toast.makeText(this, R.string.done, Toast.LENGTH_SHORT).show();
+                MediaProvider.dataChanged = true;
+                pendingDeleteItems = null;
+                pendingDeleteIndices = null;
+            } else {
+                if (pendingDeleteItems != null && pendingDeleteIndices != null) {
+                    for (int i = 0; i < pendingDeleteItems.length; i++) {
+                        int idx = pendingDeleteIndices[i];
+                        if (idx <= album.getAlbumItems().size()) {
+                            album.getAlbumItems().add(idx, pendingDeleteItems[i]);
+                        } else {
+                            album.getAlbumItems().add(pendingDeleteItems[i]);
+                        }
+                    }
+                    recyclerViewAdapter.notifyDataSetChanged();
+                    pendingDeleteItems = null;
+                    pendingDeleteIndices = null;
+                }
+            }
+            return;
+        }
+        if (requestCode == ItemActivity.VIEW_IMAGE) {
+            pruneDeletedItems();
+        }
         switch (resultCode) {
             default:
                 if (data != null && data.getAction() != null) {
@@ -693,6 +735,26 @@ public class AlbumActivity extends ThemeableActivity
     }
 
     public void deleteAlbumItems(final AlbumItem[] selected_items, final int[] indices) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            ArrayList<Uri> uris = new ArrayList<>();
+            for (AlbumItem item : selected_items) {
+                Uri u = item.getUri(this);
+                if (u != null) {
+                    uris.add(u);
+                }
+            }
+            if (!uris.isEmpty()) {
+                try {
+                    PendingIntent pi = MediaStore.createDeleteRequest(getContentResolver(), uris);
+                    pendingDeleteItems = selected_items;
+                    pendingDeleteIndices = indices;
+                    startIntentSenderForResult(pi.getIntentSender(), REQUEST_CODE_DELETE_MEDIA, null, 0, 0, 0);
+                    return;
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+        }
         File_POJO[] filesToDelete = new File_POJO[selected_items.length];
         for (int i = 0; i < filesToDelete.length; i++) {
             filesToDelete[i] = new File_POJO(selected_items[i].getPath(), true);
@@ -1186,7 +1248,29 @@ public class AlbumActivity extends ThemeableActivity
         };
     }
 
-    private void removeAlbumItem(String path) {
+    public void pruneDeletedItems() {
+        if (album == null || album.getAlbumItems() == null) return;
+        boolean changed = false;
+        for (int i = album.getAlbumItems().size() - 1; i >= 0; i--) {
+            AlbumItem item = album.getAlbumItems().get(i);
+            String p = item.getPath();
+            if (p != null && !p.equals("N/A")) {
+                File f = new File(p);
+                if (!f.exists() || f.length() == 0) {
+                    album.getAlbumItems().remove(i);
+                    changed = true;
+                }
+            }
+        }
+        if (changed && recyclerViewAdapter != null) {
+            recyclerViewAdapter.notifyDataSetChanged();
+            if (album.getAlbumItems().isEmpty()) {
+                finish();
+            }
+        }
+    }
+
+    public void removeAlbumItem(String path) {
         Log.d("AlbumActivity", "removeAlbumItem() called with: path = [" + path + "]");
         int index = -1;
         for (int i = 0; i < album.getAlbumItems().size(); i++) {

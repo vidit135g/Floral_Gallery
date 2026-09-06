@@ -104,9 +104,15 @@ public class Move extends FileOperation {
 
         File file = new File(path);
         File newFile = new File(destination, file.getName());
+        if (newFile.getParentFile() != null && !newFile.getParentFile().exists()) {
+            newFile.getParentFile().mkdirs();
+        }
 
         //moving file
         boolean success = renameFile(file, newFile);
+        if (!success) {
+            success = copyAndDeleteFiles(getApplicationContext(), null, path, destination);
+        }
 
         //re-scan all paths
         ArrayList<String> newPaths = Util.getAllChildPaths(new ArrayList<String>(), newFile.getPath());

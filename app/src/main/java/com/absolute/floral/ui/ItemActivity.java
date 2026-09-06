@@ -1,6 +1,9 @@
 package com.absolute.floral.ui;
 
 import android.app.Activity;
+import android.app.PendingIntent;
+import android.provider.MediaStore;
+import java.util.Collections;
 import android.content.ActivityNotFoundException;
 import android.content.BroadcastReceiver;
 import android.content.Context;
@@ -77,6 +80,7 @@ import com.absolute.floral.util.SimpleTransitionListener;
 import com.absolute.floral.util.Util;
 
 public class ItemActivity extends ThemeableActivity {
+    public static final int REQUEST_CODE_DELETE_ITEM = 890;
 
     public static final int VIEW_IMAGE = 3;
     public static final int FILE_OP_DIALOG_REQUEST = 1;
@@ -587,6 +591,19 @@ public class ItemActivity extends ThemeableActivity {
             return;
         }
 
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            Uri uri = albumItem.getUri(this);
+            if (uri != null) {
+                try {
+                    PendingIntent pi = MediaStore.createDeleteRequest(getContentResolver(), Collections.singletonList(uri));
+                    startIntentSenderForResult(pi.getIntentSender(), REQUEST_CODE_DELETE_ITEM, null, 0, 0, 0);
+                    return;
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+
         final File_POJO[] files = new File_POJO[]{new File_POJO(albumItem.getPath(), true)};
 
         registerLocalBroadcastReceiver(new BroadcastReceiver() {
@@ -595,6 +612,7 @@ public class ItemActivity extends ThemeableActivity {
                 unregisterLocalBroadcastReceiver(this);
                 switch (intent.getAction()) {
                     case FileOperation.RESULT_DONE:
+                        MediaProvider.dataChanged = true;
                         String path = albumItem.getPath();
                         Intent i = new Intent(AlbumActivity.ALBUM_ITEM_REMOVED)
                                 .putExtra(ALBUM_ITEM_PATH, path);
@@ -1039,4 +1057,34 @@ public class ItemActivity extends ThemeableActivity {
             }
         };
     }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if (requestCode == REQUEST_CODE_DELETE_ITEM) {
+            if (resultCode == RESULT_OK) {
+                MediaProvider.dataChanged = true;
+                String path = albumItem.getPath();
+                Intent i = new Intent(AlbumActivity.ALBUM_ITEM_REMOVED)
+                        .putExtra(ALBUM_ITEM_PATH, path);
+                LocalBroadcastManager.getInstance(ItemActivity.this).sendBroadcast(i);
+
+                album.getAlbumItems().remove(albumItem);
+                viewPager.getAdapter().notifyDataSetChanged();
+
+                if (album.getAlbumItems().size() == 0) {
+                    ItemActivity.this.setResult(RESULT_OK);
+                    finish();
+                    return;
+                }
+
+                albumItem = album.getAlbumItems().get(viewPager.getCurrentItem());
+                ItemAdapter adapter = (ItemAdapter) viewPager.getAdapter();
+                ViewHolder viewHolder = adapter.findViewHolderByTag(albumItem.getPath());
+                onShowViewHolder(viewHolder);
+                Toast.makeText(this, R.string.done, Toast.LENGTH_SHORT).show();
+            }
+        }
+    }
+
 }

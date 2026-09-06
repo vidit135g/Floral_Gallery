@@ -43,15 +43,48 @@ public class MediaProvider extends Provider {
         super(context);
     }
 
+    public static String[] getRequiredPermissions() {
+        if (Build.VERSION.SDK_INT >= 34) {
+            return new String[]{
+                    Manifest.permission.READ_MEDIA_IMAGES,
+                    Manifest.permission.READ_MEDIA_VIDEO,
+                    Manifest.permission.READ_MEDIA_VISUAL_USER_SELECTED,
+                    Manifest.permission.POST_NOTIFICATIONS
+            };
+        } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            return new String[]{
+                    Manifest.permission.READ_MEDIA_IMAGES,
+                    Manifest.permission.READ_MEDIA_VIDEO,
+                    Manifest.permission.POST_NOTIFICATIONS
+            };
+        } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            return new String[]{
+                    Manifest.permission.READ_EXTERNAL_STORAGE
+            };
+        } else {
+            return new String[]{
+                    Manifest.permission.READ_EXTERNAL_STORAGE,
+                    Manifest.permission.WRITE_EXTERNAL_STORAGE
+            };
+        }
+    }
+
     public static boolean checkPermission(Activity context) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            int read = ContextCompat.checkSelfPermission(context, Manifest.permission.READ_EXTERNAL_STORAGE);
-            int write = ContextCompat.checkSelfPermission(context, Manifest.permission.WRITE_EXTERNAL_STORAGE);
-            if (read != PackageManager.PERMISSION_GRANTED || write != PackageManager.PERMISSION_GRANTED) {
-                String[] requestedPermissions = new String[]{
-                        Manifest.permission.READ_EXTERNAL_STORAGE,
-                        Manifest.permission.WRITE_EXTERNAL_STORAGE};
-                ActivityCompat.requestPermissions(context, requestedPermissions, PERMISSION_REQUEST_CODE);
+            String[] permissions = getRequiredPermissions();
+            ArrayList<String> missing = new ArrayList<>();
+            for (String perm : permissions) {
+                if (ContextCompat.checkSelfPermission(context, perm) != PackageManager.PERMISSION_GRANTED) {
+                    missing.add(perm);
+                }
+            }
+            if (Build.VERSION.SDK_INT >= 34) {
+                if (ContextCompat.checkSelfPermission(context, "android.permission.READ_MEDIA_VISUAL_USER_SELECTED") == PackageManager.PERMISSION_GRANTED) {
+                    return true;
+                }
+            }
+            if (!missing.isEmpty()) {
+                ActivityCompat.requestPermissions(context, missing.toArray(new String[0]), PERMISSION_REQUEST_CODE);
                 return false;
             }
         }
@@ -261,6 +294,9 @@ public class MediaProvider extends Provider {
     }
 
     private static int getMode(Context context) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            return MODE_MEDIASTORE;
+        }
         return Settings.getInstance(context).useStorageRetriever() ?
                 MODE_STORAGE : MODE_MEDIASTORE;
     }

@@ -18,6 +18,7 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.absolute.floral.R;
+import com.absolute.floral.data.provider.MediaProvider;
 
 import fr.castorflex.android.circularprogressbar.CircularProgressBar;
 
@@ -56,17 +57,8 @@ public class SplashActivity extends AppCompatActivity {
 
 
         btn.setOnClickListener(v -> {
-            if (ContextCompat.checkSelfPermission(getApplicationContext(), Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
-                ActivityCompat.requestPermissions(SplashActivity.this, new String[]{Manifest.permission.READ_EXTERNAL_STORAGE}, 1);
-            }
-
-            if (ContextCompat.checkSelfPermission(getApplicationContext(), Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
-                ActivityCompat.requestPermissions(SplashActivity.this, new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, 1);
-            }
-
-            if (ContextCompat.checkSelfPermission(getApplicationContext(), Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
-                ActivityCompat.requestPermissions(SplashActivity.this, new String[]{Manifest.permission.CAMERA}, 1);
-            }
+            String[] perms = MediaProvider.getRequiredPermissions();
+            ActivityCompat.requestPermissions(SplashActivity.this, perms, 1);
                 btn.setVisibility(View.GONE);
                 prgtext.setVisibility(View.VISIBLE);
                 progress.setVisibility(View.VISIBLE);

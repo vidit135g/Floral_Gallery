@@ -128,12 +128,14 @@ public class Copy extends FileOperation {
 
     //for files on non-removable storage
     private static boolean copyFile(String path, String destination) throws IOException {
-        //create output directory if it doesn't exist
         File dir = new File(destination);
         if (new File(path).isDirectory()) {
             return dir.mkdirs();
         } else {
-            if (dir.createNewFile()) {
+            if (dir.getParentFile() != null && !dir.getParentFile().exists()) {
+                dir.getParentFile().mkdirs();
+            }
+            if (dir.createNewFile() || dir.exists()) {
                 InputStream inputStream = new FileInputStream(path);
                 OutputStream outputStream = new FileOutputStream(dir);
                 return writeStream(inputStream, outputStream);

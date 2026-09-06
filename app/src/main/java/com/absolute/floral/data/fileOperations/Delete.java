@@ -3,6 +3,8 @@ package com.absolute.floral.data.fileOperations;
 import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
+import android.provider.MediaStore;
+import android.media.MediaScannerConnection;
 import androidx.documentfile.provider.DocumentFile;
 
 import java.io.File;
@@ -69,15 +71,46 @@ public class Delete extends FileOperation {
     }
 
     public boolean deleteFile(String path) {
-        boolean success;
+        boolean success = false;
         File file = new File(path);
         if (file.isDirectory()) {
             File[] files = file.listFiles();
-            for (int i = 0; i < files.length; i++) {
-                deleteFile(files[i].getPath());
+            if (files != null) {
+                for (int i = 0; i < files.length; i++) {
+                    deleteFile(files[i].getPath());
+                }
+            }
+            success = file.delete();
+        } else {
+            try {
+                Uri contentUri = StorageUtil.getContentUri(getApplicationContext(), path);
+                if (contentUri != null) {
+                    int rows = getApplicationContext().getContentResolver().delete(contentUri, null, null);
+                    if (rows > 0) {
+                        success = true;
+                    }
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+
+            if (!success && file.exists()) {
+                success = file.delete();
+            }
+
+            if (!file.exists()) {
+                success = true;
             }
         }
-        success = file.delete();
+
+        try {
+            getApplicationContext().getContentResolver().delete(
+                    MediaStore.Files.getContentUri("external"),
+                    MediaStore.Files.FileColumns.DATA + "=?",
+                    new String[]{path});
+            MediaScannerConnection.scanFile(getApplicationContext(), new String[]{path}, null, null);
+        } catch (Exception ignored) {}
+
         addPathToScan(path);
         return success;
     }

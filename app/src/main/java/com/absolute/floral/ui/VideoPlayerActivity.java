@@ -30,14 +30,13 @@ import com.google.android.exoplayer2.DefaultLoadControl;
 import com.google.android.exoplayer2.DefaultRenderersFactory;
 import com.google.android.exoplayer2.ExoPlaybackException;
 import com.google.android.exoplayer2.ExoPlayer;
-import com.google.android.exoplayer2.ExoPlayerFactory;
+import com.google.android.exoplayer2.MediaItem;
 import com.google.android.exoplayer2.PlaybackParameters;
 import com.google.android.exoplayer2.Player;
 import com.google.android.exoplayer2.SimpleExoPlayer;
 import com.google.android.exoplayer2.Timeline;
 import com.google.android.exoplayer2.extractor.DefaultExtractorsFactory;
 import com.google.android.exoplayer2.extractor.ExtractorsFactory;
-import com.google.android.exoplayer2.source.ExtractorMediaSource;
 import com.google.android.exoplayer2.source.MediaSource;
 import com.google.android.exoplayer2.source.TrackGroupArray;
 import com.google.android.exoplayer2.trackselection.AdaptiveTrackSelection;
@@ -56,7 +55,7 @@ public class VideoPlayerActivity extends ThemeableActivity {
 
     private Uri videoUri;
 
-    private SimpleExoPlayer player;
+    private ExoPlayer player;
     private long playerPosition = -1;
 
     @Override
@@ -255,44 +254,31 @@ public class VideoPlayerActivity extends ThemeableActivity {
     }
 
     private void initPlayer() {
-        // Produces DataSource instances through which media data is loaded.
-        DataSource.Factory dataSourceFactory = new DefaultDataSourceFactory(this,
-                Util.getUserAgent(this, getString(R.string.app_name)), null);
-        // Produces Extractor instances for parsing the media data.
-        ExtractorsFactory extractorsFactory = new DefaultExtractorsFactory();
-        // This is the MediaSource representing the media to be played.
-        MediaSource videoSource = new ExtractorMediaSource(videoUri,
-                dataSourceFactory, extractorsFactory, null, null);
+        player = new ExoPlayer.Builder(this).build();
 
-        DefaultRenderersFactory renderersFactory = new DefaultRenderersFactory(this);
-
-        // Create the player
-        Context context;
-        TrackSelector trackSelector;
-
-        player=ExoPlayerFactory.newSimpleInstance(getApplicationContext(), new DefaultTrackSelector(new AdaptiveTrackSelection.Factory()),new DefaultLoadControl());
-
-
-//        player = ExoPlayerFactory.newSimpleInstance(renderersFactory,
-//                new DefaultTrackSelector(new AdaptiveTrackSelection.Factory(null)),
-//                new DefaultLoadControl());
-
-        // Bind the player to the view.
         PlayerView simpleExoPlayerView = findViewById(R.id.simpleExoPlayerView);
         simpleExoPlayerView.setPlayer(player);
 
-        // Prepare the player with the source.
-        player.prepare(videoSource);
+        player.setMediaItem(MediaItem.fromUri(videoUri));
+        player.prepare();
         player.setRepeatMode(Player.REPEAT_MODE_ONE);
         player.setPlayWhenReady(true);
 
         final ImageButton playPause = findViewById(R.id.play_pause);
-        player.addListener(new SimpleEventListener() {
+        player.addListener(new Player.Listener() {
             @Override
-            public void onPlayerStateChanged(boolean playWhenReady, int playbackState) {
-                //update PlayPause-Button
+            public void onPlaybackStateChanged(int playbackState) {
+                updatePlayPauseButton();
+            }
+
+            @Override
+            public void onPlayWhenReadyChanged(boolean playWhenReady, int reason) {
+                updatePlayPauseButton();
+            }
+
+            private void updatePlayPauseButton() {
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP && showAnimations()) {
-                    if (player.getPlayWhenReady()) {
+                    if (player != null && player.getPlayWhenReady()) {
                         playPause.setImageResource(R.drawable.play_to_pause_avd);
                     } else {
                         playPause.setImageResource(R.drawable.pause_to_play_avd);
@@ -303,7 +289,7 @@ public class VideoPlayerActivity extends ThemeableActivity {
                         ((Animatable) d).start();
                     }
                 } else {
-                    if (player.getPlayWhenReady()) {
+                    if (player != null && player.getPlayWhenReady()) {
                         playPause.setImageResource(R.drawable.ic_pause_white);
                     } else {
                         playPause.setImageResource(R.drawable.ic_play_arrow_white);
@@ -364,58 +350,5 @@ public class VideoPlayerActivity extends ThemeableActivity {
         return R.style.CameraRoll_Theme_Light_VideoPlayer;
     }
 
-    public static class SimpleEventListener implements Player.EventListener {
-
-
-        @Override
-        public void onTimelineChanged(Timeline timeline, Object manifest, int reason) {
-
-        }
-
-        @Override
-        public void onTracksChanged(TrackGroupArray trackGroupArray, TrackSelectionArray trackSelectionArray) {
-
-        }
-
-        @Override
-        public void onLoadingChanged(boolean isLoading) {
-
-        }
-
-        @Override
-        public void onPlayerStateChanged(boolean playWhenReady, int playbackState) {
-
-        }
-
-        @Override
-        public void onRepeatModeChanged(int repeatMode) {
-
-        }
-
-        @Override
-        public void onShuffleModeEnabledChanged(boolean shuffleModeEnabled) {
-
-        }
-
-        @Override
-        public void onPlayerError(ExoPlaybackException error) {
-
-        }
-
-        @Override
-        public void onPositionDiscontinuity(int reason) {
-
-        }
-
-
-        @Override
-        public void onPlaybackParametersChanged(PlaybackParameters playbackParameters) {
-
-        }
-
-        @Override
-        public void onSeekProcessed() {
-
-        }
-    }
+    public static class SimpleEventListener implements Player.Listener {}
 }
