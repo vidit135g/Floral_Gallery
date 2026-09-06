@@ -11,9 +11,9 @@
     <color name="colorAccent_text">#8A212121</color>
     <color name="list_bg">#3B3B3B</color>
     <!--light theme colors-->
-    <color name="colorPrimary_light">#FAFAFA</color>
-    <color name="colorPrimaryDark_light">#fafafa</color>
-    <color name="light_bg">#FAFAFA</color>
+    <color name="colorPrimary_light">#F2F2F7</color>
+    <color name="colorPrimaryDark_light">#F2F2F7</color>
+    <color name="light_bg">#F2F2F7</color>
     <!--light accent color-->
     <color name="colorAccent_light">@color/colorAccent</color>
     <color name="colorAccentLight_light">@color/colorAccentLight</color>
@@ -55,4 +55,7 @@
     <color name="glpurple">#9575cd</color>
     <color name="gorange">#e64a19</color>
     <color name="glpink">#f48fb1 </color>
+    <!-- Bento UI Tokens -->
+    <color name="bento_card_stroke">#E5E5EA</color>
+    <color name="bento_subtext">#8E8E93</color>
 </resources>
