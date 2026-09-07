@@ -724,6 +724,10 @@ public class ItemActivity extends ThemeableActivity {
     }
 
     public void showInfoDialog() {
+        if (!view_only) {
+            try { InfoSheet.show(this, albumItem); return; }
+            catch (Throwable ignored) {}
+        }
         final InfoRecyclerViewAdapter adapter = new InfoRecyclerViewAdapter();
         boolean exifSupported = adapter.exifSupported(this, albumItem);
 
