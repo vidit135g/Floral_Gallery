@@ -244,7 +244,7 @@ public class SearchActivity extends AppCompatActivity {
         grid2(places.size(), i -> {
             PlacesIndex.Place pl = places.get(i);
             BentoTile t = new BentoTile(this);
-            t.photo(cover(pl.cover()), 1 + i).label(pl.label).sub(pl.items.size() + " photos");
+            t.photo(cover(pl.cover()), 1 + i).label(pl.label).sub(count(pl.items.size()));
             t.setOnClickListener(v -> openBucket(pl.label, "Places", pl.items));
             return t;
         });
@@ -255,7 +255,7 @@ public class SearchActivity extends AppCompatActivity {
         grid2(things.size(), i -> {
             ThingsIndex.Thing th = things.get(i);
             BentoTile t = new BentoTile(this);
-            t.photo(cover(th.cover()), 4 + i).label(th.label).sub(th.photos.size() + " photos");
+            t.photo(cover(th.cover()), 4 + i).label(th.label).sub(count(th.photos.size()));
             t.setOnClickListener(v -> openBucket(th.label, "Things", th.photos));
             return t;
         });
@@ -329,6 +329,8 @@ public class SearchActivity extends AppCompatActivity {
         lp.topMargin = d(2);
         return lp;
     }
+
+    private String count(int n) { return n + (n == 1 ? " photo" : " photos"); }
 
     private Object cover(AlbumItem it) {
         if (it == null) return null;

@@ -99,7 +99,7 @@ public final class BentoHeader {
         BentoTile thingsT = b.tile(rowB, 1f, v -> a.startActivity(new Intent(a, SearchActivity.class)));
         if (!things.isEmpty() && things.get(0).cover() != null)
             thingsT.photo(cover(a, things.get(0).cover()), 10).label("Things")
-                    .sub(things.size() + " categories");
+                    .sub(things.size() + (things.size() == 1 ? " category" : " categories"));
         else thingsT.gradient(10).label("Things").sub("Scanning…");
 
         b.tile(rowB, 1f, v -> a.startActivity(new Intent(a, InsightsActivity.class)))
