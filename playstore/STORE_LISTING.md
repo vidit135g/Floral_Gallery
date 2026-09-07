@@ -69,6 +69,18 @@ No ads. No account. No cloud. Made with care in India.
 
 ## What’s new (release notes, 500 chars max)
 ```
+Floral 2.2 — deeper, more capable, still 100% on-device:
+• A richer bento theme — dimensional gradients, soft glow, hue-matched shadows
+• Search rebuilt: People, Places, Things and a Browse grid on one page
+• Things — on-device photo tagging (Food, Nature, Sky, Beaches, Animals, …)
+• Apple-style info card in the viewer — date, camera/EXIF, a map for GPS shots
+• Collections gains a "Media types" row: Videos, Screenshots, Animated,
+  Recently added, Recently Deleted
+```
+
+<details><summary>Floral 2.1 notes</summary>
+
+```
 Floral 2.1 — best of Apple & Google Photos, on-device:
 • Soft pastel bento theme across every screen + a redrawn welcome
 • Apple-style Years / Months / Days on the Photos tab
@@ -78,6 +90,8 @@ Floral 2.1 — best of Apple & Google Photos, on-device:
   Collage, and Free up space (screenshots, big videos, look-alikes)
 • Search icon now springs in as you scroll
 ```
+
+</details>
 
 <details><summary>Floral 2.0 notes</summary>
 

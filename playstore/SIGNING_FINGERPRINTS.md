@@ -2,7 +2,7 @@
 
 ## This build
 
-- **APK/AAB:** `Floral-2.1-release.apk` / `Floral-2.1-release.aab`
+- **APK/AAB:** `Floral-2.2-release.apk` / `Floral-2.2-release.aab`
 - **Signed with:** `/Users/viditgupta/Documents/Project fix/release.keystore`, alias `releaseKey`
 - **Store / key password:** `android123`  ← **dev password — rotate before publishing**
 - **Owner:** `CN=Vidit Gupta, OU=Mobile, O=Absolute, L=San Francisco, ST=CA, C=US`
@@ -51,5 +51,5 @@ there is nothing else to configure.
 ```bash
 keytool -list -v -keystore "/Users/viditgupta/Documents/Project fix/release.keystore" \
   -storepass android123 -alias releaseKey
-apksigner verify --print-certs Floral-2.1-release.apk
+apksigner verify --print-certs Floral-2.2-release.apk
 ```
