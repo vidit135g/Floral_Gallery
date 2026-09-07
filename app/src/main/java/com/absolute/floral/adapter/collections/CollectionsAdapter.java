@@ -35,7 +35,7 @@ import java.util.List;
 /** The Collections tab — Pinned row, People strip, then the album grid. Soma look. */
 public class CollectionsAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
 
-    private static final int T_PINNED = 0, T_SECTION = 1, T_PEOPLE = 2, T_ALBUM = 3;
+    private static final int T_PINNED = 0, T_SECTION = 1, T_PEOPLE = 2, T_ALBUM = 3, T_MEDIA = 4;
 
     private final Activity a;
     private List<Album> albums = new ArrayList<>();
@@ -73,6 +73,8 @@ public class CollectionsAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
             rows.add(new Row(T_SECTION, "People & pets"));
             rows.add(new Row(T_PEOPLE));
         }
+        rows.add(new Row(T_SECTION, "Media types"));
+        rows.add(new Row(T_MEDIA));
         rows.add(new Row(T_SECTION, "Albums"));
         for (Album al : albums) if (al.getAlbumItems() != null && !al.getAlbumItems().isEmpty())
             rows.add(new Row(al));
@@ -102,6 +104,12 @@ public class CollectionsAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
             }
             case T_SECTION: return new VH(buildSection(s));
             case T_PEOPLE: return new VH(new PeopleStrip(a));
+            case T_MEDIA: {
+                FrameLayout box = new FrameLayout(a);
+                box.setLayoutParams(new RecyclerView.LayoutParams(
+                        ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+                return new VH(box);
+            }
             default: return new AlbumVH(buildAlbumCard(s));
         }
     }
@@ -114,6 +122,10 @@ public class CollectionsAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
             android.widget.FrameLayout box = (android.widget.FrameLayout) h.itemView;
             box.removeAllViews();
             box.addView(buildBento(s));
+        } else if (r.type == T_MEDIA) {
+            FrameLayout box = (FrameLayout) h.itemView;
+            box.removeAllViews();
+            box.addView(buildMediaTypes(s));
         } else if (r.type == T_SECTION) {
             ((TextView) h.itemView).setText(r.text);
         } else if (r.type == T_PEOPLE) {
@@ -162,6 +174,51 @@ public class CollectionsAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
         b.tile(r2, 1f, v -> a.startActivity(new Intent(a, com.absolute.floral.ui.InsightsActivity.class)))
                 .gradient(6).label("This month").value(snap != null && snap.busiestMonthCount > 0
                         ? String.valueOf(snap.months[java.util.Calendar.getInstance().get(java.util.Calendar.MONTH)]) : "");
+        return b;
+    }
+
+    /* ---- Apple-style "Media types" ---- */
+    private View buildMediaTypes(Soma s) {
+        List<AlbumItem> videos = new ArrayList<>(), shots = new ArrayList<>(),
+                gifs = new ArrayList<>(), recent = new ArrayList<>();
+        long weekAgo = System.currentTimeMillis() - 7L * 24 * 3600 * 1000;
+        for (Album al : albums) {
+            if (al.getAlbumItems() == null) continue;
+            for (AlbumItem it : al.getAlbumItems()) {
+                String p = (it.getPath() == null ? "" : it.getPath()).toLowerCase();
+                String n = (it.getName() == null ? "" : it.getName()).toLowerCase();
+                if (com.absolute.floral.util.MediaType.isVideo(p)) videos.add(it);
+                else if (p.endsWith(".gif")) gifs.add(it);
+                if (p.contains("screenshot") || n.contains("screenshot")) shots.add(it);
+                if (it.getDate() > weekAgo) recent.add(it);
+            }
+        }
+        java.util.Collections.sort(recent, (x, y) -> Long.compare(y.getDate(), x.getDate()));
+        List<AlbumItem> deleted = trashed();
+
+        final String[] names = { "Videos", "Screenshots", "Animated", "Recently added", "Recently Deleted" };
+        @SuppressWarnings("unchecked")
+        final List<AlbumItem>[] sets = new List[] { videos, shots, gifs, recent, deleted };
+        final int[] accents = { 6, 9, 1, 3, 8 };
+
+        com.absolute.floral.bento.BentoLayout b = new com.absolute.floral.bento.BentoLayout(a);
+        b.setLayoutParams(new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+        LinearLayout row = null;
+        for (int i = 0; i < names.length; i++) {
+            if (i % 3 == 0) row = b.row(94);
+            final List<AlbumItem> set = sets[i];
+            final String nm = names[i];
+            com.absolute.floral.bento.BentoTile t = b.tile(row, 1f, v -> {
+                if (!set.isEmpty()) openBucket(nm, "MEDIA TYPE", new ArrayList<>(set));
+            });
+            AlbumItem cov = set.isEmpty() ? null : set.get(0);
+            if (cov != null) {
+                Object u = cov.getUri(a);
+                t.photo(u != null ? u : cov.getPath(), accents[i]);
+            } else t.gradient(accents[i]);
+            t.label(nm).sub(set.size() + (set.size() == 1 ? " item" : " items"));
+        }
         return b;
     }
 
