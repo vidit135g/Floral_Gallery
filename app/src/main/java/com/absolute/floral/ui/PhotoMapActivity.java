@@ -257,18 +257,19 @@ public class PhotoMapActivity extends AppCompatActivity {
 
                 int n = p.items.size();
                 float r = dp(13) + Math.min(dp(10), (float) Math.log10(Math.max(1, n)) * dp(7));
+                // the pin's head sits a little above the anchor point (y = ground)
+                float cy = y - r * 1.35f;
 
-                // shadow blob
-                pin.setColor(0x33000000);
-                cv.drawOval(new RectF(x - r, y - r + dp(3), x + r, y + r + dp(3)), pin);
-                // teardrop
+                // soft shadow (same teardrop, nudged down)
+                pin.setColor(0x2E000000);
+                drawTeardrop(cv, x + dp(1), cy + dp(3), r);
+                // teardrop body + white centre + count
                 pin.setColor(0xFF0B6BD6);
-                drawTeardrop(cv, x, y, r);
+                drawTeardrop(cv, x, cy, r);
                 pin.setColor(0xFFFFFFFF);
-                cv.drawCircle(x, y - r * 0.15f, r * 0.42f, pin);
-                pin.setColor(0xFF0B6BD6);
+                cv.drawCircle(x, cy, r * 0.46f, pin);
                 text.setColor(0xFF0B6BD6);
-                cv.drawText(String.valueOf(n), x, y - r * 0.15f + sp(4), text);
+                cv.drawText(String.valueOf(n), x, cy + sp(4.5f), text);
 
                 // label pill
                 String name = p.label == null ? "" : p.label;
@@ -281,17 +282,26 @@ public class PhotoMapActivity extends AppCompatActivity {
                 label.setTextAlign(Paint.Align.CENTER);
                 cv.drawText(name, x, ly + dp(16.5f), label);
 
-                hitBoxes.add(new float[]{ x, y, Math.max(r, tw / 2 + dp(9)), i });
+                hitBoxes.add(new float[]{ x, cy, Math.max(r * 1.4f, tw / 2 + dp(12)), i });
             }
             text.setTextAlign(Paint.Align.LEFT);
         }
 
-        private void drawTeardrop(Canvas cv, float x, float y, float r) {
+        /** A map pin: a circle of radius r centred at (cx,cy) with a tail meeting a point r*1.35 below. */
+        private void drawTeardrop(Canvas cv, float cx, float cy, float r) {
             teardrop.reset();
-            teardrop.addCircle(x, y - r, r, Path.Direction.CW);
-            teardrop.moveTo(x - r * 0.72f, y - r * 0.55f);
-            teardrop.lineTo(x, y + r * 0.5f);
-            teardrop.lineTo(x + r * 0.72f, y - r * 0.55f);
+            float tipY = cy + r * 1.35f;
+            // angle from centre to the tangent points that flow into the tail
+            double a = Math.asin(Math.min(1.0, r / (tipY - cy)));
+            float tx = (float) (r * Math.cos(a));
+            float ty = (float) (r * Math.sin(a));
+            double aDeg = Math.toDegrees(a);
+            teardrop.moveTo(cx - tx, cy + ty);
+            teardrop.lineTo(cx, tipY);
+            teardrop.lineTo(cx + tx, cy + ty);
+            // arc counter-clockwise, over the top, from the right tangent to the left one
+            teardrop.arcTo(new RectF(cx - r, cy - r, cx + r, cy + r),
+                    (float) aDeg, (float) -(360 - 2 * aDeg));
             teardrop.close();
             cv.drawPath(teardrop, pin);
         }
