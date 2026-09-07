@@ -184,6 +184,16 @@
             android:foregroundServiceType="dataSync"
             tools:ignore="InnerclassSeparator" />
 
+        <activity
+            android:name="com.absolute.floral.ui.CollageActivity"
+            android:launchMode="singleTop"
+            android:theme="@style/CameraRoll.Theme" />
+        <activity
+            android:name="com.absolute.floral.ui.SearchActivity"
+            android:launchMode="singleTop"
+            android:windowSoftInputMode="adjustResize|stateVisible"
+            android:theme="@style/CameraRoll.Theme" />
+
         <receiver
             android:name="com.absolute.floral.widget.MemoriesWidgetProvider"
             android:exported="false"

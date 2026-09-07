@@ -34,6 +34,7 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.ViewTreeObserver;
+import android.widget.FrameLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -117,6 +118,15 @@ public class MainActivity extends ThemeableActivity implements CheckRefreshClick
 
     private RecyclerView recyclerView;
     private AbstractRecyclerViewAdapter<ArrayList<Album>> recyclerViewAdapter;
+
+    // Google-Photos-style tabs
+    public static final int TAB_PHOTOS = 0, TAB_COLLECTIONS = 1, TAB_CREATE = 2;
+    private int currentTab = TAB_PHOTOS;
+    private com.absolute.floral.soma.NavPill navPill;
+    private com.absolute.floral.adapter.photos.PhotoGridAdapter photoAdapter;
+    private GridLayoutManager gridLayoutManager;
+    private int photoSpan = 3;
+    private androidx.recyclerview.widget.RecyclerView.ItemDecoration collectionsDecoration;
 
 
     private MediaProvider mediaProvider;
@@ -226,7 +236,9 @@ public class MainActivity extends ThemeableActivity implements CheckRefreshClick
             recyclerViewAdapter.getSelectorManager().addCallback(callback);
         }
         recyclerView.setAdapter(recyclerViewAdapter);
-        recyclerView.setLayoutManager(new GridLayoutManager(this, spanCount));
+        gridLayoutManager = new GridLayoutManager(this, spanCount);
+        recyclerView.setLayoutManager(gridLayoutManager);
+        final int collectionsSpan = spanCount;
 
         if (recyclerView instanceof FastScrollerRecyclerView) {
             ((FastScrollerRecyclerView) recyclerView).addOuterGridSpacing(spacing);
@@ -356,6 +368,119 @@ public class MainActivity extends ThemeableActivity implements CheckRefreshClick
         mSwipeRefreshLayout.setColorSchemeColors(c1,c2,c3,c4);
         mSwipeRefreshLayout.setOnRefreshListener(() -> refreshPhotos());
         setSystemUiFlags();
+
+        if (!pick_photos) {
+            setupGooglePhotosTabs(collectionsSpan);
+        }
+    }
+
+    /* ---------------- Google-Photos-style tabs ---------------- */
+
+    private void setupGooglePhotosTabs(final int collectionsSpan) {
+        final com.absolute.floral.soma.Soma soma = com.absolute.floral.soma.SomaSkin.read(this);
+        ViewGroup host = (ViewGroup) recyclerView.getParent();          // root_view FrameLayout
+
+        navPill = new com.absolute.floral.soma.NavPill(this);
+        navPill.setSoma(soma);
+        FrameLayout.LayoutParams lp = new FrameLayout.LayoutParams(
+                ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        lp.gravity = android.view.Gravity.BOTTOM | android.view.Gravity.CENTER_HORIZONTAL;
+        int m = Math.round(getResources().getDisplayMetrics().density * 14);
+        lp.setMargins(m, m, m, m + Math.round(getResources().getDisplayMetrics().density * 8));
+        host.addView(navPill, lp);
+
+        recyclerView.setClipToPadding(false);
+        recyclerView.setPadding(recyclerView.getPaddingLeft(), recyclerView.getPaddingTop(),
+                recyclerView.getPaddingRight(),
+                recyclerView.getPaddingBottom() + Math.round(getResources().getDisplayMetrics().density * 84));
+
+        photoAdapter = new com.absolute.floral.adapter.photos.PhotoGridAdapter(this,
+                com.absolute.floral.data.PhotoTimeline.from(albums));
+        photoAdapter.setSpanCount(photoSpan);
+
+        // pinch to change density
+        final android.view.ScaleGestureDetector pinch = new android.view.ScaleGestureDetector(this,
+                new android.view.ScaleGestureDetector.SimpleOnScaleGestureListener() {
+                    @Override public boolean onScale(android.view.ScaleGestureDetector d) {
+                        if (currentTab != TAB_PHOTOS) return false;
+                        if (d.getScaleFactor() > 1.18f && photoSpan > 2) { setPhotoSpan(photoSpan - 1); return true; }
+                        if (d.getScaleFactor() < 0.86f && photoSpan < 6) { setPhotoSpan(photoSpan + 1); return true; }
+                        return false;
+                    }
+                });
+        recyclerView.addOnItemTouchListener(new RecyclerView.SimpleOnItemTouchListener() {
+            @Override public boolean onInterceptTouchEvent(RecyclerView rv, android.view.MotionEvent e) {
+                if (currentTab == TAB_PHOTOS && e.getPointerCount() > 1) { pinch.onTouchEvent(e); return true; }
+                return false;
+            }
+            @Override public void onTouchEvent(RecyclerView rv, android.view.MotionEvent e) { pinch.onTouchEvent(e); }
+        });
+
+        // repurpose the corner FAB as Search
+        final FloatingActionButton searchFab = findViewById(R.id.fab);
+        if (searchFab != null) {
+            searchFab.setImageResource(R.drawable.ic_search_white);
+            searchFab.setColorFilter(soma.ink);
+            searchFab.setBackgroundTintList(android.content.res.ColorStateList.valueOf(
+                    soma.lightBase ? 0xFFFFFFFF : 0xFF262320));
+            searchFab.setVisibility(View.VISIBLE);
+            searchFab.setOnClickListener(v ->
+                    startActivity(new Intent(this, SearchActivity.class)));
+            searchFab.setTranslationY(-Math.round(getResources().getDisplayMetrics().density * 76));
+        }
+
+        navPill.setOnTab(idx -> {
+            if (idx == TAB_CREATE) {
+                navPill.select(currentTab, false);
+                com.absolute.floral.ui.CreateSheet.show(this);
+                return;
+            }
+            switchTab(idx, collectionsSpan);
+        });
+
+        switchTab(TAB_PHOTOS, collectionsSpan);
+    }
+
+    private void setPhotoSpan(int span) {
+        photoSpan = span;
+        photoAdapter.setSpanCount(span);
+        gridLayoutManager.setSpanCount(span);
+        photoAdapter.notifyDataSetChanged();
+    }
+
+    private void switchTab(int idx, int collectionsSpan) {
+        currentTab = idx;
+        final Toolbar toolbar = findViewById(R.id.toolbar);
+        com.absolute.floral.soma.Soma soma = com.absolute.floral.soma.SomaSkin.read(this);
+        if (idx == TAB_PHOTOS) {
+            com.absolute.floral.soma.SomaSkin.wordmark(toolbar, soma, "Photos", "");
+            gridLayoutManager.setSpanCount(photoSpan);
+            gridLayoutManager.setSpanSizeLookup(photoAdapter.spanSizeLookup());
+            recyclerView.setItemAnimator(null);
+            if (recyclerView.getAdapter() != photoAdapter) recyclerView.setAdapter(photoAdapter);
+            java.util.ArrayList<Album> fresh = MediaProvider.getAlbumsWithVirtualDirectories(this);
+            photoAdapter.setTimeline(com.absolute.floral.data.PhotoTimeline.from(
+                    fresh != null && !fresh.isEmpty() ? fresh : albums));
+        } else {
+            com.absolute.floral.soma.SomaSkin.wordmark(toolbar, soma, "Collections", "");
+            gridLayoutManager.setSpanCount(collectionsSpan);
+            gridLayoutManager.setSpanSizeLookup(new GridLayoutManager.DefaultSpanSizeLookup());
+            if (recyclerView.getAdapter() != recyclerViewAdapter) recyclerView.setAdapter(recyclerViewAdapter);
+        }
+        recyclerView.post(() -> com.absolute.floral.soma.Anim.enterChildren(recyclerView, 30, 26));
+
+        if (idx == TAB_PHOTOS) {
+            for (int delay : new int[]{ 500, 1400, 3000, 6000 }) {
+                recyclerView.postDelayed(() -> {
+                    if (currentTab != TAB_PHOTOS) return;
+                    java.util.ArrayList<Album> f = MediaProvider.getAlbumsWithVirtualDirectories(this);
+                    if (f != null && !f.isEmpty()) {
+                        com.absolute.floral.data.PhotoTimeline tl = com.absolute.floral.data.PhotoTimeline.from(f);
+                        if (tl.items.size() != photoAdapter.getItemCount()) photoAdapter.setTimeline(tl);
+                    }
+                }, delay);
+            }
+        }
     }
 
 
@@ -500,6 +625,10 @@ public class MainActivity extends ThemeableActivity implements CheckRefreshClick
                         public void run() {
                             MainActivity.this.albums = albumsWithVirtualDirs;
                             recyclerViewAdapter.setData(albumsWithVirtualDirs);
+                            if (photoAdapter != null) {
+                                photoAdapter.setTimeline(
+                                        com.absolute.floral.data.PhotoTimeline.from(albumsWithVirtualDirs));
+                            }
 
                             if (mediaProvider != null) {
                                 mediaProvider.onDestroy();
@@ -540,6 +669,13 @@ public class MainActivity extends ThemeableActivity implements CheckRefreshClick
     protected void onStart() {
         super.onStart();
         refreshPhotos();
+        if (photoAdapter != null && currentTab == TAB_PHOTOS) {
+            recyclerView.postDelayed(() -> {
+                java.util.ArrayList<Album> fresh = MediaProvider.getAlbumsWithVirtualDirectories(this);
+                if (fresh != null && !fresh.isEmpty())
+                    photoAdapter.setTimeline(com.absolute.floral.data.PhotoTimeline.from(fresh));
+            }, 400);
+        }
     }
 
     @Override
@@ -764,13 +900,12 @@ public class MainActivity extends ThemeableActivity implements CheckRefreshClick
             return;
         }
 
-        com.absolute.floral.soma.SomaSkin.wordmark(toolbar, soma, "Floral", "  gallery");
+        String big = currentTab == TAB_COLLECTIONS ? "Collections" : "Photos";
+        com.absolute.floral.soma.SomaSkin.wordmark(toolbar, soma, big, "");
         toolbar.post(() -> com.absolute.floral.soma.SomaSkin.toolbarIcons(toolbar, soma));
 
         // gentle entrance for the wordmark + first albums
         com.absolute.floral.soma.Anim.enter(toolbar, 60);
-        recyclerView.post(() ->
-                com.absolute.floral.soma.Anim.enterChildren(recyclerView, 90, 60));
     }
 
     @Override
