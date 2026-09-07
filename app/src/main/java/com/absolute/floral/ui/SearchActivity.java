@@ -7,6 +7,7 @@ import android.view.Gravity;
 import android.view.ViewGroup;
 import android.view.inputmethod.EditorInfo;
 import android.widget.EditText;
+import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
@@ -47,6 +48,39 @@ public class SearchActivity extends AppCompatActivity {
         setContentView(root);
         SomaSkin.statusBarIcons(this, soma);
 
+        // Google-Photos-style search bar: back arrow + rounded field with a magnifier
+        LinearLayout bar = new LinearLayout(this);
+        bar.setOrientation(LinearLayout.HORIZONTAL);
+        bar.setGravity(Gravity.CENTER_VERTICAL);
+        int p = d(8);
+        bar.setPadding(p, d(44), p, d(8));
+        root.addView(bar, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+
+        ImageView back = new ImageView(this);
+        back.setImageResource(R.drawable.ic_arrow_back_white);
+        back.setColorFilter(soma.ink);
+        int bp = d(10);
+        back.setPadding(bp, bp, bp, bp);
+        back.setOnClickListener(v -> finish());
+        bar.addView(back, new LinearLayout.LayoutParams(d(44), d(44)));
+
+        LinearLayout fieldWrap = new LinearLayout(this);
+        fieldWrap.setOrientation(LinearLayout.HORIZONTAL);
+        fieldWrap.setGravity(Gravity.CENTER_VERTICAL);
+        android.graphics.drawable.GradientDrawable fg = new android.graphics.drawable.GradientDrawable();
+        fg.setColor(soma.surfaceStrong);
+        fg.setCornerRadius(d(100));
+        fieldWrap.setBackground(fg);
+        fieldWrap.setPadding(d(14), d(6), d(14), d(6));
+        LinearLayout.LayoutParams fwlp = new LinearLayout.LayoutParams(0, d(44), 1f);
+        fwlp.setMargins(d(2), 0, d(6), 0);
+        bar.addView(fieldWrap, fwlp);
+
+        ImageView mag = new ImageView(this);
+        mag.setImageResource(R.drawable.ic_search_white);
+        mag.setColorFilter(soma.inkMute);
+        fieldWrap.addView(mag, new LinearLayout.LayoutParams(d(20), d(20)));
+
         EditText field = new EditText(this);
         field.setHint("Search your photos");
         field.setSingleLine(true);
@@ -54,11 +88,18 @@ public class SearchActivity extends AppCompatActivity {
         field.setTypeface(Soma.body(this));
         field.setTextColor(soma.ink);
         field.setHintTextColor(soma.inkMute);
-        field.setTextSize(17);
-        int p = d(20);
-        field.setPadding(p, d(48), p, d(14));
+        field.setTextSize(16);
         field.setBackgroundColor(0x00000000);
-        root.addView(field, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+        field.setPadding(d(10), 0, 0, 0);
+        if (android.os.Build.VERSION.SDK_INT >= 29) {
+            try {
+                android.graphics.drawable.GradientDrawable cur = new android.graphics.drawable.GradientDrawable();
+                cur.setSize(d(2), 0);
+                cur.setColor(soma.accent);
+                field.setTextCursorDrawable(cur);
+            } catch (Throwable ignored) {}
+        }
+        fieldWrap.addView(field, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.MATCH_PARENT, 1f));
 
         RecyclerView rv = new RecyclerView(this);
         rv.setClipToPadding(false);

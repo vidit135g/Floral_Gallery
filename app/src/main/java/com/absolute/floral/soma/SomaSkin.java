@@ -85,5 +85,11 @@ public final class SomaSkin {
         if (s.lightBase) f |= View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR;
         else f &= ~View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR;
         decor.setSystemUiVisibility(f);
+        try {
+            a.getWindow().clearFlags(android.view.WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS);
+            a.getWindow().addFlags(android.view.WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS);
+            a.getWindow().setStatusBarColor(s.ground[0]);
+            if (android.os.Build.VERSION.SDK_INT >= 27) a.getWindow().setNavigationBarColor(s.ground[0]);
+        } catch (Exception ignored) {}
     }
 }
