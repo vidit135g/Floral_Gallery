@@ -11,7 +11,7 @@
         android:key="@string/pref_key_virtual_directories"
         android:title="@string/virtual_albums" />
 
-    <PreferenceCategory android:title="@string/appearance">
+    <PreferenceCategory android:title="@string/appearance" android:layout="@layout/pref_category_soma">
         <ListPreference
             android:defaultValue="@string/LIGHT_THEME_VALUE"
             android:entries="@array/theme_names"
@@ -51,7 +51,7 @@
             android:summary="@string/maximum_brightness_summary" />
     </PreferenceCategory>
 
-    <PreferenceCategory android:title="@string/other">
+    <PreferenceCategory android:title="@string/other" android:layout="@layout/pref_category_soma">
         <SwitchPreference
             android:defaultValue="false"
             android:key="@string/pref_key_show_videos"
