@@ -124,6 +124,7 @@ public class MainActivity extends ThemeableActivity implements CheckRefreshClick
     private int currentTab = TAB_PHOTOS;
     private com.absolute.floral.soma.NavPill navPill;
     private com.absolute.floral.adapter.photos.PhotoGridAdapter photoAdapter;
+    private com.absolute.floral.adapter.collections.CollectionsAdapter collectionsAdapter;
     private GridLayoutManager gridLayoutManager;
     private int photoSpan = 3;
     private androidx.recyclerview.widget.RecyclerView.ItemDecoration collectionsDecoration;
@@ -398,6 +399,12 @@ public class MainActivity extends ThemeableActivity implements CheckRefreshClick
                 com.absolute.floral.data.PhotoTimeline.from(albums));
         photoAdapter.setSpanCount(photoSpan);
 
+        collectionsAdapter = new com.absolute.floral.adapter.collections.CollectionsAdapter(this);
+        collectionsAdapter.setData(albums);
+        com.absolute.floral.people.PeopleIndex.get().ensure(this, people -> {
+            if (collectionsAdapter != null) collectionsAdapter.setPeople(people);
+        });
+
         // pinch to change density
         final android.view.ScaleGestureDetector pinch = new android.view.ScaleGestureDetector(this,
                 new android.view.ScaleGestureDetector.SimpleOnScaleGestureListener() {
@@ -464,9 +471,11 @@ public class MainActivity extends ThemeableActivity implements CheckRefreshClick
             photoAdapter.setMemories(com.absolute.floral.data.Memories.build(src));
         } else {
             com.absolute.floral.soma.SomaSkin.wordmark(toolbar, soma, "Collections", "");
-            gridLayoutManager.setSpanCount(collectionsSpan);
-            gridLayoutManager.setSpanSizeLookup(new GridLayoutManager.DefaultSpanSizeLookup());
-            if (recyclerView.getAdapter() != recyclerViewAdapter) recyclerView.setAdapter(recyclerViewAdapter);
+            collectionsAdapter.setData(MediaProvider.getAlbumsWithVirtualDirectories(this));
+            gridLayoutManager.setSpanCount(2);
+            gridLayoutManager.setSpanSizeLookup(collectionsAdapter.spanSizeLookup(2));
+            recyclerView.setItemAnimator(null);
+            if (recyclerView.getAdapter() != collectionsAdapter) recyclerView.setAdapter(collectionsAdapter);
         }
         recyclerView.post(() -> com.absolute.floral.soma.Anim.enterChildren(recyclerView, 30, 26));
 
@@ -627,6 +636,7 @@ public class MainActivity extends ThemeableActivity implements CheckRefreshClick
                         public void run() {
                             MainActivity.this.albums = albumsWithVirtualDirs;
                             recyclerViewAdapter.setData(albumsWithVirtualDirs);
+                            if (collectionsAdapter != null) collectionsAdapter.setData(albumsWithVirtualDirs);
                             if (photoAdapter != null) {
                                 photoAdapter.setTimeline(
                                         com.absolute.floral.data.PhotoTimeline.from(albumsWithVirtualDirs));

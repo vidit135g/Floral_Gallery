@@ -88,4 +88,7 @@ dependencies {
     implementation 'io.reactivex.rxjava2:rxjava:2.2.21'
     implementation 'androidx.multidex:multidex:2.0.1'
     implementation 'com.squareup.picasso:picasso:2.71828'
+
+    // on-device face detection for the People collection (no identity, no cloud)
+    implementation 'com.google.mlkit:face-detection:16.1.7'
 }
