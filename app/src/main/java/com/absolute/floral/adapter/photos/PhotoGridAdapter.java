@@ -39,7 +39,18 @@ public class PhotoGridAdapter extends RecyclerView.Adapter<RecyclerView.ViewHold
     private java.util.List<com.absolute.floral.data.Memories.Memory> memories = new ArrayList<>();
     private com.absolute.floral.bento.LibrarySnapshot snapshot;
     private java.util.List<com.absolute.floral.people.PeopleIndex.Person> people = new ArrayList<>();
+    private java.util.List<com.absolute.floral.data.Story> stories = new ArrayList<>();
+    private java.util.List<com.absolute.floral.places.PlacesIndex.Place> places = new ArrayList<>();
     private boolean bentoEnabled = true;
+
+    public void setStories(java.util.List<com.absolute.floral.data.Story> s) {
+        this.stories = s == null ? new ArrayList<>() : s;
+        if (hasMemories()) notifyItemChanged(0);
+    }
+    public void setPlaces(java.util.List<com.absolute.floral.places.PlacesIndex.Place> p) {
+        this.places = p == null ? new ArrayList<>() : p;
+        if (hasMemories()) notifyItemChanged(0);
+    }
 
     public void setMemories(java.util.List<com.absolute.floral.data.Memories.Memory> m) {
         boolean was = hasMemories();
@@ -149,7 +160,8 @@ public class PhotoGridAdapter extends RecyclerView.Adapter<RecyclerView.ViewHold
         if (holder instanceof MemoriesHolder) {
             android.widget.FrameLayout box = (android.widget.FrameLayout) holder.itemView;
             box.removeAllViews();
-            box.addView(com.absolute.floral.bento.BentoHeader.build(activity, snapshot, memories, people));
+            box.addView(com.absolute.floral.bento.BentoHeader.build(
+                    activity, snapshot, memories, people, stories, places));
             return;
         }
         PhotoTimeline.Row row = rowAt(position);

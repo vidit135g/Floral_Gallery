@@ -49,17 +49,20 @@ public class MediaProvider extends Provider {
                     Manifest.permission.READ_MEDIA_IMAGES,
                     Manifest.permission.READ_MEDIA_VIDEO,
                     Manifest.permission.READ_MEDIA_VISUAL_USER_SELECTED,
+                    Manifest.permission.ACCESS_MEDIA_LOCATION,
                     Manifest.permission.POST_NOTIFICATIONS
             };
         } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             return new String[]{
                     Manifest.permission.READ_MEDIA_IMAGES,
                     Manifest.permission.READ_MEDIA_VIDEO,
+                    Manifest.permission.ACCESS_MEDIA_LOCATION,
                     Manifest.permission.POST_NOTIFICATIONS
             };
         } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
             return new String[]{
-                    Manifest.permission.READ_EXTERNAL_STORAGE
+                    Manifest.permission.READ_EXTERNAL_STORAGE,
+                    Manifest.permission.ACCESS_MEDIA_LOCATION
             };
         } else {
             return new String[]{

@@ -6,6 +6,8 @@
     <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
     <uses-permission android:name="android.permission.READ_MEDIA_VIDEO" />
     <uses-permission android:name="android.permission.READ_MEDIA_VISUAL_USER_SELECTED" />
+    <uses-permission android:name="android.permission.ACCESS_MEDIA_LOCATION" /> <!-- read GPS embedded in photos, for Places -->
+    <uses-feature android:name="android.hardware.location" android:required="false" />
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"
         android:maxSdkVersion="29"
         tools:ignore="ScopedStorage" /> <!-- to set Wallpaper -->
@@ -209,6 +211,18 @@
             android:name="com.absolute.floral.ui.ColorSearchActivity"
             android:launchMode="singleTop"
             android:theme="@style/CameraRoll.Theme" />
+        <activity
+            android:name="com.absolute.floral.ui.PlacesActivity"
+            android:launchMode="singleTop"
+            android:theme="@style/CameraRoll.Theme" />
+        <activity
+            android:name="com.absolute.floral.ui.BrowseByDateActivity"
+            android:launchMode="singleTop"
+            android:theme="@style/CameraRoll.Theme" />
+        <activity
+            android:name="com.absolute.floral.ui.StoryPlayerActivity"
+            android:launchMode="singleTop"
+            android:theme="@style/CameraRoll.Theme.PhotoView" />
 
         <receiver
             android:name="com.absolute.floral.widget.MemoriesWidgetProvider"

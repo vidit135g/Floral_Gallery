@@ -444,6 +444,17 @@ public class MainActivity extends ThemeableActivity implements CheckRefreshClick
         switchTab(TAB_PHOTOS, collectionsSpan);
     }
 
+    private void rebuildStories() {
+        if (photoAdapter == null) return;
+        java.util.List<com.absolute.floral.data.Memories.Memory> mem =
+                com.absolute.floral.data.Memories.build(
+                        MediaProvider.getAlbumsWithVirtualDirectories(this));
+        photoAdapter.setStories(com.absolute.floral.data.Stories.build(
+                mem,
+                com.absolute.floral.people.PeopleIndex.get().current(),
+                com.absolute.floral.places.PlacesIndex.get().current()));
+    }
+
     private void setPhotoSpan(int span) {
         photoSpan = span;
         photoAdapter.setSpanCount(span);
@@ -637,10 +648,15 @@ public class MainActivity extends ThemeableActivity implements CheckRefreshClick
                                 com.absolute.floral.people.PeopleIndex.get().ensure(MainActivity.this, ppl -> {
                                     if (collectionsAdapter != null) collectionsAdapter.setPeople(ppl);
                                     if (photoAdapter != null) photoAdapter.setPeople(ppl);
+                                    rebuildStories();
                                 });
                                 com.absolute.floral.bento.LibrarySnapshot.get(MainActivity.this, snap -> {
                                     if (photoAdapter != null) photoAdapter.setSnapshot(snap);
                                     if (collectionsAdapter != null) collectionsAdapter.setSnapshot(snap);
+                                });
+                                com.absolute.floral.places.PlacesIndex.get().ensure(MainActivity.this, pl -> {
+                                    if (photoAdapter != null) photoAdapter.setPlaces(pl);
+                                    rebuildStories();
                                 });
                             }
                             if (photoAdapter != null) {
@@ -648,6 +664,7 @@ public class MainActivity extends ThemeableActivity implements CheckRefreshClick
                                         com.absolute.floral.data.PhotoTimeline.from(albumsWithVirtualDirs));
                                 photoAdapter.setMemories(
                                         com.absolute.floral.data.Memories.build(albumsWithVirtualDirs));
+                                rebuildStories();
                             }
 
                             if (mediaProvider != null) {
