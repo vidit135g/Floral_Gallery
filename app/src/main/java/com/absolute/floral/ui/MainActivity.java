@@ -741,6 +741,9 @@ public class MainActivity extends ThemeableActivity implements CheckRefreshClick
                                     if (photoAdapter != null) photoAdapter.setPlaces(pl);
                                     rebuildStories();
                                 });
+                                com.absolute.floral.things.ThingsIndex.get().ensure(MainActivity.this, th -> {
+                                    if (photoAdapter != null) photoAdapter.notifyDataSetChanged();
+                                });
                             }
                             if (photoAdapter != null) {
                                 photoAdapter.setTimeline(
