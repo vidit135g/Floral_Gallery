@@ -37,7 +37,6 @@ public class HighlightActivity extends AppCompatActivity {
     private static final int PICK = 82;
     private Soma s;
     private TextView status;
-    private com.absolute.floral.bento.BarChartView bar;   // reuse as a simple progress strip? no
     private android.widget.ProgressBar progress;
     private VideoView video;
 

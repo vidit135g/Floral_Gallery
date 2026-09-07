@@ -120,6 +120,29 @@ public class StoryPlayerActivity extends AppCompatActivity {
         close.setOnClickListener(v -> finish());
         root.addView(close, clp);
 
+        TextView film = new TextView(this);
+        film.setText("✨  Save as film");
+        film.setTextColor(Color.WHITE);
+        film.setTextSize(13);
+        film.setTypeface(Soma.body(this), android.graphics.Typeface.BOLD);
+        film.setPadding(d(16), d(9), d(16), d(9));
+        android.graphics.drawable.GradientDrawable fpill = new android.graphics.drawable.GradientDrawable(
+                android.graphics.drawable.GradientDrawable.Orientation.LEFT_RIGHT,
+                new int[]{ 0xFFF14E8C, 0xFF9B3CC7 });
+        fpill.setCornerRadius(d(100));
+        film.setBackground(fpill);
+        FrameLayout.LayoutParams flp = new FrameLayout.LayoutParams(
+                ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        flp.gravity = Gravity.START | Gravity.TOP;
+        flp.setMargins(d(18), d(30), 0, 0);
+        film.setOnClickListener(v -> {
+            Story cur = STORIES.get(storyIdx);
+            HighlightActivity.AUTO_ITEMS = new java.util.ArrayList<>(cur.items);
+            HighlightActivity.AUTO_TITLE = cur.title;
+            startActivity(new android.content.Intent(this, HighlightActivity.class));
+        });
+        root.addView(film, flp);
+
         final GestureDetector gd = new GestureDetector(this, new GestureDetector.SimpleOnGestureListener() {
             @Override public boolean onSingleTapUp(MotionEvent e) {
                 if (e.getX() > getResources().getDisplayMetrics().widthPixels * 0.35f) next();

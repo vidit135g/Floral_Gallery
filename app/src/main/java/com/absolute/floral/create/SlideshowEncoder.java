@@ -26,8 +26,9 @@ public class SlideshowEncoder {
 
     public interface Progress { void onProgress(float f); void onDone(Uri uri); void onError(String msg); }
 
-    private static final int W = 1080, H = 1080;
+    private static final int W = 960, H = 960;
     private static final int FPS = 30;
+    private static final int MAX_PHOTOS = 20;
     private static final float SECONDS_PER = 2.6f;
     private static final float FADE = 0.55f;
 
@@ -47,12 +48,14 @@ public class SlideshowEncoder {
     }
 
     private Uri run(List<String> paths, List<Uri> uris, Progress cb) throws Exception {
+        if (paths != null && paths.size() > MAX_PHOTOS) paths = paths.subList(0, MAX_PHOTOS);
+        if (uris != null && uris.size() > MAX_PHOTOS) uris = uris.subList(0, MAX_PHOTOS);
         int n = paths != null ? paths.size() : uris.size();
         if (n == 0) throw new IllegalStateException("no photos");
 
         MediaFormat fmt = MediaFormat.createVideoFormat(MediaFormat.MIMETYPE_VIDEO_AVC, W, H);
         fmt.setInteger(MediaFormat.KEY_COLOR_FORMAT, MediaCodecInfo.CodecCapabilities.COLOR_FormatYUV420SemiPlanar);
-        fmt.setInteger(MediaFormat.KEY_BIT_RATE, 6_000_000);
+        fmt.setInteger(MediaFormat.KEY_BIT_RATE, 3_500_000);
         fmt.setInteger(MediaFormat.KEY_FRAME_RATE, FPS);
         fmt.setInteger(MediaFormat.KEY_I_FRAME_INTERVAL, 1);
 
