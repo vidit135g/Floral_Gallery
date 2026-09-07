@@ -115,17 +115,19 @@ public final class WidgetRenderer {
         canvas.drawRect(frame, p);
         p.setShader(null);
 
-        // top kicker chip
-        Typeface body = font(ctx, R.font.poppins_medium);
-        Typeface display = font(ctx, R.font.fraunces_semibold);
+        // typography — the app font (Google-Sans-style)
+        Typeface body;
+        try { body = Typeface.createFromAsset(ctx.getAssets(), "fonts/google.ttf"); }
+        catch (Exception e) { body = Typeface.DEFAULT; }
+        Typeface display = Typeface.create(body, Typeface.BOLD);
         float pad = dp(ctx, 16);
 
         TextPaint kicker = new TextPaint(Paint.ANTI_ALIAS_FLAG);
         kicker.setTypeface(body);
         kicker.setColor(0xE6FFFFFF);
         kicker.setTextSize(dp(ctx, 10));
-        kicker.setLetterSpacing(0.22f);
-        canvas.drawText("MEMORIES", pad, pad + dp(ctx, 10), kicker);
+        kicker.setLetterSpacing(0.14f);
+        canvas.drawText("MEMORIES", pad, pad + dp(ctx, 12), kicker);
 
         // date in Fraunces
         String dateStr = photo.dateMs > 0

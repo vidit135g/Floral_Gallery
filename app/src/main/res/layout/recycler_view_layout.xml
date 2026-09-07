@@ -3,13 +3,13 @@
     android:id="@+id/root_view"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:tag="@string/theme_bg_color">
+    android:background="#FFFFFFFF">
 
     <com.absolute.floral.ui.widget.FastScrollerRecyclerView
         android:id="@+id/recyclerView"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:clipToPadding="true"
+        android:clipToPadding="false"
         android:paddingTop="?android:attr/actionBarSize" />
 
     <com.pluscubed.recyclerfastscroll.RecyclerFastScroller
@@ -23,33 +23,24 @@
         android:layout_height="wrap_content"
         android:layout_width="match_parent"
         android:minHeight="?attr/actionBarSize"
-        xmlns:android="http://schemas.android.com/apk/res/android">
-
+        android:contentInsetStartWithNavigation="0dp"
+        app:contentInsetStart="16dp">
 
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Floral"
-            android:textSize="24sp"
-            android:textColor="@color/gred"
-            android:layout_gravity="center"
-            android:visibility="visible"
-            android:fontFamily="@font/roboto_mono_medium"
+            android:text="Photos"
+            android:textSize="22sp"
+            android:textColor="#1F1F1F"
+            android:layout_gravity="start|center_vertical"
+            android:paddingStart="2dp"
             android:id="@+id/toolbar_title" />
 
-
-
         <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text=" Gallery"
-            android:textSize="24sp"
-            android:textColor="#767676"
-            android:layout_gravity="center"
-            android:visibility="visible"
-            android:fontFamily="@font/roboto_mono_light"
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            android:visibility="gone"
             android:id="@+id/toolbar_gallery" />
-
 
     </androidx.appcompat.widget.Toolbar>
 

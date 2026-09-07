@@ -5,19 +5,17 @@
     android:layout_width="match_parent"
     android:id="@+id/mainl"
     android:layout_height="match_parent"
-    android:background="@drawable/soma_onboard_bg"
+    android:background="#FFFFFF"
     tools:context="com.absolute.floral.ui.SplashActivity">
 
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Hello"
-        android:textSize="15sp"
-        android:letterSpacing="0.18"
-        android:fontFamily="@font/poppins_medium"
+        android:text="Welcome"
+        android:textSize="14sp"
         android:id="@+id/hello"
-        android:layout_marginTop="72dp"
-        android:textColor="#73231F1A"
+        android:layout_marginTop="80dp"
+        android:textColor="#5F6368"
         android:layout_centerHorizontal="true" />
 
     <LinearLayout
@@ -25,12 +23,13 @@
         android:layout_height="wrap_content"
         android:orientation="vertical"
         android:gravity="center"
+        android:paddingHorizontal="36dp"
         android:layout_centerInParent="true">
 
         <ImageView
             android:id="@+id/pixelimage"
-            android:layout_width="132dp"
-            android:layout_height="132dp"
+            android:layout_width="88dp"
+            android:layout_height="88dp"
             android:src="@mipmap/ic_launcher" />
 
         <TextView
@@ -38,42 +37,39 @@
             android:layout_height="wrap_content"
             android:text="Your photos, at home"
             android:textSize="26sp"
-            android:layout_marginTop="26dp"
+            android:textStyle="bold"
+            android:layout_marginTop="28dp"
             android:gravity="center"
-            android:fontFamily="@font/fraunces_semibold"
-            android:textColor="#231F1A" />
+            android:textColor="#1F1F1F" />
 
         <TextView
-            android:layout_width="280dp"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Everything on your device — timelines, memories, albums and people. No account, nothing uploaded."
-            android:textSize="13sp"
-            android:layout_marginTop="12dp"
+            android:text="Every photo and video on your device — a timeline, memories, albums and people. No account. Nothing is uploaded."
+            android:textSize="14sp"
+            android:layout_marginTop="14dp"
             android:gravity="center"
-            android:lineSpacingExtra="3dp"
-            android:fontFamily="@font/poppins_regular"
-            android:textColor="#B0231F1A" />
+            android:lineSpacingExtra="4dp"
+            android:textColor="#5F6368" />
     </LinearLayout>
 
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text=""
         android:id="@+id/intro"
         android:visibility="gone"
         android:layout_centerHorizontal="true" />
 
     <androidx.appcompat.widget.AppCompatButton
-        android:layout_width="wrap_content"
-        android:layout_height="52dp"
+        android:layout_width="match_parent"
+        android:layout_height="54dp"
         android:text="Get started"
         android:textSize="15sp"
-        android:paddingHorizontal="42dp"
-        android:fontFamily="@font/poppins_medium"
+        android:layout_marginHorizontal="24dp"
         android:id="@+id/pixelbutton"
-        android:textColor="#FDF7EE"
+        android:textColor="#FFFFFF"
         android:layout_alignParentBottom="true"
-        android:layout_marginBottom="44dp"
+        android:layout_marginBottom="40dp"
         android:background="@drawable/soma_pill_btn"
         android:stateListAnimator="@null"
         android:textAllCaps="false"
@@ -91,7 +87,7 @@
             android:layout_width="18dp"
             android:layout_height="18dp"
             android:indeterminate="true"
-            app:cpb_color="#E99274"
+            app:cpb_color="#0B57D0"
             android:visibility="gone"
             app:cpb_colors="@array/progress_colors"
             app:cpb_rotation_speed="1.0"
@@ -107,9 +103,8 @@
             android:text="Reading your library…"
             android:id="@+id/progresstext"
             android:textSize="13sp"
-            android:fontFamily="@font/poppins_regular"
             android:visibility="gone"
-            android:textColor="#73231F1A" />
+            android:textColor="#5F6368" />
     </LinearLayout>
 
 </RelativeLayout>

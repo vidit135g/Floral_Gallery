@@ -43,7 +43,7 @@ public class MemoriesStrip extends HorizontalScrollView {
         current = memories;
         row.removeAllViews();
         Soma soma = SomaSkin.read(getContext());
-        int cardW = dp(130), cardH = dp(190);
+        int cardW = dp(112), cardH = dp(170);
         for (int i = 0; i < memories.size(); i++) {
             final Memories.Memory m = memories.get(i);
             FrameLayout card = new FrameLayout(getContext());
@@ -84,21 +84,13 @@ public class MemoriesStrip extends HorizontalScrollView {
             tlp.gravity = Gravity.BOTTOM;
             card.addView(txt, tlp);
 
-            TextView k = new TextView(getContext());
-            k.setText(m.kicker);
-            k.setTextColor(0xCCFFFFFF);
-            k.setTextSize(9);
-            k.setLetterSpacing(0.18f);
-            k.setTypeface(Soma.body(getContext()));
-            txt.addView(k);
-
             TextView tt = new TextView(getContext());
             tt.setText(m.title);
             tt.setTextColor(Color.WHITE);
-            tt.setTextSize(15);
+            tt.setTextSize(13);
             tt.setMaxLines(2);
             tt.setTypeface(Soma.display(getContext()));
-            tt.setShadowLayer(dp(6), 0, dp(1), 0x66000000);
+            tt.setShadowLayer(dp(6), 0, dp(1), 0x80000000);
             txt.addView(tt);
 
             final int idx = i;

@@ -166,9 +166,8 @@ public class MainActivity extends ThemeableActivity implements CheckRefreshClick
         final Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
         getSupportActionBar().setDisplayShowTitleEnabled(false);
-        getSupportActionBar().setDisplayHomeAsUpEnabled(true);
-        getSupportActionBar().setDisplayShowHomeEnabled(true);
-        getSupportActionBar().setHomeAsUpIndicator(R.drawable.pinbk);
+        getSupportActionBar().setDisplayHomeAsUpEnabled(!pick_photos ? false : true);
+        getSupportActionBar().setDisplayShowHomeEnabled(false);
         toolbar.setBackgroundColor(!pick_photos ? toolbarColor : accentColor);
         toolbar.setTitleTextColor(!pick_photos ? textColorPrimary : accentTextColor);
 
@@ -721,6 +720,7 @@ public class MainActivity extends ThemeableActivity implements CheckRefreshClick
       public boolean onOptionsItemSelected(MenuItem item) {
        switch (item.getItemId()) {
            case android.R.id.home:
+           case R.id.locked_folder:
                final Intent intent=new Intent(MainActivity.this,PinningActivity.class);
                startActivity(intent);
                break;

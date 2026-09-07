@@ -30,34 +30,40 @@ public final class SomaSkin {
         return Soma.forNow(a, base);
     }
 
-    /** Slide an AmbientView ground behind the content of a root ViewGroup. */
-    public static AmbientView ground(Activity a, ViewGroup root, Soma s) {
-        AmbientView existing = root.findViewById(R.id.soma_ground);
-        if (existing != null) { existing.setSoma(s); return existing; }
-        AmbientView av = new AmbientView(a);
-        av.setId(R.id.soma_ground);
-        av.setSoma(s);
-        root.addView(av, 0, new ViewGroup.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
-        a.getWindow().setBackgroundDrawable(new ColorDrawable(s.ground[1]));
-        return av;
+    /** Paint the window + root a flat Material surface colour. */
+    public static Object ground(Activity a, ViewGroup root, Soma s) {
+        root.setBackgroundColor(s.ground[0]);
+        a.getWindow().setBackgroundDrawable(new ColorDrawable(s.ground[0]));
+        a.getWindow().setStatusBarColor(s.ground[0]);
+        if (android.os.Build.VERSION.SDK_INT >= 27) {
+            try { a.getWindow().setNavigationBarColor(s.ground[0]); } catch (Exception ignored) {}
+        }
+        return null;
     }
 
-    /** Style the two-part toolbar wordmark ("Floral" + "gallery") in Fraunces. */
+    /** Left-aligned Google-Photos-style screen title. */
     public static void wordmark(Toolbar toolbar, Soma s, String big, String small) {
-        toolbar.setBackgroundColor(Color.TRANSPARENT);
+        toolbar.setBackgroundColor(s.ground[0]);
         TextView t1 = toolbar.findViewById(R.id.toolbar_title);
         TextView t2 = toolbar.findViewById(R.id.toolbar_gallery);
         if (t1 != null) {
-            t1.setTypeface(Soma.display(toolbar.getContext()));
+            t1.setTypeface(Soma.display(toolbar.getContext()), android.graphics.Typeface.BOLD);
             t1.setText(big);
             t1.setTextColor(s.ink);
-            t1.setLetterSpacing(0.01f);
+            t1.setTextSize(android.util.TypedValue.COMPLEX_UNIT_SP, 22f);
+            t1.setLetterSpacing(0f);
+            Toolbar.LayoutParams lp = new Toolbar.LayoutParams(
+                    Toolbar.LayoutParams.WRAP_CONTENT, Toolbar.LayoutParams.WRAP_CONTENT);
+            lp.gravity = android.view.Gravity.START | android.view.Gravity.CENTER_VERTICAL;
+            t1.setLayoutParams(lp);
         }
+        // no navigation icon on the tab screens — GP keeps the title flush-left
+        toolbar.setNavigationIcon(null);
+        toolbar.setContentInsetStartWithNavigation(0);
+        toolbar.setContentInsetsRelative((int) Soma.dp(toolbar.getContext(), 16), 0);
         if (t2 != null) {
-            t2.setTypeface(Soma.serif(toolbar.getContext()));
-            t2.setText(small);
-            t2.setTextColor(s.inkMute);
+            t2.setText("");
+            t2.setVisibility(View.GONE);
         }
     }
 

@@ -108,7 +108,7 @@ public class CollectionsAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
             Album al = r.album;
             av.name.setText(al.getName());
             int n = al.getAlbumItems().size();
-            av.count.setText(n + (n == 1 ? " item" : " items"));
+            av.count.setText(String.valueOf(n));
             AlbumItem cover = al.getAlbumItems().get(0);
             Object t = cover.getUri(a);
             Glide.with(a).load(t != null ? t : cover.getPath()).centerCrop().into(av.image);
@@ -126,99 +126,113 @@ public class CollectionsAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
     private View buildPinned(Soma s) {
         LinearLayout row = new LinearLayout(a);
         row.setOrientation(LinearLayout.HORIZONTAL);
-        int p = dp(10);
-        row.setPadding(p, dp(6), p, dp(6));
-        row.addView(chip(s, "★", "Favorites", () -> openBucket("Favorites", "PINNED",
-                collect(FlagStore.favorites(a).all()))));
-        row.addView(chip(s, "◧", "Archive", () -> openBucket("Archive", "PINNED",
-                collect(FlagStore.archive(a).all()))));
-        row.addView(chip(s, "🗑", "Trash", () -> openBucket("Trash", "PINNED", trashed())));
+        int p = dp(12);
+        row.setPadding(p, dp(4), p, dp(8));
+        row.addView(chip(s, com.absolute.floral.R.drawable.ic_star_white, "Favorites", () ->
+                openBucket("Favorites", "", collect(FlagStore.favorites(a).all()))));
+        row.addView(chip(s, com.absolute.floral.R.drawable.ic_archive_white, "Archive", () ->
+                openBucket("Archive", "", collect(FlagStore.archive(a).all()))));
+        row.addView(chip(s, com.absolute.floral.R.drawable.ic_delete_white, "Trash", () ->
+                openBucket("Trash", "", trashed())));
         return row;
     }
 
-    private View chip(Soma s, String glyph, String label, Runnable onTap) {
+    private View chip(Soma s, int iconRes, String label, Runnable onTap) {
         LinearLayout c = new LinearLayout(a);
         c.setOrientation(LinearLayout.VERTICAL);
         c.setGravity(Gravity.CENTER);
-        c.setPadding(dp(6), dp(14), dp(6), dp(12));
+        c.setPadding(dp(6), dp(16), dp(6), dp(14));
         LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f);
         lp.setMargins(dp(4), 0, dp(4), 0);
         c.setLayoutParams(lp);
         GradientDrawable g = new GradientDrawable();
-        g.setColor(s != null ? s.surface : 0xFFEEEEEE);
-        g.setCornerRadius(dp(18));
-        if (s != null) g.setStroke(Math.max(1, dp(1)), s.hairline);
+        g.setColor(s.surfaceStrong);
+        g.setCornerRadius(dp(16));
         c.setBackground(g);
         c.setClickable(true);
+        applyRipple(c);
         c.setOnClickListener(v -> onTap.run());
 
-        TextView icon = new TextView(a);
-        icon.setText(glyph);
-        icon.setTextSize(20);
-        icon.setGravity(Gravity.CENTER);
-        if (s != null) icon.setTextColor(s.ink);
-        c.addView(icon);
+        ImageView icon = new ImageView(a);
+        icon.setImageResource(iconRes);
+        icon.setColorFilter(s.ink);
+        int d = dp(24);
+        c.addView(icon, new LinearLayout.LayoutParams(d, d));
+
         TextView t = new TextView(a);
         t.setText(label);
-        t.setTextSize(11);
+        t.setTextSize(12);
         t.setTypeface(Soma.body(a));
-        if (s != null) t.setTextColor(s.inkSoft);
-        t.setPadding(0, dp(6), 0, 0);
+        t.setTextColor(s.inkSoft);
+        t.setPadding(0, dp(8), 0, 0);
         c.addView(t);
         return c;
     }
 
+    private void applyRipple(View v) {
+        if (android.os.Build.VERSION.SDK_INT < 23) return;
+        try {
+            android.util.TypedValue tv = new android.util.TypedValue();
+            a.getTheme().resolveAttribute(android.R.attr.selectableItemBackground, tv, true);
+            v.setForeground(androidx.core.content.ContextCompat.getDrawable(a, tv.resourceId));
+        } catch (Exception ignored) {}
+    }
+
     private View buildSection(Soma s) {
         TextView t = new TextView(a);
-        t.setTypeface(Soma.display(a));
-        t.setTextSize(18);
-        if (s != null) t.setTextColor(s.ink);
+        t.setTypeface(Soma.display(a), android.graphics.Typeface.BOLD);
+        t.setTextSize(22);
+        t.setTextColor(s.ink);
         int p = dp(16);
-        t.setPadding(p, dp(20), p, dp(8));
+        t.setPadding(p, dp(22), p, dp(10));
         return t;
     }
 
     private View buildAlbumCard(Soma s) {
-        FrameLayout card = new FrameLayout(a);
+        LinearLayout card = new LinearLayout(a);
+        card.setOrientation(LinearLayout.VERTICAL);
         RecyclerView.LayoutParams lp = new RecyclerView.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT, dp(150));
-        lp.setMargins(dp(6), dp(6), dp(6), dp(6));
+                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        lp.setMargins(dp(8), dp(8), dp(8), dp(12));
         card.setLayoutParams(lp);
-        card.setClipToOutline(true);
-        card.setOutlineProvider(new android.view.ViewOutlineProvider() {
+        card.setClickable(true);
+        applyRipple(card);
+
+        com.absolute.floral.ui.widget.SquareFrameLayout coverBox =
+                new com.absolute.floral.ui.widget.SquareFrameLayout(a);
+        coverBox.setClipToOutline(true);
+        final int r = dp(14);
+        coverBox.setOutlineProvider(new android.view.ViewOutlineProvider() {
             @Override public void getOutline(View v, android.graphics.Outline o) {
-                o.setRoundRect(0, 0, v.getWidth(), v.getHeight(), dp(20));
+                o.setRoundRect(0, 0, v.getWidth(), v.getHeight(), r);
             }
         });
         ImageView img = new ImageView(a);
         img.setId(android.R.id.icon);
         img.setScaleType(ImageView.ScaleType.CENTER_CROP);
-        card.addView(img, new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
-        View scrim = new View(a);
-        scrim.setBackground(new GradientDrawable(GradientDrawable.Orientation.TOP_BOTTOM,
-                new int[]{ 0x00000000, 0x00000000, 0xB3000000 }));
-        card.addView(scrim, new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
-        LinearLayout txt = new LinearLayout(a);
-        txt.setOrientation(LinearLayout.VERTICAL);
-        txt.setPadding(dp(12), dp(12), dp(12), dp(12));
-        FrameLayout.LayoutParams tlp = new FrameLayout.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-        tlp.gravity = Gravity.BOTTOM;
-        card.addView(txt, tlp);
+        img.setBackgroundColor(s.surfaceStrong);
+        coverBox.addView(img, new FrameLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
+        card.addView(coverBox, new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+
         TextView name = new TextView(a);
         name.setId(android.R.id.text1);
         name.setTypeface(Soma.display(a));
-        name.setTextSize(15);
-        name.setTextColor(Color.WHITE);
+        name.setTextSize(14);
+        name.setTextColor(s.ink);
         name.setMaxLines(1);
-        name.setShadowLayer(dp(6), 0, dp(1), 0x66000000);
-        txt.addView(name);
+        name.setEllipsize(android.text.TextUtils.TruncateAt.END);
+        name.setPadding(dp(2), dp(8), dp(2), 0);
+        card.addView(name);
+
         TextView count = new TextView(a);
         count.setId(android.R.id.text2);
         count.setTypeface(Soma.body(a));
-        count.setTextSize(11);
-        count.setTextColor(0xCCFFFFFF);
-        txt.addView(count);
+        count.setTextSize(12);
+        count.setTextColor(s.inkMute);
+        count.setPadding(dp(2), dp(1), dp(2), 0);
+        card.addView(count);
         return card;
     }
 

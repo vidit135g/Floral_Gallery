@@ -15,6 +15,11 @@
         app:showAsAction="always"
         tools:ignore="AlwaysShowAction" />
 
+    <item
+        android:id="@+id/locked_folder"
+        android:title="Locked folder"
+        app:showAsAction="never" />
+
     <!--<item-->
         <!--android:id="@+id/camera_shortcut"-->
         <!--android:icon="@drawable/ic_camera_lens_avd"-->

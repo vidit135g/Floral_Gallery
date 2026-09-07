@@ -4,16 +4,15 @@ import android.content.Context;
 import android.graphics.Typeface;
 import android.graphics.drawable.GradientDrawable;
 
-import androidx.core.content.res.ResourcesCompat;
-
-import com.absolute.floral.R;
-
 import java.util.Calendar;
 
 /**
- * Soma — Floral's design language. A quiet, gallery-first surface: a warm paper
- * (or deep charcoal) ground carrying a faint time-of-day tint, frosted cards with
- * a hairline edge, Fraunces for display and Poppins Medium for everything else.
+ * Design tokens for Floral. The app follows the Google Photos look — flat white
+ * (or true-dark) Material 3 surfaces, Google-Sans-style typography, a blue
+ * accent, edge-to-edge photo grids.
+ *
+ * The class name and public surface are unchanged from the earlier iteration so
+ * existing call-sites keep working; only the values are now Material.
  */
 public final class Soma {
 
@@ -21,20 +20,20 @@ public final class Soma {
     public static final int BASE_DARK  = 1;
     public static final int BASE_OLED  = 2;
 
-    /** Card corner radius, dp. */
-    public static final float RADIUS = 22f;
+    /** Card corner radius, dp (memories cards, album cards). */
+    public static final float RADIUS = 16f;
     /** Hairline stroke, dp. */
     public static final float HAIRLINE = 1f;
 
-    public final int[] ground;      // 3-stop full-screen gradient
-    public final int surface;       // frosted card fill
-    public final int surfaceStrong; // hero / emphasised card fill
-    public final int hairline;      // card edge
-    public final int ink;           // primary text
+    public final int[] ground;      // flat window background (3 equal stops)
+    public final int surface;       // card / sheet fill
+    public final int surfaceStrong; // container fill (chips, search field)
+    public final int hairline;      // dividers / card edges
+    public final int ink;           // primary text / icons
     public final int inkSoft;       // secondary text
-    public final int inkMute;       // labels / captions
-    public final int accent;        // time-of-day accent
-    public final int accentSoft;    // accent wash
+    public final int inkMute;       // tertiary text / captions
+    public final int accent;        // primary (Google blue)
+    public final int accentSoft;    // selected-state container
     public final int scrim;         // over-photo text protection
     public final boolean lightBase;
 
@@ -58,84 +57,90 @@ public final class Soma {
         return forHour(ctx, base, Calendar.getInstance().get(Calendar.HOUR_OF_DAY));
     }
 
-    /** Period accent — dawn coral, midday sky, golden dusk, deep-night indigo. */
+    /** Kept for source compatibility; the palette no longer varies by time. */
     public static int accentForHour(int hour) {
-        if (hour < 6)  return 0xFF7C83C7;   // night — muted indigo
-        if (hour < 10) return 0xFFE99274;   // dawn — coral
-        if (hour < 16) return 0xFF6FA8C7;   // day — soft sky
-        if (hour < 20) return 0xFFE0A25C;   // dusk — amber
-        return 0xFF8A7FB8;                  // evening — dusky violet
+        return 0xFF0B57D0;
     }
 
     public static Soma forHour(Context ctx, int base, int hour) {
-        int accent = accentForHour(hour);
-        int accentSoft = (accent & 0x00FFFFFF) | 0x1F000000;
-
-        if (base == BASE_LIGHT) {
-            int tintTop = blend(0xFFF7F3EC, accent, 0.05f);
-            int[] g = { tintTop, 0xFFF1EBE1, 0xFFEAE3D6 };
-            return new Soma(g,
-                    0xF2FFFFFF,          // surface — near-opaque paper white
-                    0xFFFFFFFF,
-                    0x14000000,          // hairline
-                    0xFF1E1B17,          // ink
-                    0xB0231F1A,          // inkSoft
-                    0x73231F1A,          // inkMute
-                    accent, accentSoft,
-                    0x66000000, true);
-        }
         if (base == BASE_OLED) {
-            int[] g = { 0xFF0B0A09, 0xFF060606, 0xFF000000 };
+            int[] g = { 0xFF000000, 0xFF000000, 0xFF000000 };
             return new Soma(g,
-                    0x14FFFFFF, 0x1FFFFFFF, 0x1FFFFFFF,
-                    0xFFF4EFE7, 0xC7FFFFFF, 0x8AFFFFFF,
-                    accent, (accent & 0x00FFFFFF) | 0x24000000,
-                    0x8A000000, false);
+                    0xFF1A1A1A,   // surface
+                    0xFF262626,   // surfaceStrong
+                    0xFF2A2A2A,   // hairline
+                    0xFFE3E3E3,   // ink
+                    0xFFC4C7C5,   // inkSoft
+                    0xFF9AA0A6,   // inkMute
+                    0xFFA8C7FA,   // accent
+                    0xFF0842A0,   // accentSoft
+                    0x99000000, false);
         }
-        // dark — warm charcoal, faint accent tint at the top
-        int tintTop = blend(0xFF17130F, accent, 0.10f);
-        int[] g = { tintTop, 0xFF121110, 0xFF0C0B0A };
+        if (base == BASE_DARK) {
+            int[] g = { 0xFF131314, 0xFF131314, 0xFF131314 };
+            return new Soma(g,
+                    0xFF1E1F20, 0xFF2D2F31, 0xFF3C4043,
+                    0xFFE3E3E3, 0xFFC4C7C5, 0xFF9AA0A6,
+                    0xFFA8C7FA, 0xFF0842A0,
+                    0x99000000, false);
+        }
+        // light — Google Photos default
+        int[] g = { 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF };
         return new Soma(g,
-                0x1AFFFFFF, 0x24FFFFFF, 0x24FFFFFF,
-                0xFFF6F1E9, 0xC7FFFFFF, 0x8AFFFFFF,
-                accent, (accent & 0x00FFFFFF) | 0x2E000000,
-                0x8A000000, false);
+                0xFFFFFFFF,   // surface
+                0xFFF0F1F3,   // surfaceStrong  (M3 surfaceContainer)
+                0xFFE3E3E3,   // hairline
+                0xFF1F1F1F,   // ink
+                0xFF444746,   // inkSoft
+                0xFF5F6368,   // inkMute  (Google grey)
+                0xFF0B57D0,   // accent   (M3 primary blue)
+                0xFFE8F0FE,   // accentSoft
+                0x66000000, true);
     }
 
-    /* ----- fonts ----- */
+    /* ----- fonts -----
+       google.ttf (bundled, a Google-Sans-style face) is the app font. It is
+       already the global default via CustomFontApp; these helpers hand the same
+       face to the few views that set it explicitly. */
 
-    public static Typeface display(Context c) {  // Fraunces SemiBold
-        return ResourcesCompat.getFont(c, R.font.fraunces_semibold);
+    private static Typeface base;
+
+    private static Typeface load(Context c) {
+        if (base == null) {
+            try {
+                base = Typeface.createFromAsset(c.getApplicationContext().getAssets(), "fonts/google.ttf");
+            } catch (Exception e) {
+                base = Typeface.SANS_SERIF;
+            }
+        }
+        return base;
     }
 
-    public static Typeface serif(Context c) {    // Fraunces Regular
-        return ResourcesCompat.getFont(c, R.font.fraunces_regular);
+    /** Titles / headers — a touch heavier. */
+    public static Typeface display(Context c) {
+        return Typeface.create(load(c), Typeface.NORMAL);
     }
 
-    public static Typeface body(Context c) {     // Poppins Medium
-        return ResourcesCompat.getFont(c, R.font.poppins_medium);
-    }
+    /** Alias kept for old call-sites (no more serif). */
+    public static Typeface serif(Context c) { return load(c); }
 
-    public static Typeface bodyRegular(Context c) {
-        return ResourcesCompat.getFont(c, R.font.poppins_regular);
-    }
+    /** Body / labels. */
+    public static Typeface body(Context c) { return load(c); }
+
+    public static Typeface bodyRegular(Context c) { return load(c); }
 
     /* ----- drawables ----- */
 
-    /** Full-screen ground gradient. */
     public GradientDrawable groundDrawable() {
-        GradientDrawable d = new GradientDrawable(
-                GradientDrawable.Orientation.TL_BR, ground);
-        d.setGradientType(GradientDrawable.LINEAR_GRADIENT);
+        GradientDrawable d = new GradientDrawable();
+        d.setColor(ground[0]);
         return d;
     }
 
-    /** A frosted card background at the given dp radius. */
     public GradientDrawable card(Context c, boolean strong, float radiusDp) {
         GradientDrawable d = new GradientDrawable();
         d.setColor(strong ? surfaceStrong : surface);
         d.setCornerRadius(dp(c, radiusDp));
-        d.setStroke(Math.max(1, Math.round(dp(c, HAIRLINE))), hairline);
         return d;
     }
 

@@ -1,7 +1,6 @@
 package com.absolute.floral.soma;
 
 import android.content.Context;
-import android.graphics.Typeface;
 import android.graphics.drawable.GradientDrawable;
 import android.util.AttributeSet;
 import android.util.TypedValue;
@@ -10,8 +9,8 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 
 /**
- * The floating Google-Photos-style bottom nav — a frosted pill with
- * Photos / Collections / Create, drawn in the Soma language.
+ * The Google-Photos-style floating bottom nav — a white (or dark) pill with
+ * Photos / Collections / Create; the active tab gets a filled indicator.
  */
 public class NavPill extends LinearLayout {
 
@@ -31,22 +30,21 @@ public class NavPill extends LinearLayout {
     private void init() {
         setOrientation(HORIZONTAL);
         setGravity(Gravity.CENTER_VERTICAL);
-        int padH = dp(6), padV = dp(6);
-        setPadding(padH, padV, padH, padV);
+        int pad = dp(6);
+        setPadding(pad, pad, pad, pad);
         for (int i = 0; i < 3; i++) {
             final int idx = i;
             TextView t = new TextView(getContext());
             t.setText(LABELS[i]);
             t.setTypeface(Soma.body(getContext()));
-            t.setTextSize(TypedValue.COMPLEX_UNIT_SP, 12.5f);
+            t.setTextSize(TypedValue.COMPLEX_UNIT_SP, 13);
             t.setGravity(Gravity.CENTER);
             t.setSingleLine(true);
-            t.setMaxLines(1);
-            t.setPadding(dp(15), dp(10), dp(15), dp(10));
+            t.setPadding(dp(18), dp(10), dp(18), dp(10));
             t.setOnClickListener(v -> select(idx, true));
             LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(
                     LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT);
-            lp.setMargins(dp(1), 0, dp(1), 0);
+            lp.setMargins(dp(2), 0, dp(2), 0);
             addView(t, lp);
             tabs[i] = t;
         }
@@ -55,11 +53,11 @@ public class NavPill extends LinearLayout {
     public void setSoma(Soma s) {
         this.soma = s;
         GradientDrawable bg = new GradientDrawable();
-        bg.setColor(s.lightBase ? 0xF7FFFFFF : 0xF01D1B19);
-        bg.setCornerRadius(dp(28));
-        bg.setStroke(Math.max(1, dp(1)), s.hairline);
+        bg.setColor(s.lightBase ? 0xFFFFFFFF : 0xFF2D2F31);
+        bg.setCornerRadius(dp(26));
         setBackground(bg);
-        setElevation(dp(10));
+        setElevation(dp(6));
+        setClipToOutline(true);
         restyle();
     }
 
@@ -70,17 +68,15 @@ public class NavPill extends LinearLayout {
         current = idx;
         restyle();
         if (notify && listener != null) listener.onTab(idx);
-        Anim.pulse(tabs[idx]);
     }
 
     private void restyle() {
         if (soma == null) return;
         for (int i = 0; i < 3; i++) {
             boolean on = i == current;
-            tabs[i].setTextColor(on ? soma.ink : soma.inkMute);
-            tabs[i].setTypeface(on ? Soma.display(getContext()) : Soma.body(getContext()));
+            tabs[i].setTextColor(on ? (soma.lightBase ? soma.accent : 0xFF1F1F1F) : soma.inkMute);
             GradientDrawable chip = new GradientDrawable();
-            chip.setCornerRadius(dp(22));
+            chip.setCornerRadius(dp(20));
             chip.setColor(on ? soma.accentSoft : 0x00000000);
             tabs[i].setBackground(chip);
         }
