@@ -69,6 +69,19 @@ No ads. No account. No cloud. Made with care in India.
 
 ## What’s new (release notes, 500 chars max)
 ```
+Floral 2.1 — best of Apple & Google Photos, on-device:
+• Soft pastel bento theme across every screen + a redrawn welcome
+• Apple-style Years / Months / Days on the Photos tab
+• Featured Stories — full-screen, auto-advancing; tap “Save as film”
+• Places (from photo GPS) and Browse by date
+• Create, for real: Animation (looping GIF), Highlight film (Ken-Burns MP4),
+  Collage, and Free up space (screenshots, big videos, look-alikes)
+• Search icon now springs in as you scroll
+```
+
+<details><summary>Floral 2.0 notes</summary>
+
+```
 Floral 2.0 — a ground-up rebuild:
 • A colourful bento layout — memories, people and library stats as bright tiles
 • New Insights dashboard with an animated photos-per-year chart + your palette
@@ -80,6 +93,8 @@ Floral 2.0 — a ground-up rebuild:
 • Collage maker in Create, instant Search, a redrawn home-screen widget
 • A new app icon and a warm, gallery-first design throughout
 ```
+
+</details>
 
 ## Graphic assets (in this folder)
 | Asset | File | Spec |
