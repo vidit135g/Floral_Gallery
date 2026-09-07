@@ -4,23 +4,27 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:layout_gravity="bottom"
+    android:gravity="center_horizontal"
     android:background="@android:color/transparent">
 
     <LinearLayout
         android:id="@+id/bottom_bar"
-        android:layout_width="match_parent"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:layout_gravity="center_horizontal"
+        android:layout_marginBottom="22dp"
         android:baselineAligned="false"
         android:orientation="horizontal"
-        android:paddingBottom="16dp"
-        android:paddingEnd="16dp"
-        android:paddingStart="16dp"
-        android:background="@drawable/transparent_to_dark_gradient">
+        android:elevation="8dp"
+        android:paddingTop="4dp"
+        android:paddingBottom="4dp"
+        android:paddingEnd="10dp"
+        android:paddingStart="10dp"
+        android:background="@drawable/viewer_bar_pill">
 
         <RelativeLayout
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1">
+            android:layout_width="52dp"
+            android:layout_height="wrap_content">
 
             <ImageView
                 android:id="@+id/info_button"
@@ -37,9 +41,8 @@
         </RelativeLayout>
 
         <RelativeLayout
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1">
+            android:layout_width="52dp"
+            android:layout_height="wrap_content">
 
             <ImageView
                 android:id="@+id/share_button"
@@ -56,9 +59,8 @@
         </RelativeLayout>
 
         <RelativeLayout
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1">
+            android:layout_width="52dp"
+            android:layout_height="wrap_content">
 
             <ImageView
                 android:id="@+id/edit_button"
@@ -75,9 +77,8 @@
         </RelativeLayout>
 
         <RelativeLayout
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1">
+            android:layout_width="52dp"
+            android:layout_height="wrap_content">
 
             <ImageView
                 android:id="@+id/delete_button"

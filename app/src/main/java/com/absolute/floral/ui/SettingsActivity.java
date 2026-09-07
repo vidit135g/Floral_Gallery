@@ -221,6 +221,28 @@ public class SettingsActivity extends ThemeableActivity {
         }
 
         @Override
+        public void onViewCreated(View view, @Nullable Bundle savedInstanceState) {
+            super.onViewCreated(view, savedInstanceState);
+            try {
+                com.absolute.floral.soma.Soma s = com.absolute.floral.soma.SomaSkin.read(requireActivity());
+                setDivider(new android.graphics.drawable.ColorDrawable(0x00000000));
+                setDividerHeight(0);
+                androidx.recyclerview.widget.RecyclerView rv = getListView();
+                float d = getResources().getDisplayMetrics().density;
+                int m = Math.round(14 * d);
+                rv.setClipToPadding(false);
+                rv.setPadding(m, Math.round(8 * d), m, Math.round(24 * d));
+                android.graphics.drawable.GradientDrawable card = new android.graphics.drawable.GradientDrawable();
+                card.setColor(s.surface);
+                card.setCornerRadius(Math.round(22 * d));
+                card.setStroke(Math.round(d), s.hairline);
+                rv.setBackground(card);
+                ((View) rv.getParent()).setPadding(m, m, m, 0);
+                view.setBackgroundColor(com.absolute.floral.soma.Soma.blend(s.ground[0], s.accentSoft, 0.35f));
+            } catch (Throwable ignored) {}
+        }
+
+        @Override
         public void onCreatePreferences(Bundle savedInstanceState, String rootKey) {
             addPreferencesFromResource(R.xml.preferences);
 

@@ -41,12 +41,31 @@ public class PlacesActivity extends AppCompatActivity {
         LinearLayout head = new LinearLayout(this);
         head.setOrientation(LinearLayout.VERTICAL);
         head.setPadding(d(8), 0, d(8), d(6));
+
+        LinearLayout titleRow = new LinearLayout(this);
+        titleRow.setOrientation(LinearLayout.HORIZONTAL);
+        titleRow.setGravity(android.view.Gravity.CENTER_VERTICAL);
         TextView title = new TextView(this);
         title.setText("Places");
         title.setTypeface(Soma.display(this), android.graphics.Typeface.BOLD);
         title.setTextSize(30);
         title.setTextColor(s.ink);
-        head.addView(title);
+        titleRow.addView(title, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
+
+        TextView mapBtn = new TextView(this);
+        mapBtn.setText("Map");
+        mapBtn.setTypeface(Soma.body(this), android.graphics.Typeface.BOLD);
+        mapBtn.setTextSize(13);
+        mapBtn.setTextColor(s.accent);
+        mapBtn.setPadding(d(16), d(9), d(16), d(9));
+        android.graphics.drawable.GradientDrawable mp = new android.graphics.drawable.GradientDrawable();
+        mp.setColor(s.accentSoft);
+        mp.setCornerRadius(d(100));
+        mapBtn.setBackground(mp);
+        mapBtn.setOnClickListener(v -> startActivity(new android.content.Intent(this, PhotoMapActivity.class)));
+        titleRow.addView(mapBtn);
+        head.addView(titleRow);
+
         final TextView sub = new TextView(this);
         sub.setText("Reading location from your photos…");
         sub.setTextColor(s.inkMute);

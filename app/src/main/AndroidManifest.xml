@@ -220,6 +220,10 @@
             android:launchMode="singleTop"
             android:theme="@style/CameraRoll.Theme" />
         <activity
+            android:name="com.absolute.floral.ui.PhotoMapActivity"
+            android:launchMode="singleTop"
+            android:theme="@style/CameraRoll.Theme" />
+        <activity
             android:name="com.absolute.floral.ui.StoryPlayerActivity"
             android:launchMode="singleTop"
             android:theme="@style/CameraRoll.Theme.PhotoView" />
