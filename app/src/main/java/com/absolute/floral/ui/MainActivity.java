@@ -751,23 +751,26 @@ public class MainActivity extends ThemeableActivity implements CheckRefreshClick
 
     @Override
     public void onThemeApplied(Theme theme) {
+        final Toolbar toolbar = findViewById(R.id.toolbar);
+        final ViewGroup rootView = findViewById(R.id.root_view);
+
+        com.absolute.floral.soma.Soma soma = com.absolute.floral.soma.SomaSkin.read(this);
+        com.absolute.floral.soma.SomaSkin.ground(this, rootView, soma);
+        com.absolute.floral.soma.SomaSkin.statusBarIcons(this, soma);
+
         if (pick_photos) {
+            toolbar.setBackgroundColor(toolbarColor);
+            toolbar.setTitleTextColor(textColorPrimary);
             return;
         }
 
-        final Toolbar toolbar = findViewById(R.id.toolbar);
-        toolbar.setBackgroundColor(toolbarColor);
-        toolbar.setTitleTextColor(textColorPrimary);
+        com.absolute.floral.soma.SomaSkin.wordmark(toolbar, soma, "Floral", "  gallery");
+        toolbar.post(() -> com.absolute.floral.soma.SomaSkin.toolbarIcons(toolbar, soma));
 
-        if (theme.darkStatusBarIcons()) {
-            Util.setDarkStatusBarIcons(findViewById(R.id.root_view));
-        } else {
-            Util.setLightStatusBarIcons(findViewById(R.id.root_view));
-        }
-
-        if (theme.statusBarOverlay()) {
-            addStatusBarOverlay(toolbar);
-        }
+        // gentle entrance for the wordmark + first albums
+        com.absolute.floral.soma.Anim.enter(toolbar, 60);
+        recyclerView.post(() ->
+                com.absolute.floral.soma.Anim.enterChildren(recyclerView, 90, 60));
     }
 
     @Override

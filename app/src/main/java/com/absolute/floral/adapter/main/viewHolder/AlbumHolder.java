@@ -52,6 +52,21 @@ public abstract class AlbumHolder extends RecyclerView.ViewHolder {
         nameTv.setText(album.getName());
         //to fix ellipsize
         nameTv.requestLayout();
+
+        // Soma: Fraunces album titles + palette-matched text
+        com.absolute.floral.soma.Soma soma = com.absolute.floral.soma.SomaSkin.read(getContext());
+        if (soma != null) {
+            nameTv.setTypeface(com.absolute.floral.soma.Soma.display(getContext()));
+            nameTv.setTextColor(soma.ink);
+            nameTv.setLetterSpacing(0f);
+            TextView countTv = itemView.findViewById(R.id.count);
+            if (countTv != null) {
+                countTv.setTypeface(com.absolute.floral.soma.Soma.body(getContext()));
+                countTv.setTextColor(soma.inkMute);
+                countTv.setAllCaps(false);
+                countTv.setLetterSpacing(0.03f);
+            }
+        }
         //pinned indicator
         /*Drawable pinIndicator = null;
         if (album.pinned) {
