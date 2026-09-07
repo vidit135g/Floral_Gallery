@@ -42,16 +42,19 @@ public final class CreateSheet {
 
         col.addView(row(a, s, "Collage", "Combine 2–9 photos into one", () -> {
             dlg.dismiss();
-            Intent i = new Intent(a, CollageActivity.class);
-            a.startActivity(i);
+            a.startActivity(new Intent(a, CollageActivity.class));
         }));
-        col.addView(row(a, s, "Animation", "Turn a burst into a moving picture — soon", () -> {
+        col.addView(row(a, s, "Animation", "Turn photos into a looping GIF", () -> {
             dlg.dismiss();
-            android.widget.Toast.makeText(a, "Animations are coming soon", android.widget.Toast.LENGTH_SHORT).show();
+            a.startActivity(new Intent(a, AnimationActivity.class));
         }));
-        col.addView(row(a, s, "Highlight film", "Auto-picked moments set to motion — soon", () -> {
+        col.addView(row(a, s, "Highlight film", "A Ken-Burns movie with music-free motion", () -> {
             dlg.dismiss();
-            android.widget.Toast.makeText(a, "Highlight films are coming soon", android.widget.Toast.LENGTH_SHORT).show();
+            a.startActivity(new Intent(a, HighlightActivity.class));
+        }));
+        col.addView(row(a, s, "Free up space", "Screenshots, big videos and look-alikes", () -> {
+            dlg.dismiss();
+            a.startActivity(new Intent(a, CleanupActivity.class));
         }));
 
         dlg.setContentView(col);

@@ -5,17 +5,18 @@
     android:layout_width="match_parent"
     android:id="@+id/mainl"
     android:layout_height="match_parent"
-    android:background="#FFFFFF"
+    android:background="@drawable/soma_onboard_bg"
     tools:context="com.absolute.floral.ui.SplashActivity">
 
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Welcome"
-        android:textSize="14sp"
+        android:text="WELCOME TO"
+        android:textSize="12sp"
+        android:letterSpacing="0.25"
         android:id="@+id/hello"
-        android:layout_marginTop="80dp"
-        android:textColor="#5F6368"
+        android:layout_marginTop="76dp"
+        android:textColor="#8A3B3A3E"
         android:layout_centerHorizontal="true" />
 
     <LinearLayout
@@ -23,34 +24,43 @@
         android:layout_height="wrap_content"
         android:orientation="vertical"
         android:gravity="center"
-        android:paddingHorizontal="36dp"
+        android:paddingHorizontal="34dp"
         android:layout_centerInParent="true">
 
-        <ImageView
-            android:id="@+id/pixelimage"
-            android:layout_width="88dp"
-            android:layout_height="88dp"
-            android:src="@mipmap/ic_launcher" />
+        <FrameLayout
+            android:layout_width="112dp"
+            android:layout_height="112dp">
+            <View
+                android:layout_width="112dp"
+                android:layout_height="112dp"
+                android:background="@drawable/splash_glow" />
+            <ImageView
+                android:id="@+id/pixelimage"
+                android:layout_width="84dp"
+                android:layout_height="84dp"
+                android:layout_gravity="center"
+                android:src="@mipmap/ic_launcher" />
+        </FrameLayout>
 
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Your photos, at home"
-            android:textSize="26sp"
+            android:text="Floral"
+            android:textSize="40sp"
             android:textStyle="bold"
-            android:layout_marginTop="28dp"
-            android:gravity="center"
-            android:textColor="#1F1F1F" />
+            android:layout_marginTop="22dp"
+            android:letterSpacing="-0.01"
+            android:textColor="#2A2930" />
 
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Every photo and video on your device — a timeline, memories, albums and people. No account. Nothing is uploaded."
+            android:text="Your whole photo library — a bento of memories, people, places and colours. Every pixel stays on your device."
             android:textSize="14sp"
             android:layout_marginTop="14dp"
             android:gravity="center"
-            android:lineSpacingExtra="4dp"
-            android:textColor="#5F6368" />
+            android:lineSpacingExtra="5dp"
+            android:textColor="#7A3B3A3E" />
     </LinearLayout>
 
     <TextView
@@ -62,14 +72,14 @@
 
     <androidx.appcompat.widget.AppCompatButton
         android:layout_width="match_parent"
-        android:layout_height="54dp"
+        android:layout_height="56dp"
         android:text="Get started"
         android:textSize="15sp"
-        android:layout_marginHorizontal="24dp"
+        android:layout_marginHorizontal="22dp"
         android:id="@+id/pixelbutton"
         android:textColor="#FFFFFF"
         android:layout_alignParentBottom="true"
-        android:layout_marginBottom="40dp"
+        android:layout_marginBottom="38dp"
         android:background="@drawable/soma_pill_btn"
         android:stateListAnimator="@null"
         android:textAllCaps="false"
@@ -87,7 +97,7 @@
             android:layout_width="18dp"
             android:layout_height="18dp"
             android:indeterminate="true"
-            app:cpb_color="#0B57D0"
+            app:cpb_color="#B57BC7"
             android:visibility="gone"
             app:cpb_colors="@array/progress_colors"
             app:cpb_rotation_speed="1.0"
@@ -104,7 +114,7 @@
             android:id="@+id/progresstext"
             android:textSize="13sp"
             android:visibility="gone"
-            android:textColor="#5F6368" />
+            android:textColor="#7A3B3A3E" />
     </LinearLayout>
 
 </RelativeLayout>

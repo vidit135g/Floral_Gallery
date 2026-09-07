@@ -5,12 +5,12 @@
     android:layout_height="match_parent"
     android:orientation="vertical"
     android:gravity="center"
-    android:background="#FFFFFF"
+    android:background="@drawable/soma_onboard_bg"
     tools:context="com.absolute.floral.ui.FirstActivity">
 
     <ImageView
-        android:layout_width="96dp"
-        android:layout_height="96dp"
+        android:layout_width="100dp"
+        android:layout_height="100dp"
         android:src="@mipmap/ic_launcher" />
 
     <TextView
@@ -18,7 +18,8 @@
         android:layout_height="wrap_content"
         android:layout_marginTop="18dp"
         android:text="Floral"
-        android:textSize="22sp"
+        android:textSize="24sp"
         android:textStyle="bold"
-        android:textColor="#1F1F1F" />
+        android:letterSpacing="-0.01"
+        android:textColor="#2A2930" />
 </LinearLayout>

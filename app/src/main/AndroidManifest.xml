@@ -223,6 +223,18 @@
             android:name="com.absolute.floral.ui.StoryPlayerActivity"
             android:launchMode="singleTop"
             android:theme="@style/CameraRoll.Theme.PhotoView" />
+        <activity
+            android:name="com.absolute.floral.ui.AnimationActivity"
+            android:launchMode="singleTop"
+            android:theme="@style/CameraRoll.Theme" />
+        <activity
+            android:name="com.absolute.floral.ui.HighlightActivity"
+            android:launchMode="singleTop"
+            android:theme="@style/CameraRoll.Theme" />
+        <activity
+            android:name="com.absolute.floral.ui.CleanupActivity"
+            android:launchMode="singleTop"
+            android:theme="@style/CameraRoll.Theme" />
 
         <receiver
             android:name="com.absolute.floral.widget.MemoriesWidgetProvider"

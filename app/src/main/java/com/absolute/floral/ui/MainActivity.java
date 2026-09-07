@@ -445,8 +445,10 @@ public class MainActivity extends ThemeableActivity implements CheckRefreshClick
             @Override public void onTouchEvent(RecyclerView rv, android.view.MotionEvent e) { pinch.onTouchEvent(e); }
         });
 
-        // repurpose the corner FAB as Search
+        // repurpose the corner FAB as Search — hides on scroll-down, springs back on scroll-up
         final FloatingActionButton searchFab = findViewById(R.id.fab);
+        final float fabRest = -Math.round(getResources().getDisplayMetrics().density * 76);
+        final float fabHidden = Math.round(getResources().getDisplayMetrics().density * 120);
         if (searchFab != null) {
             searchFab.setImageResource(R.drawable.ic_search_white);
             searchFab.setColorFilter(soma.ink);
@@ -455,7 +457,35 @@ public class MainActivity extends ThemeableActivity implements CheckRefreshClick
             searchFab.setVisibility(View.VISIBLE);
             searchFab.setOnClickListener(v ->
                     startActivity(new Intent(this, SearchActivity.class)));
-            searchFab.setTranslationY(-Math.round(getResources().getDisplayMetrics().density * 76));
+            searchFab.setTranslationY(fabRest);
+            searchFab.setAlpha(0f);
+            searchFab.setScaleX(0.4f); searchFab.setScaleY(0.4f);
+            searchFab.postDelayed(() -> searchFab.animate().alpha(1f).scaleX(1f).scaleY(1f)
+                    .setDuration(340).setInterpolator(com.absolute.floral.soma.Anim.ease()).start(), 260);
+            recyclerView.addOnScrollListener(new RecyclerView.OnScrollListener() {
+                boolean shown = true;
+                @Override public void onScrolled(RecyclerView rv, int dx, int dy) {
+                    if (dy > 8 && shown) {
+                        shown = false;
+                        searchFab.animate().translationY(fabHidden).alpha(0f).scaleX(0.7f).scaleY(0.7f)
+                                .setDuration(200).start();
+                    } else if (dy < -8 && !shown) {
+                        shown = true;
+                        searchFab.animate().translationY(fabRest).alpha(1f).scaleX(1f).scaleY(1f)
+                                .setInterpolator(new android.view.animation.OvershootInterpolator(1.6f))
+                                .setDuration(360).start();
+                    }
+                }
+                @Override public void onScrollStateChanged(RecyclerView rv, int state) {
+                    if (state == RecyclerView.SCROLL_STATE_IDLE && !shown
+                            && !rv.canScrollVertically(-1)) {
+                        shown = true;
+                        searchFab.animate().translationY(fabRest).alpha(1f).scaleX(1f).scaleY(1f)
+                                .setInterpolator(new android.view.animation.OvershootInterpolator(1.6f))
+                                .setDuration(360).start();
+                    }
+                }
+            });
         }
 
         navPill.setOnTab(idx -> {

@@ -110,7 +110,7 @@ public class BentoTile extends FrameLayout {
         if (uriOrPath != null) Glide.with(getContext()).load(uriOrPath).centerCrop().into(cover);
         android.graphics.drawable.GradientDrawable s = new android.graphics.drawable.GradientDrawable(
                 android.graphics.drawable.GradientDrawable.Orientation.TOP_BOTTOM,
-                new int[]{ 0x11000000, 0x00000000, 0xA6000000 });
+                new int[]{ 0x0A000000, 0x00000000, 0x00000000, 0x82000000 });
         scrim.setBackground(s);
         value.setTextColor(0xFFFFFFFF);
         label.setTextColor(0xFFFFFFFF);
@@ -152,9 +152,16 @@ public class BentoTile extends FrameLayout {
 
     @Override protected void onDraw(Canvas canvas) {
         if (photoMode) return;
-        r.set(0, 0, getWidth(), getHeight());
+        float inset = Soma.dp(getContext(), 0.5f);
+        r.set(inset, inset, getWidth() - inset, getHeight() - inset);
         int[] g = Bento.gradient(gi);
+        gp.setStyle(Paint.Style.FILL);
         gp.setShader(new LinearGradient(0, 0, getWidth(), getHeight(), g[0], g[1], Shader.TileMode.CLAMP));
+        canvas.drawRoundRect(r, rad, rad, gp);
+        gp.setShader(null);
+        gp.setStyle(Paint.Style.STROKE);
+        gp.setStrokeWidth(Soma.dp(getContext(), 1f));
+        gp.setColor(0x12000000);
         canvas.drawRoundRect(r, rad, rad, gp);
     }
 }
