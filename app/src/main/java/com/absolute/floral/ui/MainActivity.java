@@ -125,6 +125,10 @@ public class MainActivity extends ThemeableActivity implements CheckRefreshClick
     private com.absolute.floral.soma.NavPill navPill;
     private com.absolute.floral.adapter.photos.PhotoGridAdapter photoAdapter;
     private com.absolute.floral.adapter.collections.CollectionsAdapter collectionsAdapter;
+    private com.absolute.floral.adapter.photos.PeriodAdapter monthsAdapter, yearsAdapter;
+    private com.absolute.floral.soma.Segmented segmented;
+    private int photoScope = 2; // 0 years, 1 months, 2 days
+    private int baseRecyclerPadBottom = -1;
     private GridLayoutManager gridLayoutManager;
     private int photoSpan = 3;
     private androidx.recyclerview.widget.RecyclerView.ItemDecoration collectionsDecoration;
@@ -401,6 +405,28 @@ public class MainActivity extends ThemeableActivity implements CheckRefreshClick
         collectionsAdapter = new com.absolute.floral.adapter.collections.CollectionsAdapter(this);
         collectionsAdapter.setData(albums);
 
+        com.absolute.floral.adapter.photos.PeriodAdapter.OnPeriod drill = p -> {
+            com.absolute.floral.ui.BucketActivity.TITLE = p.title;
+            com.absolute.floral.ui.BucketActivity.KICKER = p.subtitle;
+            com.absolute.floral.ui.BucketActivity.ITEMS = new java.util.ArrayList<>(p.items);
+            startActivity(new Intent(this, com.absolute.floral.ui.BucketActivity.class));
+        };
+        monthsAdapter = new com.absolute.floral.adapter.photos.PeriodAdapter(this, true, drill);
+        yearsAdapter = new com.absolute.floral.adapter.photos.PeriodAdapter(this, false, drill);
+
+        // Apple-Photos Years / Months / Days segmented control — floats above the nav pill
+        segmented = new com.absolute.floral.soma.Segmented(this);
+        segmented.setSoma(soma);
+        segmented.select(2, false);
+        float dd = getResources().getDisplayMetrics().density;
+        FrameLayout.LayoutParams slp = new FrameLayout.LayoutParams(
+                Math.round(dd * 240), Math.round(dd * 38));
+        slp.gravity = android.view.Gravity.BOTTOM | android.view.Gravity.CENTER_HORIZONTAL;
+        slp.bottomMargin = Math.round(dd * 128);   // clear of the nav pill
+        segmented.setElevation(dd * 10);
+        host.addView(segmented, slp);
+        segmented.setOnChange(this::setPhotoScope);
+
         // pinch to change density
         final android.view.ScaleGestureDetector pinch = new android.view.ScaleGestureDetector(this,
                 new android.view.ScaleGestureDetector.SimpleOnScaleGestureListener() {
@@ -462,20 +488,47 @@ public class MainActivity extends ThemeableActivity implements CheckRefreshClick
         photoAdapter.notifyDataSetChanged();
     }
 
+    private void setPhotoScope(int scope) {
+        photoScope = scope;
+        if (currentTab != TAB_PHOTOS) return;
+        java.util.List<Album> src = MediaProvider.getAlbumsWithVirtualDirectories(this);
+        if (src == null || src.isEmpty()) src = albums;
+        recyclerView.setItemAnimator(null);
+        if (scope == 2) {                                   // Days
+            gridLayoutManager.setSpanCount(photoSpan);
+            gridLayoutManager.setSpanSizeLookup(photoAdapter.spanSizeLookup());
+            if (recyclerView.getAdapter() != photoAdapter) recyclerView.setAdapter(photoAdapter);
+            photoAdapter.setTimeline(com.absolute.floral.data.PhotoTimeline.from(src));
+        } else if (scope == 1) {                            // Months
+            gridLayoutManager.setSpanCount(1);
+            gridLayoutManager.setSpanSizeLookup(new GridLayoutManager.DefaultSpanSizeLookup());
+            monthsAdapter.setData(com.absolute.floral.data.Periods.months(src));
+            recyclerView.setAdapter(monthsAdapter);
+        } else {                                            // Years
+            gridLayoutManager.setSpanCount(1);
+            gridLayoutManager.setSpanSizeLookup(new GridLayoutManager.DefaultSpanSizeLookup());
+            yearsAdapter.setData(com.absolute.floral.data.Periods.years(src));
+            recyclerView.setAdapter(yearsAdapter);
+        }
+        recyclerView.scrollToPosition(0);
+        recyclerView.post(() -> com.absolute.floral.soma.Anim.enterChildren(recyclerView, 20, 22));
+    }
+
     private void switchTab(int idx, int collectionsSpan) {
         currentTab = idx;
         final Toolbar toolbar = findViewById(R.id.toolbar);
         com.absolute.floral.soma.Soma soma = com.absolute.floral.soma.SomaSkin.read(this);
+        if (baseRecyclerPadBottom < 0) baseRecyclerPadBottom = recyclerView.getPaddingBottom();
+        if (segmented != null) segmented.setVisibility(idx == TAB_PHOTOS ? View.VISIBLE : View.GONE);
+        int segPad = idx == TAB_PHOTOS ? Math.round(getResources().getDisplayMetrics().density * 62) : 0;
+        recyclerView.setPadding(recyclerView.getPaddingLeft(), recyclerView.getPaddingTop(),
+                recyclerView.getPaddingRight(), baseRecyclerPadBottom + segPad);
         if (idx == TAB_PHOTOS) {
             com.absolute.floral.soma.SomaSkin.wordmark(toolbar, soma, "Photos", "");
-            gridLayoutManager.setSpanCount(photoSpan);
-            gridLayoutManager.setSpanSizeLookup(photoAdapter.spanSizeLookup());
-            recyclerView.setItemAnimator(null);
-            if (recyclerView.getAdapter() != photoAdapter) recyclerView.setAdapter(photoAdapter);
             java.util.ArrayList<Album> fresh = MediaProvider.getAlbumsWithVirtualDirectories(this);
             java.util.List<Album> src = fresh != null && !fresh.isEmpty() ? fresh : albums;
-            photoAdapter.setTimeline(com.absolute.floral.data.PhotoTimeline.from(src));
             photoAdapter.setMemories(com.absolute.floral.data.Memories.build(src));
+            setPhotoScope(photoScope);
         } else {
             com.absolute.floral.soma.SomaSkin.wordmark(toolbar, soma, "Collections", "");
             collectionsAdapter.setData(MediaProvider.getAlbumsWithVirtualDirectories(this));
