@@ -51,8 +51,14 @@ backgrounds — and save it straight to your gallery.
 Type to find photos by file name, folder, month, or just “videos” / “photos”.
 Results appear instantly, grouped by date.
 
+— INSIGHTS & COLOUR —
+A colourful bento dashboard: how many photos and videos you have, your
+busiest month, an animated “photos through the year” chart, and your
+library’s top colours — all computed on your device. “Search by colour” lets
+you pick a hue and see every photo that matches.
+
 — MORE —
-• A warm, quiet design that lets your photographs be the loudest thing on screen
+• A colourful bento layout — memories, people and stats as bright, tappable tiles
 • Light, dark and true-black (AMOLED) themes
 • A home-screen “Memories” widget that shows a different photo each day
 • Fast HD viewing, EXIF details, hidden folders, file manager, set as wallpaper
@@ -64,6 +70,9 @@ No ads. No account. No cloud. Made with care in India.
 ## What’s new (release notes, 500 chars max)
 ```
 Floral 2.0 — a ground-up rebuild:
+• A colourful bento layout — memories, people and library stats as bright tiles
+• New Insights dashboard with an animated photos-per-year chart + your palette
+• Search by colour — pick a hue, matched entirely on-device
 • New Photos / Collections / Create layout with a floating nav
 • One date-grouped timeline of everything, pinch to zoom the grid
 • Memories carousel — auto-picked highlights from your own library
