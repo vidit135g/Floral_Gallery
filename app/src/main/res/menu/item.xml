@@ -3,6 +3,18 @@
     xmlns:app="http://schemas.android.com/apk/res-auto">
 
     <item
+        android:id="@+id/favorite"
+        android:icon="@drawable/ic_star_border_white"
+        android:title="Favorite"
+        app:showAsAction="always" />
+
+    <item
+        android:id="@+id/archive"
+        android:icon="@drawable/ic_archive_white"
+        android:title="Archive"
+        app:showAsAction="never" />
+
+    <item
         android:id="@+id/set_as"
         android:icon="@drawable/ic_wallpaper_white"
         android:title="@string/set_as"

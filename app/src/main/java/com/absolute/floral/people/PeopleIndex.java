@@ -73,13 +73,25 @@ public class PeopleIndex {
     }
 
     private List<Person> scan(Context ctx) throws Exception {
-        ArrayList<Album> albums = MediaProvider.getAlbums();
         List<AlbumItem> items = new ArrayList<>();
         java.util.HashSet<String> seen = new java.util.HashSet<>();
-        if (albums != null) for (Album a : albums) if (a.getAlbumItems() != null)
-            for (AlbumItem it : a.getAlbumItems())
-                if (!com.absolute.floral.util.MediaType.isVideo(it.getPath())
-                        && (it.getPath() == null || seen.add(it.getPath()))) items.add(it);
+        for (int attempt = 0; attempt < 4; attempt++) {
+            items.clear(); seen.clear();
+            try {
+                ArrayList<Album> albums = new ArrayList<>(MediaProvider.getAlbums());
+                for (Album a : albums) {
+                    if (a == null || a.getAlbumItems() == null) continue;
+                    for (AlbumItem it : new ArrayList<>(a.getAlbumItems())) {
+                        if (it == null) continue;
+                        if (!com.absolute.floral.util.MediaType.isVideo(it.getPath())
+                                && (it.getPath() == null || seen.add(it.getPath()))) items.add(it);
+                    }
+                }
+                break;
+            } catch (java.util.ConcurrentModificationException cme) {
+                Thread.sleep(600);
+            }
+        }
         // newest first, cap the work
         Collections.sort(items, (x, y) -> Long.compare(y.getDate(), x.getDate()));
         if (items.size() > 400) items = items.subList(0, 400);
@@ -130,9 +142,9 @@ public class PeopleIndex {
         detector.close();
 
         List<Person> keep = new ArrayList<>();
-        for (Person p : clusters) if (p.photos.size() >= 2) keep.add(p);
+        for (Person p : clusters) if (!p.photos.isEmpty()) keep.add(p);
         Collections.sort(keep, (a, b) -> Integer.compare(b.photos.size(), a.photos.size()));
-        return keep;
+        return keep.size() > 12 ? keep.subList(0, 12) : keep;
     }
 
     private void merge(Person p, float[] emb) {

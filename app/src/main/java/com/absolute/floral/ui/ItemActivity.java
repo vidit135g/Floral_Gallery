@@ -412,6 +412,11 @@ public class ItemActivity extends ThemeableActivity {
 
     @Override
     public boolean onPrepareOptionsMenu(Menu menu) {
+        MenuItem fav = menu.findItem(R.id.favorite);
+        if (fav != null && albumItem != null) {
+            boolean on = com.absolute.floral.data.FlagStore.favorites(this).contains(albumItem.getPath());
+            fav.setIcon(on ? R.drawable.ic_star_white : R.drawable.ic_star_border_white);
+        }
         if (theme.isBaseLight()) {
             int black = ContextCompat.getColor(this, R.color.black);
             for (int i = 0; i < menu.size(); i++) {
@@ -430,6 +435,19 @@ public class ItemActivity extends ThemeableActivity {
             case android.R.id.home:
                 onBackPressed();
                 break;
+            case R.id.favorite: {
+                boolean now = com.absolute.floral.data.FlagStore.favorites(this).toggle(albumItem.getPath());
+                item.setIcon(now ? R.drawable.ic_star_white : R.drawable.ic_star_border_white);
+                android.widget.Toast.makeText(this, now ? "Added to Favorites" : "Removed from Favorites",
+                        android.widget.Toast.LENGTH_SHORT).show();
+                break;
+            }
+            case R.id.archive: {
+                boolean now = com.absolute.floral.data.FlagStore.archive(this).toggle(albumItem.getPath());
+                android.widget.Toast.makeText(this, now ? "Archived" : "Removed from Archive",
+                        android.widget.Toast.LENGTH_SHORT).show();
+                break;
+            }
             case R.id.set_as:
                 setPhotoAs();
                 break;

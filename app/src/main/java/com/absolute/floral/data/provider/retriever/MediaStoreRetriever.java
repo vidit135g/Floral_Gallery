@@ -31,6 +31,8 @@ public class MediaStoreRetriever extends Retriever {
             MediaStore.Files.FileColumns.MIME_TYPE,
             MediaStore.Images.ImageColumns.DATE_TAKEN,
             MediaStore.Video.VideoColumns.DATE_TAKEN,
+            MediaStore.Files.FileColumns.DATE_MODIFIED,
+            MediaStore.Files.FileColumns.DATE_ADDED,
             BaseColumns._ID};
 
     @Override
@@ -99,6 +101,17 @@ public class MediaStoreRetriever extends Retriever {
                                             MediaStore.Images.ImageColumns.DATE_TAKEN :
                                             MediaStore.Video.VideoColumns.DATE_TAKEN);
                             dateTaken = cursor.getLong(dateTakenColumn);
+                            if (dateTaken <= 0) {
+                                // many photos have no EXIF DATE_TAKEN — fall back to
+                                // DATE_MODIFIED then DATE_ADDED (both stored in seconds)
+                                int modCol = cursor.getColumnIndex(MediaStore.Files.FileColumns.DATE_MODIFIED);
+                                int addCol = cursor.getColumnIndex(MediaStore.Files.FileColumns.DATE_ADDED);
+                                long mod = modCol >= 0 ? cursor.getLong(modCol) : 0;
+                                long add = addCol >= 0 ? cursor.getLong(addCol) : 0;
+                                long secs = mod > 0 ? mod : add;
+                                if (secs > 0) dateTaken = secs * 1000L;
+                                else dateTaken = file.lastModified();
+                            }
                             albumItem.setDate(dateTaken);
 
                             id = cursor.getLong(idColumn);

@@ -401,9 +401,6 @@ public class MainActivity extends ThemeableActivity implements CheckRefreshClick
 
         collectionsAdapter = new com.absolute.floral.adapter.collections.CollectionsAdapter(this);
         collectionsAdapter.setData(albums);
-        com.absolute.floral.people.PeopleIndex.get().ensure(this, people -> {
-            if (collectionsAdapter != null) collectionsAdapter.setPeople(people);
-        });
 
         // pinch to change density
         final android.view.ScaleGestureDetector pinch = new android.view.ScaleGestureDetector(this,
@@ -636,7 +633,12 @@ public class MainActivity extends ThemeableActivity implements CheckRefreshClick
                         public void run() {
                             MainActivity.this.albums = albumsWithVirtualDirs;
                             recyclerViewAdapter.setData(albumsWithVirtualDirs);
-                            if (collectionsAdapter != null) collectionsAdapter.setData(albumsWithVirtualDirs);
+                            if (collectionsAdapter != null) {
+                                collectionsAdapter.setData(albumsWithVirtualDirs);
+                                com.absolute.floral.people.PeopleIndex.get().ensure(MainActivity.this, ppl -> {
+                                    if (collectionsAdapter != null) collectionsAdapter.setPeople(ppl);
+                                });
+                            }
                             if (photoAdapter != null) {
                                 photoAdapter.setTimeline(
                                         com.absolute.floral.data.PhotoTimeline.from(albumsWithVirtualDirs));
