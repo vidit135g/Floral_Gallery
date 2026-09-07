@@ -2,7 +2,6 @@ package com.absolute.floral.ui;
 
 import android.content.Intent;
 import android.os.Bundle;
-import android.os.Handler;
 import androidx.appcompat.app.AppCompatActivity;
 import android.view.View;
 
@@ -15,14 +14,9 @@ public class LoadingActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_loading);
 
-
-
-        new Handler().postDelayed(() -> {
-
-            Intent i = new Intent(LoadingActivity.this, MainActivity.class);
-            startActivity(i);
-        },5000);
-
+        startActivity(new Intent(this, MainActivity.class));
+        overridePendingTransition(0, 0);
+        finish();
     }
     @Override
     protected void onResume() {

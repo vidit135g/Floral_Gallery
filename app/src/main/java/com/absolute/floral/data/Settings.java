@@ -123,9 +123,9 @@ public class Settings {
 
             if (theme.equals(res.getString(R.string.LIGHT_THEME_VALUE))) {
                 return new LightTheme();
-            } else if (theme.equals(res.getString(R.string.BLACK_THEME_VALUE))) {
-                return new BlackTheme();
-            } else if (theme.equals("DARK")) {
+            } else if (theme.equals("DARK")
+                    || theme.equals(res.getString(R.string.BLACK_THEME_VALUE))) {
+                // BLACK/AMOLED was retired — upgraders fall back to Dark
                 return new DarkTheme();
             } else {
                 return new LightTheme();

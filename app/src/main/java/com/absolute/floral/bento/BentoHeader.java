@@ -8,22 +8,19 @@ import android.widget.LinearLayout;
 import com.absolute.floral.R;
 import com.absolute.floral.data.FlagStore;
 import com.absolute.floral.data.Memories;
-import com.absolute.floral.data.Story;
 import com.absolute.floral.data.models.AlbumItem;
 import com.absolute.floral.people.PeopleIndex;
 import com.absolute.floral.places.PlacesIndex;
-import com.absolute.floral.ui.BrowseByDateActivity;
 import com.absolute.floral.ui.BucketActivity;
-import com.absolute.floral.ui.ColorSearchActivity;
-import com.absolute.floral.ui.InsightsActivity;
 import com.absolute.floral.ui.MemoryActivity;
 import com.absolute.floral.ui.PlacesActivity;
-import com.absolute.floral.ui.SearchActivity;
-import com.absolute.floral.ui.StoryPlayerActivity;
 
 import java.util.List;
 
-/** Featured-stories row + colourful bento mosaic, pinned above the Photos timeline. */
+/**
+ * The colourful bento mosaic pinned above the Photos timeline.
+ * (Interim — replaced by the single-scroll Library sections in the next stage.)
+ */
 public final class BentoHeader {
 
     private BentoHeader() {}
@@ -31,30 +28,21 @@ public final class BentoHeader {
     public static View build(final Activity a, LibrarySnapshot snap,
                              final List<Memories.Memory> memories,
                              final List<PeopleIndex.Person> people,
-                             final List<Story> stories,
                              final List<PlacesIndex.Place> places) {
         LinearLayout wrap = new LinearLayout(a);
         wrap.setOrientation(LinearLayout.VERTICAL);
         wrap.setLayoutParams(new LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT));
 
-        if (stories != null && !stories.isEmpty()) {
-            wrap.addView(new StoriesTray(a, stories));
-        }
-
         BentoLayout b = new BentoLayout(a);
         wrap.addView(b);
 
         final boolean hasMem = memories != null && !memories.isEmpty();
 
-        /* row A : big story + stacked (recent, people) */
+        /* row A : big memory + stacked (recent, people) */
         LinearLayout rowA = b.row(168);
         BentoTile big = b.tile(rowA, 1.7f, v -> {
-            if (stories != null && !stories.isEmpty()) {
-                StoryPlayerActivity.STORIES = stories;
-                StoryPlayerActivity.START_INDEX = 0;
-                a.startActivity(new Intent(a, StoryPlayerActivity.class));
-            } else if (hasMem) {
+            if (hasMem) {
                 MemoryActivity.MEMORIES = memories;
                 Intent it = new Intent(a, MemoryActivity.class);
                 it.putExtra(MemoryActivity.EXTRA_INDEX, 0);
@@ -63,10 +51,9 @@ public final class BentoHeader {
         });
         Memories.Memory mem = hasMem ? memories.get(0) : null;
         if (mem != null && mem.cover() != null) {
-            big.photo(cover(a, mem.cover()), 0).label(mem.title).sub(mem.items.size() + " photos")
-                    .icon(R.drawable.ic_play_arrow_white);
+            big.photo(cover(a, mem.cover()), 0).label(mem.title).sub(mem.items.size() + " photos");
         } else {
-            big.gradient(2).label("Stories").sub("Your highlights, auto-made");
+            big.gradient(2).label("Memories").sub("Auto-made from your library");
         }
 
         LinearLayout colA = b.column(rowA, 1f);
@@ -84,37 +71,20 @@ public final class BentoHeader {
             }
         });
         int pc = people == null ? 0 : people.size();
-        peopleT.gradient(6).label("People").value(pc > 0 ? String.valueOf(pc) : "").sub(pc == 0 ? "Scanning…" : null);
+        peopleT.gradient(6).label("People").value(pc > 0 ? String.valueOf(pc) : "")
+                .sub(pc == 0 ? "Scanning…" : null);
 
-        /* row B : places / things / insights */
-        LinearLayout rowB = b.row(104);
-        List<com.absolute.floral.things.ThingsIndex.Thing> things =
-                com.absolute.floral.things.ThingsIndex.get().current();
+        /* row B : places / favourites */
+        LinearLayout rowB = b.row(100);
         BentoTile placesT = b.tile(rowB, 1f, v -> a.startActivity(new Intent(a, PlacesActivity.class)));
         if (places != null && !places.isEmpty() && places.get(0).cover() != null)
             placesT.photo(cover(a, places.get(0).cover()), 5).label("Places")
                     .icon(R.drawable.ic_location_on_white).sub(places.size() + " places");
         else placesT.gradient(5).label("Places").icon(R.drawable.ic_location_on_white);
 
-        BentoTile thingsT = b.tile(rowB, 1f, v -> a.startActivity(new Intent(a, SearchActivity.class)));
-        if (!things.isEmpty() && things.get(0).cover() != null)
-            thingsT.photo(cover(a, things.get(0).cover()), 10).label("Things")
-                    .sub(things.size() + (things.size() == 1 ? " category" : " categories"));
-        else thingsT.gradient(10).label("Things").sub("Scanning…");
-
-        b.tile(rowB, 1f, v -> a.startActivity(new Intent(a, InsightsActivity.class)))
-                .gradient(4).label("Insights")
-                .value(snap != null ? String.valueOf(snap.photos + snap.videos) : "");
-
-        /* row C : favourites / by date / colours */
-        LinearLayout rowC = b.row(96);
-        BentoTile favs = b.tile(rowC, 1f, v -> openBucket(a, "Favorites", favItems(a)));
+        BentoTile favs = b.tile(rowB, 1.3f, v -> openBucket(a, "Favorites", favItems(a)));
         favs.gradient(0).label("Favorites");
         if (snap != null) favs.countTo(snap.favorites, "");
-        b.tile(rowC, 1f, v -> a.startActivity(new Intent(a, BrowseByDateActivity.class)))
-                .gradient(3).label("By date").icon(R.drawable.ic_date_range_white);
-        b.tile(rowC, 1.2f, v -> a.startActivity(new Intent(a, ColorSearchActivity.class)))
-                .gradient(9).label("Colours").icon(0);
 
         return wrap;
     }

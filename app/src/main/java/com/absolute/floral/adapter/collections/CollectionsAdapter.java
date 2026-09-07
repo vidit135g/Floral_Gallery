@@ -166,15 +166,25 @@ public class CollectionsAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
                 .gradient(8).label("Trash").icon(com.absolute.floral.R.drawable.ic_delete_white);
 
         LinearLayout r2 = b.row(96);
-        b.tile(r2, 1.3f, v -> a.startActivity(new Intent(a, com.absolute.floral.ui.InsightsActivity.class)))
-                .gradient(4).label("Insights").sub(snap != null
-                        ? (snap.photos + snap.videos) + " items" : "Explore your library");
-        b.tile(r2, 1f, v -> a.startActivity(new Intent(a, com.absolute.floral.ui.ColorSearchActivity.class)))
-                .gradient(9).label("Colours");
-        b.tile(r2, 1f, v -> a.startActivity(new Intent(a, com.absolute.floral.ui.InsightsActivity.class)))
-                .gradient(6).label("This month").value(snap != null && snap.busiestMonthCount > 0
+        b.tile(r2, 1f, v -> a.startActivity(new Intent(a, com.absolute.floral.ui.PlacesActivity.class)))
+                .gradient(5).label("Places").icon(com.absolute.floral.R.drawable.ic_location_on_white);
+        b.tile(r2, 1f, v -> openBucket("This month", "", thisMonth()))
+                .gradient(6).label("This month").value(snap != null
                         ? String.valueOf(snap.months[java.util.Calendar.getInstance().get(java.util.Calendar.MONTH)]) : "");
         return b;
+    }
+
+    private List<AlbumItem> thisMonth() {
+        int m = java.util.Calendar.getInstance().get(java.util.Calendar.MONTH);
+        int y = java.util.Calendar.getInstance().get(java.util.Calendar.YEAR);
+        List<AlbumItem> out = new ArrayList<>();
+        for (Album al : albums) if (al.getAlbumItems() != null)
+            for (AlbumItem it : al.getAlbumItems()) {
+                java.util.Calendar c = java.util.Calendar.getInstance();
+                c.setTimeInMillis(it.getDate());
+                if (c.get(java.util.Calendar.MONTH) == m && c.get(java.util.Calendar.YEAR) == y) out.add(it);
+            }
+        return out;
     }
 
     /* ---- Apple-style "Media types" ---- */

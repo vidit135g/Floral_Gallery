@@ -19,20 +19,6 @@
             android:key="@string/pref_key_theme"
             android:title="@string/theme" />
 
-        <!--suppress AndroidElementNotAllowed -->
-        <com.absolute.floral.preferences.StylePreference
-            style="@style/CameraRoll.Theme.DialogPreference"
-            android:defaultValue="2"
-            android:key="@string/pref_key_style"
-            android:title="@string/style" />
-
-        <!--suppress AndroidElementNotAllowed -->
-        <com.absolute.floral.preferences.ColumnCountPreference
-            style="@style/CameraRoll.Theme.DialogPreference"
-            android:defaultValue="4"
-            android:key="@string/pref_key_column_count"
-            android:title="@string/column_count" />
-
         <SwitchPreference
             android:defaultValue="true"
             android:key="@string/pref_key_animations"

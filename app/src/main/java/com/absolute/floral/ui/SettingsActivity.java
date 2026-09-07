@@ -28,10 +28,6 @@ import java.util.Arrays;
 import com.absolute.floral.R;
 import com.absolute.floral.themes.Theme;
 import com.absolute.floral.data.Settings;
-import com.absolute.floral.preferences.ColumnCountPreference;
-import com.absolute.floral.preferences.ColumnCountPreferenceDialogFragment;
-import com.absolute.floral.preferences.StylePreference;
-import com.absolute.floral.preferences.StylePreferenceDialogFragment;
 import com.absolute.floral.util.Util;
 
 public class SettingsActivity extends ThemeableActivity {
@@ -251,29 +247,12 @@ public class SettingsActivity extends ThemeableActivity {
             initExcludedPathsPref();
             initVirtualDirectoriesPref();
             initThemePref(settings.getTheme());
-            initStylePref(settings.getStyle(getContext(), false));
-            initColumnCountPref(settings.getRealColumnCount());
             initShowVideos(settings.showVideos());
             initMediaRetrieverPref(settings.useStorageRetriever());
             init8BitColorPref(settings.use8BitColor());
             initCameraShortcutPref(settings.getCameraShortcut());
             initAnimationsPref(settings.showAnimations());
             initMaxBrightnessPref(settings.isMaxBrightness());
-
-            if (savedInstanceState != null
-                    && savedInstanceState.containsKey(SHOWN_DIALOG_FRAGMENT)) {
-                int shownDialogFragment = savedInstanceState.getInt(SHOWN_DIALOG_FRAGMENT);
-                Preference preference = null;
-                if (shownDialogFragment == STYLE_DIALOG_FRAGMENT) {
-                    preference = findPreference(getString(R.string.pref_key_style));
-                } else if (shownDialogFragment == COLUMN_COUNT_DIALOG_FRAGMENT) {
-                    preference = findPreference(getString(R.string.pref_key_column_count));
-                }
-
-                if (preference != null) {
-                    onDisplayPreferenceDialog(preference);
-                }
-            }
         }
 
         private void initExcludedPathsPref() {
@@ -318,23 +297,6 @@ public class SettingsActivity extends ThemeableActivity {
             if(theme_name.equals("Black"))
                 themePref.setSummary("Black");
             themePref.setOnPreferenceChangeListener(this);
-        }
-
-        private void initStylePref(int style) {
-            StylePreference stylePref = (StylePreference)
-                    findPreference(getString(R.string.pref_key_style));
-
-            String style_name = Settings.Utils.getStyleName(getActivity(), style);
-            stylePref.setSummary(style_name);
-            stylePref.setOnPreferenceChangeListener(this);
-        }
-
-        private void initColumnCountPref(int column_count) {
-            ColumnCountPreference columnCountPref = (ColumnCountPreference)
-                    findPreference(getString(R.string.pref_key_column_count));
-
-            columnCountPref.setSummary(String.valueOf(column_count));
-            columnCountPref.setOnPreferenceChangeListener(this);
         }
 
         private void initShowVideos(boolean hide) {
@@ -389,24 +351,6 @@ public class SettingsActivity extends ThemeableActivity {
                 callback.onSettingChanged();
             }
 
-            DialogFragment dialogFragment = null;
-            if (preference instanceof StylePreference) {
-                dialogFragment
-                        = StylePreferenceDialogFragment
-                        .newInstance(preference);
-
-            } else if (preference instanceof ColumnCountPreference) {
-                dialogFragment
-                        = ColumnCountPreferenceDialogFragment
-                        .newInstance(preference);
-            }
-
-            if (dialogFragment != null) {
-                dialogFragment.setTargetFragment(this, 0);
-                dialogFragment.show(this.getFragmentManager(), DIALOG_FRAGMENT_TAG);
-                return;
-            }
-
             super.onDisplayPreferenceDialog(preference);
         }
 
@@ -454,14 +398,6 @@ public class SettingsActivity extends ThemeableActivity {
 
                 //update Activities
                 getActivity().recreate();
-            } else if (preference.getKey().equals(getString(R.string.pref_key_style))) {
-                settings.setStyle((int) o);
-                String style_name = Settings.Utils.getStyleName(getActivity(), (int) o);
-                preference.setSummary(style_name);
-
-            } else if (preference.getKey().equals(getString(R.string.pref_key_column_count))) {
-                settings.setColumnCount((int) o);
-                preference.setSummary(String.valueOf(o));
             } else if (preference.getKey().equals(getString(R.string.pref_key_media_retriever))) {
                 settings.useStorageRetriever((boolean) o);
             } else if (preference.getKey().equals(getString(R.string.pref_key_8_bit_color))) {

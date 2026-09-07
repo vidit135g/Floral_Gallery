@@ -6,7 +6,8 @@
     <!--black theme colors-->
     <color name="black_bg">#000000</color>
     <!--accent color-->
-    <color name="colorAccent">@color/gred</color>
+    <color name="ios_blue">#0A84FF</color>
+    <color name="colorAccent">@color/ios_blue</color>
     <color name="colorAccentLight">@color/white</color>
     <color name="colorAccent_text">#8A212121</color>
     <color name="list_bg">#3B3B3B</color>
@@ -43,7 +44,8 @@
     <color name="temperature_background">@color/colorPrimary</color>
     <color name="temperature_text">@android:color/white</color>
     <color name="gblack">#000</color>
-    <color name="gred">#DB4437</color>
+    <!-- was Google red; retired for the Apple look — kept as an alias so old refs resolve to the accent -->
+    <color name="gred">@color/ios_blue</color>
     <color name="ggreen">#0F9D58</color>
     <color name="gblue">#4285F4</color>
     <color name="gyellow"> #F4B400</color>

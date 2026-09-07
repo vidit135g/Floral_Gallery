@@ -32,7 +32,6 @@ import com.absolute.floral.places.PlacesIndex;
 import com.absolute.floral.soma.Anim;
 import com.absolute.floral.soma.Soma;
 import com.absolute.floral.soma.SomaSkin;
-import com.absolute.floral.things.ThingsIndex;
 import com.absolute.floral.util.MediaType;
 import com.bumptech.glide.Glide;
 
@@ -94,7 +93,7 @@ public class SearchActivity extends AppCompatActivity {
         fieldWrap.addView(mag, new LinearLayout.LayoutParams(d(20), d(20)));
 
         EditText field = new EditText(this);
-        field.setHint("Search people, places, things");
+        field.setHint("Photos, People, Places");
         field.setSingleLine(true);
         field.setImeOptions(EditorInfo.IME_ACTION_SEARCH);
         field.setTypeface(Soma.body(this));
@@ -168,16 +167,11 @@ public class SearchActivity extends AppCompatActivity {
         if (!places.isEmpty()) { addPlaces(places); any = true; }
         else PlacesIndex.get().ensure(this, p -> { if (!p.isEmpty()) rebuild(); });
 
-        // Things (on-device labels)
-        List<ThingsIndex.Thing> things = ThingsIndex.get().current();
-        if (!things.isEmpty()) { addThings(things); any = true; }
-        else ThingsIndex.get().ensure(this, t -> { if (!t.isEmpty()) rebuild(); });
-
         addCategories();
 
         if (!any) {
             TextView hint = new TextView(this);
-            hint.setText("Finding people, places and things in your library…");
+            hint.setText("Finding people and places in your library…");
             hint.setTextColor(soma.inkMute);
             hint.setTextSize(13);
             hint.setPadding(d(4), d(14), d(4), 0);
@@ -246,17 +240,6 @@ public class SearchActivity extends AppCompatActivity {
             BentoTile t = new BentoTile(this);
             t.photo(cover(pl.cover()), 1 + i).label(pl.label).sub(count(pl.items.size()));
             t.setOnClickListener(v -> openBucket(pl.label, "Places", pl.items));
-            return t;
-        });
-    }
-
-    private void addThings(List<ThingsIndex.Thing> things) {
-        header("Things");
-        grid2(things.size(), i -> {
-            ThingsIndex.Thing th = things.get(i);
-            BentoTile t = new BentoTile(this);
-            t.photo(cover(th.cover()), 4 + i).label(th.label).sub(count(th.photos.size()));
-            t.setOnClickListener(v -> openBucket(th.label, "Things", th.photos));
             return t;
         });
     }
@@ -359,29 +342,21 @@ public class SearchActivity extends AppCompatActivity {
         rv.setVisibility(View.VISIBLE);
 
         boolean wantVideo = q.contains("video"), wantPhoto = q.equals("photos") || q.equals("photo") || q.equals("images");
-        String thingHit = null;
-        for (ThingsIndex.Thing t : ThingsIndex.get().current())
-            if (t.label.toLowerCase().contains(q) || q.contains(t.label.toLowerCase())) thingHit = t.label;
 
         List<AlbumItem> hits = new ArrayList<>();
-        if (thingHit != null) {
-            for (ThingsIndex.Thing t : ThingsIndex.get().current())
-                if (t.label.equals(thingHit)) hits.addAll(t.photos);
-        } else {
-            for (AlbumItem it : all) {
-                boolean v = MediaType.isVideo(it.getPath());
-                String name = (it.getName() == null ? "" : it.getName()).toLowerCase();
-                String folder = owner.containsKey(it) ? owner.get(it).toLowerCase() : "";
-                String month = android.text.format.DateFormat.format("MMMM yyyy",
-                        it.getDate() > 0 ? it.getDate() : 0).toString().toLowerCase();
-                boolean match = (wantVideo && v) || (wantPhoto && !v)
-                        || name.contains(q) || folder.contains(q) || month.contains(q);
-                if (match) hits.add(it);
-            }
-            for (PlacesIndex.Place pl : PlacesIndex.get().current())
-                if (pl.label.toLowerCase().contains(q)) for (AlbumItem it : pl.items)
-                    if (!hits.contains(it)) hits.add(it);
+        for (AlbumItem it : all) {
+            boolean v = MediaType.isVideo(it.getPath());
+            String name = (it.getName() == null ? "" : it.getName()).toLowerCase();
+            String folder = owner.containsKey(it) ? owner.get(it).toLowerCase() : "";
+            String month = android.text.format.DateFormat.format("MMMM yyyy",
+                    it.getDate() > 0 ? it.getDate() : 0).toString().toLowerCase();
+            boolean match = (wantVideo && v) || (wantPhoto && !v)
+                    || name.contains(q) || folder.contains(q) || month.contains(q);
+            if (match) hits.add(it);
         }
+        for (PlacesIndex.Place pl : PlacesIndex.get().current())
+            if (pl.label.toLowerCase().contains(q)) for (AlbumItem it : pl.items)
+                if (!hits.contains(it)) hits.add(it);
 
         Album a = new Album();
         a.setPath("search");
