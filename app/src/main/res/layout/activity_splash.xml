@@ -5,96 +5,111 @@
     android:layout_width="match_parent"
     android:id="@+id/mainl"
     android:layout_height="match_parent"
-    android:background="@color/white"
+    android:background="@drawable/soma_onboard_bg"
     tools:context="com.absolute.floral.ui.SplashActivity">
 
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Hi there"
-        android:textSize="24sp"
+        android:text="Hello"
+        android:textSize="15sp"
+        android:letterSpacing="0.18"
+        android:fontFamily="@font/poppins_medium"
         android:id="@+id/hello"
-        android:layout_marginTop="40dp"
-        android:clickable="true"
-        android:textColor="@color/black"
-        android:layout_centerHorizontal="true"/>
+        android:layout_marginTop="72dp"
+        android:textColor="#73231F1A"
+        android:layout_centerHorizontal="true" />
 
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:gravity="center"
+        android:layout_centerInParent="true">
 
-    <ImageView
-        android:id="@+id/pixelimage"
-        android:layout_width="200dp"
-        android:layout_height="200dp"
-        android:layout_centerInParent="true"
-        android:paddingLeft="20dp"
-        android:paddingRight="20dp"
-        android:src="@drawable/floral" />
+        <ImageView
+            android:id="@+id/pixelimage"
+            android:layout_width="132dp"
+            android:layout_height="132dp"
+            android:src="@mipmap/ic_launcher" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Your photos, at home"
+            android:textSize="26sp"
+            android:layout_marginTop="26dp"
+            android:gravity="center"
+            android:fontFamily="@font/fraunces_semibold"
+            android:textColor="#231F1A" />
+
+        <TextView
+            android:layout_width="280dp"
+            android:layout_height="wrap_content"
+            android:text="Everything on your device — timelines, memories, albums and people. No account, nothing uploaded."
+            android:textSize="13sp"
+            android:layout_marginTop="12dp"
+            android:gravity="center"
+            android:lineSpacingExtra="3dp"
+            android:fontFamily="@font/poppins_regular"
+            android:textColor="#B0231F1A" />
+    </LinearLayout>
 
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Welcome to Floral"
-        android:textSize="22sp"
+        android:text=""
         android:id="@+id/intro"
-        android:layout_alignParentBottom="true"
-        android:typeface="monospace"
-        android:layout_above="@id/pixelbutton"
-        android:clickable="true"
-        android:layout_marginBottom="90dp"
-        android:textColor="@color/black"
-        android:layout_centerHorizontal="true"/>
+        android:visibility="gone"
+        android:layout_centerHorizontal="true" />
+
     <androidx.appcompat.widget.AppCompatButton
         android:layout_width="wrap_content"
-        android:layout_height="40dp"
-        android:theme="@style/AppTheme.Button"
-        android:text="Get Started"
-        android:textSize="14sp"
-        android:paddingRight="20dp"
-        android:visibility="visible"
-        android:paddingLeft="20dp"
-        android:layout_marginBottom="30dp"
+        android:layout_height="52dp"
+        android:text="Get started"
+        android:textSize="15sp"
+        android:paddingHorizontal="42dp"
+        android:fontFamily="@font/poppins_medium"
         android:id="@+id/pixelbutton"
-        android:textColor="@color/white"
+        android:textColor="#FDF7EE"
         android:layout_alignParentBottom="true"
-        android:background="@drawable/button_style"
+        android:layout_marginBottom="44dp"
+        android:background="@drawable/soma_pill_btn"
+        android:stateListAnimator="@null"
         android:textAllCaps="false"
-        android:layout_centerHorizontal="true"/>
+        android:layout_centerHorizontal="true" />
+
     <LinearLayout
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginRight="10dp"
-        android:layout_marginBottom="40dp"
+        android:layout_marginBottom="52dp"
         android:layout_alignParentBottom="true"
         android:layout_centerHorizontal="true"
+        android:gravity="center"
         android:orientation="horizontal">
         <fr.castorflex.android.circularprogressbar.CircularProgressBar
-            xmlns:android="http://schemas.android.com/apk/res/android"
-            xmlns:app="http://schemas.android.com/apk/res-auto"
-            android:layout_width="20dp"
-            android:layout_height="20dp"
+            android:layout_width="18dp"
+            android:layout_height="18dp"
             android:indeterminate="true"
-            app:cpb_color="@color/gblue"
+            app:cpb_color="#E99274"
             android:visibility="gone"
             app:cpb_colors="@array/progress_colors"
             app:cpb_rotation_speed="1.0"
             android:id="@+id/loading_spinner"
             app:cpb_sweep_speed="1.0"
             app:cpb_stroke_width="2dp"
-            android:layout_marginTop="3dp"
-            android:layout_marginRight="8dp"
-            android:layout_gravity="center"
+            android:layout_marginEnd="8dp"
             app:cpb_min_sweep_angle="10"
-            app:cpb_max_sweep_angle="300"
-            />
-
+            app:cpb_max_sweep_angle="300" />
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Loading"
+            android:text="Reading your library…"
             android:id="@+id/progresstext"
-            android:textSize="18sp"
+            android:textSize="13sp"
+            android:fontFamily="@font/poppins_regular"
             android:visibility="gone"
-            android:layout_marginTop="8dp"
-            android:textColor="@color/black"/>
+            android:textColor="#73231F1A" />
     </LinearLayout>
 
 </RelativeLayout>

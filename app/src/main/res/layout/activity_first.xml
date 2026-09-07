@@ -1,24 +1,25 @@
 <?xml version="1.0" encoding="utf-8"?>
-<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#fff"
+    android:orientation="vertical"
+    android:gravity="center"
+    android:background="@drawable/soma_onboard_bg"
     tools:context="com.absolute.floral.ui.FirstActivity">
-<ImageView
-    android:layout_width="190dp"
-    android:layout_height="190dp"
-    android:src="@drawable/floral"
-    android:layout_centerInParent="true"
-    android:paddingBottom="50dp"/>
+
+    <ImageView
+        android:layout_width="120dp"
+        android:layout_height="120dp"
+        android:src="@mipmap/ic_launcher" />
+
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:layout_marginTop="20dp"
         android:text="Floral"
-        android:textSize="36dp"
-        android:typeface="monospace"
-        android:layout_alignParentBottom="true"
-        android:layout_centerHorizontal="true"
-        android:layout_marginBottom="50dp"
-        android:textColor="#cecece" />
-</RelativeLayout>
+        android:textSize="26sp"
+        android:fontFamily="@font/fraunces_semibold"
+        android:letterSpacing="0.01"
+        android:textColor="#231F1A" />
+</LinearLayout>
