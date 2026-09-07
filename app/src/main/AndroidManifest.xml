@@ -193,6 +193,10 @@
             android:launchMode="singleTop"
             android:windowSoftInputMode="adjustResize|stateVisible"
             android:theme="@style/CameraRoll.Theme" />
+        <activity
+            android:name="com.absolute.floral.ui.MemoryActivity"
+            android:launchMode="singleTop"
+            android:theme="@style/CameraRoll.Theme" />
 
         <receiver
             android:name="com.absolute.floral.widget.MemoriesWidgetProvider"

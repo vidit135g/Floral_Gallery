@@ -34,6 +34,18 @@ public class PhotoGridAdapter extends RecyclerView.Adapter<RecyclerView.ViewHold
 
     private static final int TYPE_HEADER = 0;
     private static final int TYPE_ITEM = 1;
+    private static final int TYPE_MEMORIES = 2;
+
+    private java.util.List<com.absolute.floral.data.Memories.Memory> memories = new ArrayList<>();
+    public void setMemories(java.util.List<com.absolute.floral.data.Memories.Memory> m) {
+        boolean was = hasMemories();
+        this.memories = m == null ? new ArrayList<>() : m;
+        if (was != hasMemories()) notifyDataSetChanged();
+        else if (hasMemories()) notifyItemChanged(0);
+    }
+    private boolean hasMemories() { return memories != null && !memories.isEmpty(); }
+    private int offset() { return hasMemories() ? 1 : 0; }
+    private PhotoTimeline.Row rowAt(int position) { return timeline.rows.get(position - offset()); }
 
     public interface SelectionListener { void onSelectionChanged(int count); }
 
@@ -68,17 +80,22 @@ public class PhotoGridAdapter extends RecyclerView.Adapter<RecyclerView.ViewHold
     public GridLayoutManager.SpanSizeLookup spanSizeLookup() {
         return new GridLayoutManager.SpanSizeLookup() {
             @Override public int getSpanSize(int position) {
-                return timeline.rows.get(position).header ? spanCount : 1;
+                if (hasMemories() && position == 0) return spanCount;
+                return rowAt(position).header ? spanCount : 1;
             }
         };
     }
 
-    @Override public int getItemCount() { return timeline == null ? 0 : timeline.rows.size(); }
+    @Override public int getItemCount() {
+        return (timeline == null ? 0 : timeline.rows.size()) + offset();
+    }
     @Override public int getItemViewType(int position) {
-        return timeline.rows.get(position).header ? TYPE_HEADER : TYPE_ITEM;
+        if (hasMemories() && position == 0) return TYPE_MEMORIES;
+        return rowAt(position).header ? TYPE_HEADER : TYPE_ITEM;
     }
     @Override public long getItemId(int position) {
-        PhotoTimeline.Row r = timeline.rows.get(position);
+        if (hasMemories() && position == 0) return "memories".hashCode();
+        PhotoTimeline.Row r = rowAt(position);
         return r.header ? ("h" + r.title).hashCode() : (r.item.getPath() == null ? position : r.item.getPath().hashCode());
     }
 
@@ -101,6 +118,8 @@ public class PhotoGridAdapter extends RecyclerView.Adapter<RecyclerView.ViewHold
     @NonNull @Override
     public RecyclerView.ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
         LayoutInflater inf = LayoutInflater.from(parent.getContext());
+        if (viewType == TYPE_MEMORIES)
+            return new MemoriesHolder(new com.absolute.floral.adapter.photos.MemoriesStrip(activity));
         if (viewType == TYPE_HEADER)
             return new HeaderHolder(inf.inflate(R.layout.photos_grid_header, parent, false));
         return new ItemHolder(inf.inflate(R.layout.photos_grid_item, parent, false));
@@ -108,7 +127,11 @@ public class PhotoGridAdapter extends RecyclerView.Adapter<RecyclerView.ViewHold
 
     @Override
     public void onBindViewHolder(@NonNull RecyclerView.ViewHolder holder, int position) {
-        PhotoTimeline.Row row = timeline.rows.get(position);
+        if (holder instanceof MemoriesHolder) {
+            ((MemoriesStrip) holder.itemView).bind(memories);
+            return;
+        }
+        PhotoTimeline.Row row = rowAt(position);
         Soma soma = SomaSkin.read(activity);
         if (holder instanceof HeaderHolder) {
             TextView tv = (TextView) holder.itemView;
@@ -176,6 +199,13 @@ public class PhotoGridAdapter extends RecyclerView.Adapter<RecyclerView.ViewHold
 
     static class HeaderHolder extends RecyclerView.ViewHolder {
         HeaderHolder(View v) { super(v); }
+    }
+    static class MemoriesHolder extends RecyclerView.ViewHolder {
+        MemoriesHolder(View v) {
+            super(v);
+            v.setLayoutParams(new RecyclerView.LayoutParams(
+                    RecyclerView.LayoutParams.MATCH_PARENT, RecyclerView.LayoutParams.WRAP_CONTENT));
+        }
     }
     static class ItemHolder extends RecyclerView.ViewHolder {
         final ImageView image; final TextView dur; final View scrim;

@@ -459,8 +459,9 @@ public class MainActivity extends ThemeableActivity implements CheckRefreshClick
             recyclerView.setItemAnimator(null);
             if (recyclerView.getAdapter() != photoAdapter) recyclerView.setAdapter(photoAdapter);
             java.util.ArrayList<Album> fresh = MediaProvider.getAlbumsWithVirtualDirectories(this);
-            photoAdapter.setTimeline(com.absolute.floral.data.PhotoTimeline.from(
-                    fresh != null && !fresh.isEmpty() ? fresh : albums));
+            java.util.List<Album> src = fresh != null && !fresh.isEmpty() ? fresh : albums;
+            photoAdapter.setTimeline(com.absolute.floral.data.PhotoTimeline.from(src));
+            photoAdapter.setMemories(com.absolute.floral.data.Memories.build(src));
         } else {
             com.absolute.floral.soma.SomaSkin.wordmark(toolbar, soma, "Collections", "");
             gridLayoutManager.setSpanCount(collectionsSpan);
@@ -476,7 +477,8 @@ public class MainActivity extends ThemeableActivity implements CheckRefreshClick
                     java.util.ArrayList<Album> f = MediaProvider.getAlbumsWithVirtualDirectories(this);
                     if (f != null && !f.isEmpty()) {
                         com.absolute.floral.data.PhotoTimeline tl = com.absolute.floral.data.PhotoTimeline.from(f);
-                        if (tl.items.size() != photoAdapter.getItemCount()) photoAdapter.setTimeline(tl);
+                        photoAdapter.setTimeline(tl);
+                        photoAdapter.setMemories(com.absolute.floral.data.Memories.build(f));
                     }
                 }, delay);
             }
@@ -628,6 +630,8 @@ public class MainActivity extends ThemeableActivity implements CheckRefreshClick
                             if (photoAdapter != null) {
                                 photoAdapter.setTimeline(
                                         com.absolute.floral.data.PhotoTimeline.from(albumsWithVirtualDirs));
+                                photoAdapter.setMemories(
+                                        com.absolute.floral.data.Memories.build(albumsWithVirtualDirs));
                             }
 
                             if (mediaProvider != null) {
