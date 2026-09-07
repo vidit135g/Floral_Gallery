@@ -4,7 +4,7 @@
 **Developer:** The Absolute Corporation
 **Category:** Photography
 **Content rating:** Everyone
-**versionCode:** 6 · **versionName:** 2.0
+**versionCode:** 9 · **versionName:** 2.3
 
 ---
 
@@ -48,8 +48,15 @@ Combine two to nine photos into a single collage — four layouts, five
 backgrounds — and save it straight to your gallery.
 
 — SEARCH —
-Type to find photos by file name, folder, month, or just “videos” / “photos”.
-Results appear instantly, grouped by date.
+Opens on a discovery page: the people, places and “things” (Food, Nature,
+Sky, Beaches, Animals, Cityscape…) found in your library entirely on-device,
+plus quick lists for Videos, Screenshots and recent shots. Type to find
+photos by file name, folder, month, a place or a category.
+
+— PLACES & MAP —
+Photos with a location are grouped by city (read from the photo, geocoded on
+your device) and plotted on “Your map” — an offline photo-map you can pan and
+zoom. No map tiles are ever downloaded.
 
 — INSIGHTS & COLOUR —
 A colourful bento dashboard: how many photos and videos you have, your
@@ -68,6 +75,17 @@ No ads. No account. No cloud. Made with care in India.
 ```
 
 ## What’s new (release notes, 500 chars max)
+```
+Floral 2.3 — a place for everything:
+• "Your map" — every geotagged place on an offline photo-map you can
+  pan and zoom (no tiles, no network)
+• One consistent card language across the app (new Card system)
+• Settings restyled as a floating bento card
+• The photo viewer's action bar is now a clean floating pill
+```
+
+<details><summary>Floral 2.2 notes</summary>
+
 ```
 Floral 2.2 — deeper, more capable, still 100% on-device:
 • A richer bento theme — dimensional gradients, soft glow, hue-matched shadows
@@ -90,6 +108,8 @@ Floral 2.1 — best of Apple & Google Photos, on-device:
   Collage, and Free up space (screenshots, big videos, look-alikes)
 • Search icon now springs in as you scroll
 ```
+
+</details>
 
 </details>
 
