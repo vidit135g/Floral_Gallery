@@ -46,13 +46,18 @@ public class PhotoTimeline {
         Collections.sort(uniq, (x, y) -> Long.compare(y.item.getDate(), x.item.getDate()));
 
         Calendar cal = Calendar.getInstance();
-        long lastBucket = Long.MIN_VALUE;
+        long now = System.currentTimeMillis();
+        String lastBucket = null;
         for (Entry e : uniq) {
             long d = e.item.getDate();
-            cal.setTimeInMillis(d > 0 ? d : System.currentTimeMillis());
-            long bucket = cal.get(Calendar.YEAR) * 1000L + cal.get(Calendar.DAY_OF_YEAR);
-            if (bucket != lastBucket) {
-                t.rows.add(new Row(headerLabel(cal, d)));
+            cal.setTimeInMillis(d > 0 ? d : now);
+            // recent photos bucket by day; older than ~3 weeks bucket by month (fuller rows, like GP)
+            boolean byMonth = d > 0 && now - d > 21L * 86400_000L;
+            String bucket = byMonth
+                    ? "m" + cal.get(Calendar.YEAR) + "-" + cal.get(Calendar.MONTH)
+                    : "d" + cal.get(Calendar.YEAR) + "-" + cal.get(Calendar.DAY_OF_YEAR);
+            if (!bucket.equals(lastBucket)) {
+                t.rows.add(new Row(headerLabel(cal, d, byMonth)));
                 lastBucket = bucket;
             }
             t.rows.add(new Row(e.item, e.albumPath));
@@ -61,10 +66,14 @@ public class PhotoTimeline {
         return t;
     }
 
-    private static String headerLabel(Calendar cal, long dateMs) {
+    private static String headerLabel(Calendar cal, long dateMs, boolean byMonth) {
         if (dateMs <= 0) return "Undated";
         Calendar now = Calendar.getInstance();
         boolean sameYear = now.get(Calendar.YEAR) == cal.get(Calendar.YEAR);
+        if (byMonth) {
+            return android.text.format.DateFormat.format(
+                    sameYear ? "MMMM" : "MMMM yyyy", cal).toString();
+        }
         int dyDiff = sameYear ? now.get(Calendar.DAY_OF_YEAR) - cal.get(Calendar.DAY_OF_YEAR) : 999;
         if (dyDiff == 0) return "Today";
         if (dyDiff == 1) return "Yesterday";
