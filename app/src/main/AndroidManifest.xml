@@ -201,6 +201,14 @@
             android:name="com.absolute.floral.ui.BucketActivity"
             android:launchMode="singleTop"
             android:theme="@style/CameraRoll.Theme" />
+        <activity
+            android:name="com.absolute.floral.ui.InsightsActivity"
+            android:launchMode="singleTop"
+            android:theme="@style/CameraRoll.Theme" />
+        <activity
+            android:name="com.absolute.floral.ui.ColorSearchActivity"
+            android:launchMode="singleTop"
+            android:theme="@style/CameraRoll.Theme" />
 
         <receiver
             android:name="com.absolute.floral.widget.MemoriesWidgetProvider"

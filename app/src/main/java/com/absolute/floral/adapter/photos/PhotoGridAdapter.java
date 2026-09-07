@@ -37,13 +37,28 @@ public class PhotoGridAdapter extends RecyclerView.Adapter<RecyclerView.ViewHold
     private static final int TYPE_MEMORIES = 2;
 
     private java.util.List<com.absolute.floral.data.Memories.Memory> memories = new ArrayList<>();
+    private com.absolute.floral.bento.LibrarySnapshot snapshot;
+    private java.util.List<com.absolute.floral.people.PeopleIndex.Person> people = new ArrayList<>();
+    private boolean bentoEnabled = true;
+
     public void setMemories(java.util.List<com.absolute.floral.data.Memories.Memory> m) {
         boolean was = hasMemories();
         this.memories = m == null ? new ArrayList<>() : m;
         if (was != hasMemories()) notifyDataSetChanged();
         else if (hasMemories()) notifyItemChanged(0);
     }
-    private boolean hasMemories() { return memories != null && !memories.isEmpty(); }
+    public void setSnapshot(com.absolute.floral.bento.LibrarySnapshot s) {
+        this.snapshot = s;
+        if (hasMemories()) notifyItemChanged(0);
+    }
+    public void setPeople(java.util.List<com.absolute.floral.people.PeopleIndex.Person> p) {
+        this.people = p == null ? new ArrayList<>() : p;
+        if (hasMemories()) notifyItemChanged(0);
+    }
+    /** The bento header shows whenever we have anything to summarise. */
+    private boolean hasMemories() {
+        return bentoEnabled && (snapshot != null || (memories != null && !memories.isEmpty()));
+    }
     private int offset() { return hasMemories() ? 1 : 0; }
     private PhotoTimeline.Row rowAt(int position) { return timeline.rows.get(position - offset()); }
 
@@ -118,8 +133,12 @@ public class PhotoGridAdapter extends RecyclerView.Adapter<RecyclerView.ViewHold
     @NonNull @Override
     public RecyclerView.ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
         LayoutInflater inf = LayoutInflater.from(parent.getContext());
-        if (viewType == TYPE_MEMORIES)
-            return new MemoriesHolder(new com.absolute.floral.adapter.photos.MemoriesStrip(activity));
+        if (viewType == TYPE_MEMORIES) {
+            android.widget.FrameLayout box = new android.widget.FrameLayout(activity);
+            box.setLayoutParams(new RecyclerView.LayoutParams(
+                    RecyclerView.LayoutParams.MATCH_PARENT, RecyclerView.LayoutParams.WRAP_CONTENT));
+            return new MemoriesHolder(box);
+        }
         if (viewType == TYPE_HEADER)
             return new HeaderHolder(inf.inflate(R.layout.photos_grid_header, parent, false));
         return new ItemHolder(inf.inflate(R.layout.photos_grid_item, parent, false));
@@ -128,7 +147,9 @@ public class PhotoGridAdapter extends RecyclerView.Adapter<RecyclerView.ViewHold
     @Override
     public void onBindViewHolder(@NonNull RecyclerView.ViewHolder holder, int position) {
         if (holder instanceof MemoriesHolder) {
-            ((MemoriesStrip) holder.itemView).bind(memories);
+            android.widget.FrameLayout box = (android.widget.FrameLayout) holder.itemView;
+            box.removeAllViews();
+            box.addView(com.absolute.floral.bento.BentoHeader.build(activity, snapshot, memories, people));
             return;
         }
         PhotoTimeline.Row row = rowAt(position);

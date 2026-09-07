@@ -40,7 +40,13 @@ public class CollectionsAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
     private final Activity a;
     private List<Album> albums = new ArrayList<>();
     private List<PeopleIndex.Person> people = new ArrayList<>();
+    private com.absolute.floral.bento.LibrarySnapshot snapshot;
     private final List<Row> rows = new ArrayList<>();
+
+    public void setSnapshot(com.absolute.floral.bento.LibrarySnapshot s) {
+        this.snapshot = s;
+        if (!rows.isEmpty()) notifyItemChanged(0);
+    }
 
     private static class Row {
         int type; String text; Album album;
@@ -88,7 +94,12 @@ public class CollectionsAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
     public RecyclerView.ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
         Soma s = SomaSkin.read(a);
         switch (viewType) {
-            case T_PINNED: return new VH(buildPinned(s));
+            case T_PINNED: {
+                android.widget.FrameLayout box = new android.widget.FrameLayout(a);
+                box.setLayoutParams(new RecyclerView.LayoutParams(
+                        ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+                return new VH(box);
+            }
             case T_SECTION: return new VH(buildSection(s));
             case T_PEOPLE: return new VH(new PeopleStrip(a));
             default: return new AlbumVH(buildAlbumCard(s));
@@ -99,7 +110,11 @@ public class CollectionsAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
     public void onBindViewHolder(@NonNull RecyclerView.ViewHolder h, int position) {
         Row r = rows.get(position);
         Soma s = SomaSkin.read(a);
-        if (r.type == T_SECTION) {
+        if (r.type == T_PINNED) {
+            android.widget.FrameLayout box = (android.widget.FrameLayout) h.itemView;
+            box.removeAllViews();
+            box.addView(buildBento(s));
+        } else if (r.type == T_SECTION) {
             ((TextView) h.itemView).setText(r.text);
         } else if (r.type == T_PEOPLE) {
             ((PeopleStrip) h.itemView).bind(people);
@@ -122,7 +137,34 @@ public class CollectionsAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
         }
     }
 
-    /* ---- pinned ---- */
+    /* ---- colourful bento ---- */
+    private View buildBento(Soma s) {
+        com.absolute.floral.bento.BentoLayout b = new com.absolute.floral.bento.BentoLayout(a);
+        b.setLayoutParams(new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+        com.absolute.floral.bento.LibrarySnapshot snap = snapshot;
+
+        LinearLayout r1 = b.row(108);
+        b.tile(r1, 1f, v -> openBucket("Favorites", "", collect(FlagStore.favorites(a).all())))
+                .gradient(0).label("Favorites").value(snap != null ? String.valueOf(snap.favorites) : "");
+        b.tile(r1, 1f, v -> openBucket("Archive", "", collect(FlagStore.archive(a).all())))
+                .gradient(3).label("Archive").value(snap != null && !FlagStore.archive(a).all().isEmpty()
+                        ? String.valueOf(FlagStore.archive(a).all().size()) : "");
+        b.tile(r1, 1f, v -> openBucket("Trash", "", trashed()))
+                .gradient(8).label("Trash").icon(com.absolute.floral.R.drawable.ic_delete_white);
+
+        LinearLayout r2 = b.row(96);
+        b.tile(r2, 1.3f, v -> a.startActivity(new Intent(a, com.absolute.floral.ui.InsightsActivity.class)))
+                .gradient(4).label("Insights").sub(snap != null
+                        ? (snap.photos + snap.videos) + " items" : "Explore your library");
+        b.tile(r2, 1f, v -> a.startActivity(new Intent(a, com.absolute.floral.ui.ColorSearchActivity.class)))
+                .gradient(9).label("Colours");
+        b.tile(r2, 1f, v -> a.startActivity(new Intent(a, com.absolute.floral.ui.InsightsActivity.class)))
+                .gradient(6).label("This month").value(snap != null && snap.busiestMonthCount > 0
+                        ? String.valueOf(snap.months[java.util.Calendar.getInstance().get(java.util.Calendar.MONTH)]) : "");
+        return b;
+    }
+
     private View buildPinned(Soma s) {
         LinearLayout row = new LinearLayout(a);
         row.setOrientation(LinearLayout.HORIZONTAL);

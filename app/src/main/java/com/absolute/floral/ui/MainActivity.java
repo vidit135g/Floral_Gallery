@@ -636,6 +636,11 @@ public class MainActivity extends ThemeableActivity implements CheckRefreshClick
                                 collectionsAdapter.setData(albumsWithVirtualDirs);
                                 com.absolute.floral.people.PeopleIndex.get().ensure(MainActivity.this, ppl -> {
                                     if (collectionsAdapter != null) collectionsAdapter.setPeople(ppl);
+                                    if (photoAdapter != null) photoAdapter.setPeople(ppl);
+                                });
+                                com.absolute.floral.bento.LibrarySnapshot.get(MainActivity.this, snap -> {
+                                    if (photoAdapter != null) photoAdapter.setSnapshot(snap);
+                                    if (collectionsAdapter != null) collectionsAdapter.setSnapshot(snap);
                                 });
                             }
                             if (photoAdapter != null) {
