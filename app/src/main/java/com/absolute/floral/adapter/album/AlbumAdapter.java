@@ -41,6 +41,7 @@ public class AlbumAdapter extends AbstractRecyclerViewAdapter<Album> {
     private final int VIEW_TYPE_RAW = 4;
 
     private DragSelectTouchListener dragSelectTouchListener;
+    private int lastAnimatedPosition = -1;
 
     public AlbumAdapter(SelectorModeManager.Callback callback, final RecyclerView recyclerView,
                         final Album album, boolean pick_photos) {
@@ -130,6 +131,11 @@ public class AlbumAdapter extends AbstractRecyclerViewAdapter<Album> {
         ((AlbumItemHolder) holder).setSelected(selected);
 
         holder.itemView.setTag(albumItem.getPath());
+
+        if (!getSelectorMode()) {
+            com.absolute.floral.soma.Anim.item(holder.itemView, position, lastAnimatedPosition);
+            if (position > lastAnimatedPosition) lastAnimatedPosition = position;
+        }
 
         holder.itemView.setOnClickListener(new View.OnClickListener() {
             @Override

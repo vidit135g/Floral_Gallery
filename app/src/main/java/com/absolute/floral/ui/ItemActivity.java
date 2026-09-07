@@ -190,7 +190,8 @@ public class ItemActivity extends ThemeableActivity {
             if (view instanceof TextView) {
                 TextView tv = (TextView) view;
                 if (tv.getText().equals(toolbar.getTitle())) {
-                    tv.setTypeface(Typeface.createFromAsset(getApplicationContext().getAssets(), "fonts/google.ttf"));
+                    tv.setTypeface(com.absolute.floral.soma.Soma.display(this));
+                    tv.setTextColor(0xFFFFFFFF);
                     break;
                 }
             }

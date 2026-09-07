@@ -1177,16 +1177,32 @@ public class AlbumActivity extends ThemeableActivity
 
     @Override
     public void onThemeApplied(Theme theme) {
+        final ViewGroup rootView = findViewById(R.id.root_view);
+        com.absolute.floral.soma.Soma soma = com.absolute.floral.soma.SomaSkin.read(this);
+        com.absolute.floral.soma.SomaSkin.ground(this, rootView, soma);
+        com.absolute.floral.soma.SomaSkin.statusBarIcons(this, soma);
+
+        final Toolbar toolbar = findViewById(R.id.toolbar);
+        toolbar.setBackgroundColor(android.graphics.Color.TRANSPARENT);
+        toolbar.setTitleTextColor(soma.ink);
+        for (int i = 0; i < toolbar.getChildCount(); i++) {
+            View v = toolbar.getChildAt(i);
+            if (v instanceof android.widget.TextView) {
+                ((android.widget.TextView) v).setTypeface(com.absolute.floral.soma.Soma.display(this));
+                ((android.widget.TextView) v).setTextColor(soma.ink);
+            }
+        }
+        toolbar.post(() -> com.absolute.floral.soma.SomaSkin.toolbarIcons(toolbar, soma));
+        if (recyclerView != null)
+            recyclerView.post(() -> com.absolute.floral.soma.Anim.enterChildren(recyclerView, 40, 22));
+
         if (pick_photos) {
             return;
         }
 
-        final Toolbar toolbar = findViewById(R.id.toolbar);
-        toolbar.setBackgroundColor(toolbarColor);
-        toolbar.setTitleTextColor(textColorPrimary);
-
         FloatingActionButton fab = findViewById(R.id.fab);
-        fab.setBackgroundTintList(ColorStateList.valueOf(accentColor));
+        fab.setBackgroundTintList(ColorStateList.valueOf(soma.surfaceStrong));
+        fab.setColorFilter(soma.ink);
 
         if (theme.darkStatusBarIcons()) {
             Util.setDarkStatusBarIcons(findViewById(R.id.root_view));
