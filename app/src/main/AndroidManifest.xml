@@ -17,9 +17,9 @@
     <application
         android:name="com.absolute.floral.ui.CustomFontApp"
         android:allowBackup="false"
-        android:icon="@drawable/floral"
+        android:icon="@mipmap/ic_launcher"
         android:label="Floral"
-        android:roundIcon="@drawable/floral"
+        android:roundIcon="@mipmap/ic_launcher_round"
         android:requestLegacyExternalStorage="true"
         android:supportsRtl="true"
         android:theme="@style/CameraRoll.Theme">
