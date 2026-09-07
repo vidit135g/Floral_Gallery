@@ -183,6 +183,19 @@
             android:name="com.absolute.floral.data.fileOperations.Rename"
             android:foregroundServiceType="dataSync"
             tools:ignore="InnerclassSeparator" />
+
+        <receiver
+            android:name="com.absolute.floral.widget.MemoriesWidgetProvider"
+            android:exported="false"
+            android:label="Floral Memories">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+                <action android:name="com.absolute.floral.widget.REFRESH" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/widget_memories_info" />
+        </receiver>
     </application>
 
 </manifest>
