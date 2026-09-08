@@ -119,19 +119,10 @@ public class MainActivity extends ThemeableActivity implements CheckRefreshClick
     private RecyclerView recyclerView;
     private AbstractRecyclerViewAdapter<ArrayList<Album>> recyclerViewAdapter;
 
-    // Google-Photos-style tabs
-    public static final int TAB_PHOTOS = 0, TAB_COLLECTIONS = 1, TAB_CREATE = 2;
-    private int currentTab = TAB_PHOTOS;
-    private com.absolute.floral.soma.NavPill navPill;
+    // iOS 18 single-scroll Library
     private com.absolute.floral.adapter.photos.PhotoGridAdapter photoAdapter;
-    private com.absolute.floral.adapter.collections.CollectionsAdapter collectionsAdapter;
-    private com.absolute.floral.adapter.photos.PeriodAdapter monthsAdapter, yearsAdapter;
-    private com.absolute.floral.soma.Segmented segmented;
-    private int photoScope = 2; // 0 years, 1 months, 2 days
-    private int baseRecyclerPadBottom = -1;
     private GridLayoutManager gridLayoutManager;
     private int photoSpan = 3;
-    private androidx.recyclerview.widget.RecyclerView.ItemDecoration collectionsDecoration;
 
 
     private MediaProvider mediaProvider;
@@ -374,199 +365,63 @@ public class MainActivity extends ThemeableActivity implements CheckRefreshClick
         setSystemUiFlags();
 
         if (!pick_photos) {
-            setupGooglePhotosTabs(collectionsSpan);
+            setupLibrary();
         }
     }
 
-    /* ---------------- Google-Photos-style tabs ---------------- */
+    /* ---------------- iOS 18 single-scroll Library ---------------- */
 
-    private void setupGooglePhotosTabs(final int collectionsSpan) {
+    private void setupLibrary() {
         final com.absolute.floral.soma.Soma soma = com.absolute.floral.soma.SomaSkin.read(this);
-        ViewGroup host = (ViewGroup) recyclerView.getParent();          // root_view FrameLayout
-
-        navPill = new com.absolute.floral.soma.NavPill(this);
-        navPill.setSoma(soma);
-        FrameLayout.LayoutParams lp = new FrameLayout.LayoutParams(
-                ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-        lp.gravity = android.view.Gravity.BOTTOM | android.view.Gravity.CENTER_HORIZONTAL;
-        int m = Math.round(getResources().getDisplayMetrics().density * 14);
-        lp.setMargins(m, m, m, m + Math.round(getResources().getDisplayMetrics().density * 8));
-        host.addView(navPill, lp);
+        final Toolbar toolbar = findViewById(R.id.toolbar);
+        com.absolute.floral.soma.SomaSkin.wordmark(toolbar, soma, "Library", "");
+        photoSpan = Math.max(2, Math.min(5, Settings.getInstance(this).getColumnCount(this)));
 
         recyclerView.setClipToPadding(false);
         recyclerView.setPadding(recyclerView.getPaddingLeft(), recyclerView.getPaddingTop(),
                 recyclerView.getPaddingRight(),
-                recyclerView.getPaddingBottom() + Math.round(getResources().getDisplayMetrics().density * 84));
+                recyclerView.getPaddingBottom()
+                        + Math.round(getResources().getDisplayMetrics().density * 12));
 
         photoAdapter = new com.absolute.floral.adapter.photos.PhotoGridAdapter(this,
                 com.absolute.floral.data.PhotoTimeline.from(albums));
         photoAdapter.setSpanCount(photoSpan);
+        photoAdapter.setAlbums(albums);
 
-        collectionsAdapter = new com.absolute.floral.adapter.collections.CollectionsAdapter(this);
-        collectionsAdapter.setData(albums);
+        gridLayoutManager.setSpanCount(photoSpan);
+        gridLayoutManager.setSpanSizeLookup(photoAdapter.spanSizeLookup());
+        recyclerView.setItemAnimator(null);
+        recyclerView.setAdapter(photoAdapter);
 
-        com.absolute.floral.adapter.photos.PeriodAdapter.OnPeriod drill = p -> {
-            com.absolute.floral.ui.BucketActivity.TITLE = p.title;
-            com.absolute.floral.ui.BucketActivity.KICKER = p.subtitle;
-            com.absolute.floral.ui.BucketActivity.ITEMS = new java.util.ArrayList<>(p.items);
-            startActivity(new Intent(this, com.absolute.floral.ui.BucketActivity.class));
-        };
-        monthsAdapter = new com.absolute.floral.adapter.photos.PeriodAdapter(this, true, drill);
-        yearsAdapter = new com.absolute.floral.adapter.photos.PeriodAdapter(this, false, drill);
-
-        // Apple-Photos Years / Months / Days segmented control — floats above the nav pill
-        segmented = new com.absolute.floral.soma.Segmented(this);
-        segmented.setSoma(soma);
-        segmented.select(2, false);
-        float dd = getResources().getDisplayMetrics().density;
-        FrameLayout.LayoutParams slp = new FrameLayout.LayoutParams(
-                Math.round(dd * 240), Math.round(dd * 38));
-        slp.gravity = android.view.Gravity.BOTTOM | android.view.Gravity.CENTER_HORIZONTAL;
-        slp.bottomMargin = Math.round(dd * 128);   // clear of the nav pill
-        segmented.setElevation(dd * 10);
-        host.addView(segmented, slp);
-        segmented.setOnChange(this::setPhotoScope);
-
-        // pinch to change density
+        // pinch to change grid density (2..5 columns), persisted
         final android.view.ScaleGestureDetector pinch = new android.view.ScaleGestureDetector(this,
                 new android.view.ScaleGestureDetector.SimpleOnScaleGestureListener() {
                     @Override public boolean onScale(android.view.ScaleGestureDetector d) {
-                        if (currentTab != TAB_PHOTOS) return false;
-                        if (d.getScaleFactor() > 1.18f && photoSpan > 2) { setPhotoSpan(photoSpan - 1); return true; }
-                        if (d.getScaleFactor() < 0.86f && photoSpan < 6) { setPhotoSpan(photoSpan + 1); return true; }
+                        if (d.getScaleFactor() > 1.18f && photoSpan > 2) { setLibrarySpan(photoSpan - 1); return true; }
+                        if (d.getScaleFactor() < 0.86f && photoSpan < 5) { setLibrarySpan(photoSpan + 1); return true; }
                         return false;
                     }
                 });
         recyclerView.addOnItemTouchListener(new RecyclerView.SimpleOnItemTouchListener() {
             @Override public boolean onInterceptTouchEvent(RecyclerView rv, android.view.MotionEvent e) {
-                if (currentTab == TAB_PHOTOS && e.getPointerCount() > 1) { pinch.onTouchEvent(e); return true; }
+                if (e.getPointerCount() > 1) { pinch.onTouchEvent(e); return true; }
                 return false;
             }
             @Override public void onTouchEvent(RecyclerView rv, android.view.MotionEvent e) { pinch.onTouchEvent(e); }
         });
 
-        // repurpose the corner FAB as Search — hides on scroll-down, springs back on scroll-up
-        final FloatingActionButton searchFab = findViewById(R.id.fab);
-        final float fabRest = -Math.round(getResources().getDisplayMetrics().density * 76);
-        final float fabHidden = Math.round(getResources().getDisplayMetrics().density * 120);
-        if (searchFab != null) {
-            searchFab.setImageResource(R.drawable.ic_search_white);
-            searchFab.setColorFilter(soma.ink);
-            searchFab.setBackgroundTintList(android.content.res.ColorStateList.valueOf(
-                    soma.lightBase ? 0xFFFFFFFF : 0xFF262320));
-            searchFab.setVisibility(View.VISIBLE);
-            searchFab.setOnClickListener(v ->
-                    startActivity(new Intent(this, SearchActivity.class)));
-            searchFab.setTranslationY(fabRest);
-            searchFab.setAlpha(0f);
-            searchFab.setScaleX(0.4f); searchFab.setScaleY(0.4f);
-            searchFab.postDelayed(() -> searchFab.animate().alpha(1f).scaleX(1f).scaleY(1f)
-                    .setDuration(340).setInterpolator(com.absolute.floral.soma.Anim.ease()).start(), 260);
-            recyclerView.addOnScrollListener(new RecyclerView.OnScrollListener() {
-                boolean shown = true;
-                @Override public void onScrolled(RecyclerView rv, int dx, int dy) {
-                    if (dy > 8 && shown) {
-                        shown = false;
-                        searchFab.animate().translationY(fabHidden).alpha(0f).scaleX(0.7f).scaleY(0.7f)
-                                .setDuration(200).start();
-                    } else if (dy < -8 && !shown) {
-                        shown = true;
-                        searchFab.animate().translationY(fabRest).alpha(1f).scaleX(1f).scaleY(1f)
-                                .setInterpolator(new android.view.animation.OvershootInterpolator(1.6f))
-                                .setDuration(360).start();
-                    }
-                }
-                @Override public void onScrollStateChanged(RecyclerView rv, int state) {
-                    if (state == RecyclerView.SCROLL_STATE_IDLE && !shown
-                            && !rv.canScrollVertically(-1)) {
-                        shown = true;
-                        searchFab.animate().translationY(fabRest).alpha(1f).scaleX(1f).scaleY(1f)
-                                .setInterpolator(new android.view.animation.OvershootInterpolator(1.6f))
-                                .setDuration(360).start();
-                    }
-                }
-            });
-        }
+        final FloatingActionButton fab = findViewById(R.id.fab);
+        if (fab != null) fab.hide();
 
-        navPill.setOnTab(idx -> {
-            if (idx > TAB_COLLECTIONS) { navPill.select(currentTab, false); return; }
-            switchTab(idx, collectionsSpan);
-        });
-
-        switchTab(TAB_PHOTOS, collectionsSpan);
+        recyclerView.post(() -> com.absolute.floral.soma.Anim.enterChildren(recyclerView, 20, 20));
     }
 
-    private void setPhotoSpan(int span) {
+    private void setLibrarySpan(int span) {
         photoSpan = span;
+        Settings.getInstance(this).setColumnCount(span);
         photoAdapter.setSpanCount(span);
         gridLayoutManager.setSpanCount(span);
         photoAdapter.notifyDataSetChanged();
-    }
-
-    private void setPhotoScope(int scope) {
-        photoScope = scope;
-        if (currentTab != TAB_PHOTOS) return;
-        java.util.List<Album> src = MediaProvider.getAlbumsWithVirtualDirectories(this);
-        if (src == null || src.isEmpty()) src = albums;
-        recyclerView.setItemAnimator(null);
-        if (scope == 2) {                                   // Days
-            gridLayoutManager.setSpanCount(photoSpan);
-            gridLayoutManager.setSpanSizeLookup(photoAdapter.spanSizeLookup());
-            if (recyclerView.getAdapter() != photoAdapter) recyclerView.setAdapter(photoAdapter);
-            photoAdapter.setTimeline(com.absolute.floral.data.PhotoTimeline.from(src));
-        } else if (scope == 1) {                            // Months
-            gridLayoutManager.setSpanCount(1);
-            gridLayoutManager.setSpanSizeLookup(new GridLayoutManager.DefaultSpanSizeLookup());
-            monthsAdapter.setData(com.absolute.floral.data.Periods.months(src));
-            recyclerView.setAdapter(monthsAdapter);
-        } else {                                            // Years
-            gridLayoutManager.setSpanCount(1);
-            gridLayoutManager.setSpanSizeLookup(new GridLayoutManager.DefaultSpanSizeLookup());
-            yearsAdapter.setData(com.absolute.floral.data.Periods.years(src));
-            recyclerView.setAdapter(yearsAdapter);
-        }
-        recyclerView.scrollToPosition(0);
-        recyclerView.post(() -> com.absolute.floral.soma.Anim.enterChildren(recyclerView, 20, 22));
-    }
-
-    private void switchTab(int idx, int collectionsSpan) {
-        currentTab = idx;
-        final Toolbar toolbar = findViewById(R.id.toolbar);
-        com.absolute.floral.soma.Soma soma = com.absolute.floral.soma.SomaSkin.read(this);
-        if (baseRecyclerPadBottom < 0) baseRecyclerPadBottom = recyclerView.getPaddingBottom();
-        if (segmented != null) segmented.setVisibility(idx == TAB_PHOTOS ? View.VISIBLE : View.GONE);
-        int segPad = idx == TAB_PHOTOS ? Math.round(getResources().getDisplayMetrics().density * 62) : 0;
-        recyclerView.setPadding(recyclerView.getPaddingLeft(), recyclerView.getPaddingTop(),
-                recyclerView.getPaddingRight(), baseRecyclerPadBottom + segPad);
-        if (idx == TAB_PHOTOS) {
-            com.absolute.floral.soma.SomaSkin.wordmark(toolbar, soma, "Photos", "");
-            java.util.ArrayList<Album> fresh = MediaProvider.getAlbumsWithVirtualDirectories(this);
-            java.util.List<Album> src = fresh != null && !fresh.isEmpty() ? fresh : albums;
-            photoAdapter.setMemories(com.absolute.floral.data.Memories.build(src));
-            setPhotoScope(photoScope);
-        } else {
-            com.absolute.floral.soma.SomaSkin.wordmark(toolbar, soma, "Collections", "");
-            collectionsAdapter.setData(MediaProvider.getAlbumsWithVirtualDirectories(this));
-            gridLayoutManager.setSpanCount(2);
-            gridLayoutManager.setSpanSizeLookup(collectionsAdapter.spanSizeLookup(2));
-            recyclerView.setItemAnimator(null);
-            if (recyclerView.getAdapter() != collectionsAdapter) recyclerView.setAdapter(collectionsAdapter);
-        }
-        recyclerView.post(() -> com.absolute.floral.soma.Anim.enterChildren(recyclerView, 30, 26));
-
-        if (idx == TAB_PHOTOS) {
-            for (int delay : new int[]{ 500, 1400, 3000, 6000 }) {
-                recyclerView.postDelayed(() -> {
-                    if (currentTab != TAB_PHOTOS) return;
-                    java.util.ArrayList<Album> f = MediaProvider.getAlbumsWithVirtualDirectories(this);
-                    if (f != null && !f.isEmpty()) {
-                        com.absolute.floral.data.PhotoTimeline tl = com.absolute.floral.data.PhotoTimeline.from(f);
-                        photoAdapter.setTimeline(tl);
-                        photoAdapter.setMemories(com.absolute.floral.data.Memories.build(f));
-                    }
-                }, delay);
-            }
-        }
     }
 
 
@@ -711,25 +566,21 @@ public class MainActivity extends ThemeableActivity implements CheckRefreshClick
                         public void run() {
                             MainActivity.this.albums = albumsWithVirtualDirs;
                             recyclerViewAdapter.setData(albumsWithVirtualDirs);
-                            if (collectionsAdapter != null) {
-                                collectionsAdapter.setData(albumsWithVirtualDirs);
-                                com.absolute.floral.people.PeopleIndex.get().ensure(MainActivity.this, ppl -> {
-                                    if (collectionsAdapter != null) collectionsAdapter.setPeople(ppl);
-                                    if (photoAdapter != null) photoAdapter.setPeople(ppl);
-                                });
-                                com.absolute.floral.bento.LibrarySnapshot.get(MainActivity.this, snap -> {
-                                    if (photoAdapter != null) photoAdapter.setSnapshot(snap);
-                                    if (collectionsAdapter != null) collectionsAdapter.setSnapshot(snap);
-                                });
-                                com.absolute.floral.places.PlacesIndex.get().ensure(MainActivity.this, pl -> {
-                                    if (photoAdapter != null) photoAdapter.setPlaces(pl);
-                                });
-                            }
                             if (photoAdapter != null) {
                                 photoAdapter.setTimeline(
                                         com.absolute.floral.data.PhotoTimeline.from(albumsWithVirtualDirs));
                                 photoAdapter.setMemories(
                                         com.absolute.floral.data.Memories.build(albumsWithVirtualDirs));
+                                photoAdapter.setAlbums(albumsWithVirtualDirs);
+                                com.absolute.floral.people.PeopleIndex.get().ensure(MainActivity.this, ppl -> {
+                                    if (photoAdapter != null) photoAdapter.setPeople(ppl);
+                                });
+                                com.absolute.floral.bento.LibrarySnapshot.get(MainActivity.this, snap -> {
+                                    if (photoAdapter != null) photoAdapter.setSnapshot(snap);
+                                });
+                                com.absolute.floral.places.PlacesIndex.get().ensure(MainActivity.this, pl -> {
+                                    if (photoAdapter != null) photoAdapter.setPlaces(pl);
+                                });
                             }
 
                             if (mediaProvider != null) {
@@ -771,11 +622,13 @@ public class MainActivity extends ThemeableActivity implements CheckRefreshClick
     protected void onStart() {
         super.onStart();
         refreshPhotos();
-        if (photoAdapter != null && currentTab == TAB_PHOTOS) {
+        if (photoAdapter != null) {
             recyclerView.postDelayed(() -> {
                 java.util.ArrayList<Album> fresh = MediaProvider.getAlbumsWithVirtualDirectories(this);
-                if (fresh != null && !fresh.isEmpty())
+                if (fresh != null && !fresh.isEmpty()) {
                     photoAdapter.setTimeline(com.absolute.floral.data.PhotoTimeline.from(fresh));
+                    photoAdapter.setAlbums(fresh);
+                }
             }, 400);
         }
     }
@@ -806,6 +659,9 @@ public class MainActivity extends ThemeableActivity implements CheckRefreshClick
       @Override
       public boolean onOptionsItemSelected(MenuItem item) {
        switch (item.getItemId()) {
+           case R.id.action_search:
+               startActivity(new Intent(MainActivity.this, SearchActivity.class));
+               break;
            case android.R.id.home:
            case R.id.locked_folder:
                final Intent intent=new Intent(MainActivity.this,PinningActivity.class);
@@ -1003,8 +859,7 @@ public class MainActivity extends ThemeableActivity implements CheckRefreshClick
             return;
         }
 
-        String big = currentTab == TAB_COLLECTIONS ? "Collections" : "Photos";
-        com.absolute.floral.soma.SomaSkin.wordmark(toolbar, soma, big, "");
+        com.absolute.floral.soma.SomaSkin.wordmark(toolbar, soma, "Library", "");
         toolbar.post(() -> com.absolute.floral.soma.SomaSkin.toolbarIcons(toolbar, soma));
 
         // gentle entrance for the wordmark + first albums

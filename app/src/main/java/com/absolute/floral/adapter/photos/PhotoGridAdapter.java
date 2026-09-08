@@ -29,44 +29,60 @@ import com.bumptech.glide.Glide;
 import java.util.ArrayList;
 import java.util.List;
 
-/** The flat, date-sectioned photo grid for the Photos tab. */
+/**
+ * The single-scroll Library: the flat, date-sectioned photo grid, followed by the
+ * "Collections" stack ({@link com.absolute.floral.bento.LibrarySections}) as one
+ * full-width row at the very bottom — Apple-Photos iOS 18 style.
+ */
 public class PhotoGridAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
 
     private static final int TYPE_HEADER = 0;
     private static final int TYPE_ITEM = 1;
-    private static final int TYPE_MEMORIES = 2;
+    private static final int TYPE_COLLECTIONS = 2;
 
     private java.util.List<com.absolute.floral.data.Memories.Memory> memories = new ArrayList<>();
     private com.absolute.floral.bento.LibrarySnapshot snapshot;
     private java.util.List<com.absolute.floral.people.PeopleIndex.Person> people = new ArrayList<>();
     private java.util.List<com.absolute.floral.places.PlacesIndex.Place> places = new ArrayList<>();
+    private java.util.List<com.absolute.floral.data.models.Album> albums = new ArrayList<>();
     private boolean bentoEnabled = true;
 
+    public void setBentoEnabled(boolean b) { this.bentoEnabled = b; }
+
+    public void setAlbums(java.util.List<com.absolute.floral.data.models.Album> a) {
+        this.albums = a == null ? new ArrayList<>() : a;
+        invalidateCollections();
+    }
     public void setPlaces(java.util.List<com.absolute.floral.places.PlacesIndex.Place> p) {
         this.places = p == null ? new ArrayList<>() : p;
-        if (hasMemories()) notifyItemChanged(0);
+        invalidateCollections();
     }
-
     public void setMemories(java.util.List<com.absolute.floral.data.Memories.Memory> m) {
-        boolean was = hasMemories();
+        boolean was = hasCollections();
         this.memories = m == null ? new ArrayList<>() : m;
-        if (was != hasMemories()) notifyDataSetChanged();
-        else if (hasMemories()) notifyItemChanged(0);
+        if (was != hasCollections()) notifyDataSetChanged();
+        else invalidateCollections();
     }
     public void setSnapshot(com.absolute.floral.bento.LibrarySnapshot s) {
         this.snapshot = s;
-        if (hasMemories()) notifyItemChanged(0);
+        invalidateCollections();
     }
     public void setPeople(java.util.List<com.absolute.floral.people.PeopleIndex.Person> p) {
         this.people = p == null ? new ArrayList<>() : p;
-        if (hasMemories()) notifyItemChanged(0);
+        invalidateCollections();
     }
-    /** The bento header shows whenever we have anything to summarise. */
-    private boolean hasMemories() {
-        return bentoEnabled && (snapshot != null || (memories != null && !memories.isEmpty()));
+
+    private void invalidateCollections() {
+        if (hasCollections()) notifyItemChanged(collectionsPos());
     }
-    private int offset() { return hasMemories() ? 1 : 0; }
-    private PhotoTimeline.Row rowAt(int position) { return timeline.rows.get(position - offset()); }
+
+    /** The Collections stack shows whenever we have any library data to summarise. */
+    private boolean hasCollections() {
+        return bentoEnabled && (snapshot != null || (memories != null && !memories.isEmpty())
+                || (albums != null && !albums.isEmpty()));
+    }
+    private int collectionsPos() { return timeline == null ? 0 : timeline.rows.size(); }
+    private PhotoTimeline.Row rowAt(int position) { return timeline.rows.get(position); }
 
     public interface SelectionListener { void onSelectionChanged(int count); }
 
@@ -101,21 +117,22 @@ public class PhotoGridAdapter extends RecyclerView.Adapter<RecyclerView.ViewHold
     public GridLayoutManager.SpanSizeLookup spanSizeLookup() {
         return new GridLayoutManager.SpanSizeLookup() {
             @Override public int getSpanSize(int position) {
-                if (hasMemories() && position == 0) return spanCount;
+                if (hasCollections() && position == collectionsPos()) return spanCount;
                 return rowAt(position).header ? spanCount : 1;
             }
         };
     }
 
     @Override public int getItemCount() {
-        return (timeline == null ? 0 : timeline.rows.size()) + offset();
+        int n = timeline == null ? 0 : timeline.rows.size();
+        return n + (hasCollections() ? 1 : 0);
     }
     @Override public int getItemViewType(int position) {
-        if (hasMemories() && position == 0) return TYPE_MEMORIES;
+        if (hasCollections() && position == collectionsPos()) return TYPE_COLLECTIONS;
         return rowAt(position).header ? TYPE_HEADER : TYPE_ITEM;
     }
     @Override public long getItemId(int position) {
-        if (hasMemories() && position == 0) return "memories".hashCode();
+        if (hasCollections() && position == collectionsPos()) return "collections".hashCode();
         PhotoTimeline.Row r = rowAt(position);
         return r.header ? ("h" + r.title).hashCode() : (r.item.getPath() == null ? position : r.item.getPath().hashCode());
     }
@@ -139,7 +156,7 @@ public class PhotoGridAdapter extends RecyclerView.Adapter<RecyclerView.ViewHold
     @NonNull @Override
     public RecyclerView.ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
         LayoutInflater inf = LayoutInflater.from(parent.getContext());
-        if (viewType == TYPE_MEMORIES) {
+        if (viewType == TYPE_COLLECTIONS) {
             android.widget.FrameLayout box = new android.widget.FrameLayout(activity);
             box.setLayoutParams(new RecyclerView.LayoutParams(
                     RecyclerView.LayoutParams.MATCH_PARENT, RecyclerView.LayoutParams.WRAP_CONTENT));
@@ -155,8 +172,8 @@ public class PhotoGridAdapter extends RecyclerView.Adapter<RecyclerView.ViewHold
         if (holder instanceof MemoriesHolder) {
             android.widget.FrameLayout box = (android.widget.FrameLayout) holder.itemView;
             box.removeAllViews();
-            box.addView(com.absolute.floral.bento.BentoHeader.build(
-                    activity, snapshot, memories, people, places));
+            box.addView(com.absolute.floral.bento.LibrarySections.build(
+                    activity, albums, memories, people, places, snapshot));
             return;
         }
         PhotoTimeline.Row row = rowAt(position);
