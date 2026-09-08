@@ -24,6 +24,9 @@ import com.absolute.floral.soma.SomaSkin;
 import com.absolute.floral.ui.ItemActivity;
 import com.absolute.floral.util.MediaType;
 import com.bumptech.glide.Glide;
+import com.bumptech.glide.load.DecodeFormat;
+import com.bumptech.glide.load.engine.DiskCacheStrategy;
+import com.bumptech.glide.request.RequestOptions;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -47,16 +50,19 @@ public class PhotoGridAdapter extends RecyclerView.Adapter<RecyclerView.ViewHold
     private DragStarter dragStarter;
     public void setDragStarter(DragStarter d) { this.dragStarter = d; }
 
+    private static final Object PAYLOAD_SEL = new Object();
+
     /** Select/deselect a contiguous run of grid positions (drag-select). */
     public void dragSelectRange(int start, int end, boolean sel) {
         selectionMode = true;
-        for (int i = start; i <= end && i < getItemCount(); i++) {
+        int lo = Math.max(0, Math.min(start, end)), hi = Math.min(getItemCount() - 1, Math.max(start, end));
+        for (int i = lo; i <= hi; i++) {
             PhotoTimeline.Row r = rowAt(i);
             if (r.header || r.item == null || r.item.getPath() == null) continue;
             if (sel) selected.add(r.item.getPath()); else selected.remove(r.item.getPath());
         }
         if (selectionListener != null) selectionListener.onSelectionChanged(selected.size());
-        notifyDataSetChanged();
+        notifyItemRangeChanged(lo, hi - lo + 1, PAYLOAD_SEL);
     }
 
     private final Activity activity;
@@ -72,11 +78,28 @@ public class PhotoGridAdapter extends RecyclerView.Adapter<RecyclerView.ViewHold
     private final java.util.LinkedHashSet<String> selected = new java.util.LinkedHashSet<>();
     private SelectionListener selectionListener;
 
+    private Soma skin;                 // cached palette — refreshed on data change, not per bind
+    private int thumbPx = 320;         // Glide decode target for one grid cell
+    private final RequestOptions gridOpts = new RequestOptions()
+            .format(DecodeFormat.PREFER_RGB_565)
+            .diskCacheStrategy(DiskCacheStrategy.RESOURCE)
+            .centerCrop();
+
     public PhotoGridAdapter(Activity activity, PhotoTimeline timeline) {
         this.activity = activity;
         this.fullTimeline = timeline;
         this.timeline = apply(timeline);
+        this.skin = SomaSkin.read(activity);
+        recomputeThumb();
         setHasStableIds(true);
+    }
+
+    /** Re-read the palette once (call on theme change / data refresh), not per-bind. */
+    public void refreshSkin() { this.skin = SomaSkin.read(activity); }
+
+    private void recomputeThumb() {
+        int screen = activity.getResources().getDisplayMetrics().widthPixels;
+        thumbPx = Math.max(160, Math.min(640, Math.round((screen / (float) Math.max(1, spanCount)) * 1.15f)));
     }
 
     public void setTimeline(PhotoTimeline t) {
@@ -93,7 +116,7 @@ public class PhotoGridAdapter extends RecyclerView.Adapter<RecyclerView.ViewHold
         notifyDataSetChanged();
     }
 
-    public void setSpanCount(int s) { this.spanCount = s; }
+    public void setSpanCount(int s) { this.spanCount = s; recomputeThumb(); }
     public void setSelectionListener(SelectionListener l) { this.selectionListener = l; }
 
     /** Library uses continuous (no headers); Bucket / Search keep the date headers. */
@@ -185,19 +208,21 @@ public class PhotoGridAdapter extends RecyclerView.Adapter<RecyclerView.ViewHold
     public void enterSelection() {
         if (selectionMode) return;
         selectionMode = true;
-        notifyDataSetChanged();
+        notifyItemRangeChanged(0, getItemCount(), PAYLOAD_SEL);
     }
     public void clearSelection() {
+        if (!selectionMode && selected.isEmpty()) return;
         selectionMode = false; selected.clear();
         if (selectionListener != null) selectionListener.onSelectionChanged(0);
-        notifyDataSetChanged();
+        notifyItemRangeChanged(0, getItemCount(), PAYLOAD_SEL);
     }
-    private void toggle(String path) {
+    private void toggle(String path, int pos) {
         if (path == null) return;
         if (!selected.remove(path)) selected.add(path);
         if (selected.isEmpty()) selectionMode = false;
         if (selectionListener != null) selectionListener.onSelectionChanged(selected.size());
-        notifyDataSetChanged();
+        if (pos != RecyclerView.NO_POSITION) notifyItemChanged(pos, PAYLOAD_SEL);
+        else notifyItemRangeChanged(0, getItemCount(), PAYLOAD_SEL);
     }
 
     @NonNull @Override
@@ -209,14 +234,24 @@ public class PhotoGridAdapter extends RecyclerView.Adapter<RecyclerView.ViewHold
     }
 
     @Override
+    public void onBindViewHolder(@NonNull RecyclerView.ViewHolder holder, int position,
+                                @NonNull List<Object> payloads) {
+        if (!payloads.isEmpty() && holder instanceof ItemHolder) {
+            PhotoTimeline.Row r = rowAt(position);
+            if (r.item != null) applySelectionVisual((ItemHolder) holder, r.item.getPath());
+            return;
+        }
+        super.onBindViewHolder(holder, position, payloads);
+    }
+
+    @Override
     public void onBindViewHolder(@NonNull RecyclerView.ViewHolder holder, int position) {
         PhotoTimeline.Row row = rowAt(position);
-        Soma soma = SomaSkin.read(activity);
         if (holder instanceof HeaderHolder) {
             TextView tv = (TextView) holder.itemView;
             tv.setText(row.title);
             tv.setTypeface(Soma.display(activity));
-            if (soma != null) tv.setTextColor(soma.ink);
+            if (skin != null) tv.setTextColor(skin.ink);
             return;
         }
         ItemHolder h = (ItemHolder) holder;
@@ -226,23 +261,22 @@ public class PhotoGridAdapter extends RecyclerView.Adapter<RecyclerView.ViewHold
         Object load = item.getUri(activity);
         if (load == null) load = item.getPath();
         Glide.with(activity).load(load)
-                .centerCrop()
+                .apply(gridOpts)
+                .override(thumbPx)
+                .dontAnimate()
                 .placeholder(R.color.bento_card_stroke)
                 .into(h.image);
 
         boolean isVideo = MediaType.isVideo(item.getPath()) || item instanceof Video;
-        if (isVideo) {
-            h.dur.setVisibility(View.VISIBLE);
-            h.dur.setText("▶");
-        } else h.dur.setVisibility(View.GONE);
+        h.dur.setVisibility(isVideo ? View.VISIBLE : View.GONE);
+        if (isVideo) h.dur.setText("▶");
 
-        h.scrim.setVisibility(selected.contains(item.getPath()) ? View.VISIBLE : View.GONE);
-        float s = selected.contains(item.getPath()) ? 0.86f : 1f;
-        h.itemView.setScaleX(s); h.itemView.setScaleY(s);
+        applySelectionVisual(h, item.getPath());
 
         h.image.setTransitionName(item.getPath());
         h.itemView.setOnClickListener(v -> {
-            if (selectionMode) { toggle(item.getPath()); return; }
+            int pos = h.getBindingAdapterPosition();
+            if (selectionMode) { toggle(item.getPath(), pos); return; }
             Intent intent = new Intent(activity, ItemActivity.class);
             intent.putExtra(ItemActivity.ALBUM_ITEM, item);
             intent.putExtra(ItemActivity.ALBUM_PATH, albumPath);
@@ -255,14 +289,26 @@ public class PhotoGridAdapter extends RecyclerView.Adapter<RecyclerView.ViewHold
             }
         });
         h.itemView.setOnLongClickListener(v -> {
+            int pos = h.getBindingAdapterPosition();
             selectionMode = true;
-            toggle(item.getPath());
-            if (dragStarter != null && item.getPath() != null && selected.contains(item.getPath())) {
-                int pos = h.getBindingAdapterPosition();
-                if (pos != RecyclerView.NO_POSITION) dragStarter.startDragAt(pos);
-            }
+            v.performHapticFeedback(android.view.HapticFeedbackConstants.LONG_PRESS);
+            toggle(item.getPath(), pos);
+            if (dragStarter != null && pos != RecyclerView.NO_POSITION
+                    && item.getPath() != null && selected.contains(item.getPath()))
+                dragStarter.startDragAt(pos);
             return true;
         });
+    }
+
+    private void applySelectionVisual(ItemHolder h, String path) {
+        boolean sel = path != null && selected.contains(path);
+        h.scrim.setVisibility(sel ? View.VISIBLE : View.GONE);
+        float s = sel ? 0.88f : 1f;
+        if (h.itemView.getScaleX() != s) {
+            h.itemView.animate().cancel();
+            h.itemView.animate().scaleX(s).scaleY(s).setDuration(110)
+                    .setInterpolator(Anim.ease()).start();
+        }
     }
 
     @Override
@@ -271,11 +317,13 @@ public class PhotoGridAdapter extends RecyclerView.Adapter<RecyclerView.ViewHold
         if (selectionMode || !(holder instanceof ItemHolder)) return;
         int pos = holder.getBindingAdapterPosition();
         if (pos <= lastAnimated) return;
+        // don't chase a fast fling — only the first sweep gets the entrance
+        if (pos > lastAnimated + 14) { lastAnimated = pos; return; }
         lastAnimated = pos;
         View v = holder.itemView;
         v.setAlpha(0f);
-        v.setTranslationY(v.getResources().getDisplayMetrics().density * 24f);
-        v.animate().alpha(1f).translationY(0f).setDuration(420)
+        v.setTranslationY(v.getResources().getDisplayMetrics().density * 14f);
+        v.animate().alpha(1f).translationY(0f).setDuration(240)
                 .setInterpolator(Anim.ease()).start();
     }
 

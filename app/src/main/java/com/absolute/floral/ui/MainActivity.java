@@ -413,8 +413,24 @@ public class MainActivity extends ThemeableActivity implements CheckRefreshClick
 
         gridLayoutManager.setSpanCount(photoSpan);
         gridLayoutManager.setSpanSizeLookup(photoAdapter.spanSizeLookup());
+        gridLayoutManager.setInitialPrefetchItemCount(photoSpan * 3);
         recyclerView.setItemAnimator(null);
+        recyclerView.setHasFixedSize(true);
+        recyclerView.setItemViewCacheSize(photoSpan * 4);
+        recyclerView.getRecycledViewPool().setMaxRecycledViews(1, photoSpan * 8);
+        recyclerView.setDrawingCacheEnabled(false);
         recyclerView.setAdapter(photoAdapter);
+        // pause Glide during a fling, resume when it settles — keeps frames free
+        recyclerView.addOnScrollListener(new RecyclerView.OnScrollListener() {
+            @Override public void onScrollStateChanged(RecyclerView rv, int state) {
+                try {
+                    if (state == RecyclerView.SCROLL_STATE_SETTLING)
+                        com.bumptech.glide.Glide.with(MainActivity.this).pauseRequests();
+                    else
+                        com.bumptech.glide.Glide.with(MainActivity.this).resumeRequests();
+                } catch (Exception ignored) {}
+            }
+        });
 
         // pinch to change grid density (2..5 columns), persisted
         final android.view.ScaleGestureDetector pinch = new android.view.ScaleGestureDetector(this,
@@ -1180,6 +1196,7 @@ public class MainActivity extends ThemeableActivity implements CheckRefreshClick
         com.absolute.floral.soma.Soma soma = com.absolute.floral.soma.SomaSkin.read(this);
         com.absolute.floral.soma.SomaSkin.ground(this, rootView, soma);
         com.absolute.floral.soma.SomaSkin.statusBarIcons(this, soma);
+        if (photoAdapter != null) { photoAdapter.refreshSkin(); photoAdapter.notifyDataSetChanged(); }
 
         if (pick_photos) {
             toolbar.setBackgroundColor(toolbarColor);
