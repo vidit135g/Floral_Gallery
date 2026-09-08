@@ -63,6 +63,11 @@ public abstract class ViewHolder {
         return albumItem.getPath();
     }
 
+    /** true when the page is not zoomed/panned — the dismiss drag may take over. */
+    public boolean isAtRest() {
+        return true;
+    }
+
     //called when the viewHolder is shown after shared element transition
     public abstract void onSharedElementEnter();
 

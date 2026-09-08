@@ -61,7 +61,9 @@ import java.util.Map;
 import com.absolute.floral.R;
 import com.absolute.floral.adapter.item.InfoRecyclerViewAdapter;
 import com.absolute.floral.adapter.item.viewHolder.ViewHolder;
+import com.absolute.floral.adapter.item.viewHolder.VideoViewHolder;
 import com.absolute.floral.adapter.item.ItemAdapter;
+import com.absolute.floral.ui.widget.DismissFrameLayout;
 import com.absolute.floral.data.fileOperations.Move;
 import com.absolute.floral.data.models.Album;
 import com.absolute.floral.data.models.AlbumItem;
@@ -99,6 +101,7 @@ public class ItemActivity extends ThemeableActivity {
     private Toolbar toolbar;
     private View bottomBar;
     private ViewPager viewPager;
+    private ChromeController chrome;
 
     private AlertDialog infoDialog;
     private Menu menu;
@@ -136,11 +139,7 @@ public class ItemActivity extends ThemeableActivity {
             = new SimpleTransitionListener() {
         @Override
         public void onTransitionStart(@NonNull Transition transition) {
-            //hide toolbar & statusbar
-            float toolbar_translationY = -(toolbar.getHeight());
-            float bottomBar_translationY = ((View) bottomBar.getParent()).getHeight();
-            toolbar.setTranslationY(toolbar_translationY);
-            ((View) bottomBar.getParent()).setTranslationY(bottomBar_translationY);
+            if (chrome != null) chrome.setVisible(false, false);
             super.onTransitionStart(transition);
         }
 
@@ -158,7 +157,7 @@ public class ItemActivity extends ThemeableActivity {
 
             super.onTransitionEnd(transition);
             albumItem.isSharedElement = false;
-            showUI(!isReturning);
+            if (!isReturning && chrome != null) chrome.setVisible(true, true);
         }
     };
 
@@ -211,60 +210,52 @@ public class ItemActivity extends ThemeableActivity {
             ((View) edit.getParent()).setVisibility(View.GONE);
         }
 
-        final ViewGroup rootView = findViewById(R.id.root_view);
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-            rootView.setOnApplyWindowInsetsListener(new View.OnApplyWindowInsetsListener() {
-                @Override
-                @RequiresApi(api = Build.VERSION_CODES.KITKAT_WATCH)
-                public WindowInsets onApplyWindowInsets(View view, WindowInsets insets) {
-                    toolbar.setPadding(toolbar.getPaddingStart() + insets.getSystemWindowInsetLeft(),
-                            toolbar.getPaddingTop() + insets.getSystemWindowInsetTop(),
-                            toolbar.getPaddingEnd() + insets.getSystemWindowInsetRight(),
-                            toolbar.getPaddingBottom());
+        final View dragTarget = findViewById(R.id.drag_target);
+        final View scrimTop = findViewById(R.id.scrim_top);
+        final View scrimBottom = findViewById(R.id.scrim_bottom);
 
-                    bottomBar.setPadding(bottomBar.getPaddingStart() + insets.getSystemWindowInsetLeft(),
-                            bottomBar.getPaddingTop(),
-                            bottomBar.getPaddingEnd() + insets.getSystemWindowInsetRight(),
-                            bottomBar.getPaddingBottom() + insets.getSystemWindowInsetBottom());
+        // edge-to-edge immersive viewer
+        androidx.core.view.WindowCompat.setDecorFitsSystemWindows(getWindow(), false);
+        chrome = new ChromeController(getWindow(), getWindow().getDecorView(),
+                toolbar, scrimTop, scrimBottom, (View) bottomBar.getParent());
 
-                    // clear this listener so insets aren't re-applied
-                    rootView.setOnApplyWindowInsetsListener(null);
-                    return insets.consumeSystemWindowInsets();
-                }
-            });
-        } else {
-            rootView.getViewTreeObserver()
-                    .addOnGlobalLayoutListener(
-                            new ViewTreeObserver.OnGlobalLayoutListener() {
-                                @Override
-                                public void onGlobalLayout() {
-                                    //hacky way of getting window insets on pre-Lollipop
-                                    int[] screenSize = Util.getScreenSize(ItemActivity.this);
+        final int toolbarPadTop = toolbar.getPaddingTop();
+        final int barPadBottom = ((View) bottomBar.getParent()).getPaddingBottom();
+        androidx.core.view.ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.root_view),
+                (v, insetsCompat) -> {
+                    androidx.core.graphics.Insets sb = insetsCompat.getInsets(
+                            androidx.core.view.WindowInsetsCompat.Type.systemBars());
+                    toolbar.setPadding(toolbar.getPaddingLeft(), toolbarPadTop + sb.top,
+                            toolbar.getPaddingRight(), toolbar.getPaddingBottom());
+                    View barParent = (View) bottomBar.getParent();
+                    barParent.setPadding(barParent.getPaddingLeft(), barParent.getPaddingTop(),
+                            barParent.getPaddingRight(), barPadBottom + sb.bottom);
+                    return insetsCompat;
+                });
 
-                                    int[] windowInsets = new int[]{
-                                            Math.abs(screenSize[0] - rootView.getLeft()),
-                                            Math.abs(screenSize[1] - rootView.getTop()),
-                                            Math.abs(screenSize[2] - rootView.getRight()),
-                                            Math.abs(screenSize[3] - rootView.getBottom())};
-
-                                    toolbar.setPadding(toolbar.getPaddingStart() + windowInsets[0],
-                                            toolbar.getPaddingTop() + windowInsets[1],
-                                            toolbar.getPaddingEnd() + windowInsets[2],
-                                            toolbar.getPaddingBottom());
-
-                                    bottomBar.setPadding(bottomBar.getPaddingStart() + windowInsets[0],
-                                            bottomBar.getPaddingTop(),
-                                            bottomBar.getPaddingEnd() + windowInsets[2],
-                                            bottomBar.getPaddingBottom() + windowInsets[3]);
-
-                                    rootView.getViewTreeObserver()
-                                            .removeOnGlobalLayoutListener(this);
-                                }
-                            });
-        }
-
-        //needed to achieve transparent navBar
-        setSystemUiFlags();
+        DismissFrameLayout dismiss = findViewById(R.id.root_view);
+        dismiss.setTarget(dragTarget);
+        dismiss.setDismissListener(new DismissFrameLayout.Listener() {
+            @Override public boolean canDismiss() {
+                if (view_only || viewPager == null || viewPager.getAdapter() == null) return false;
+                ViewHolder vh = ((ItemAdapter) viewPager.getAdapter())
+                        .viewHolderAt(viewPager.getCurrentItem());
+                return vh == null || vh.isAtRest();
+            }
+            @Override public void onDrag(float p) {
+                if (chrome != null) chrome.setDragProgress(p);
+            }
+            @Override public void onDismiss() {
+                if (chrome != null) chrome.hideForExit();
+                dismissToGrid();
+            }
+            @Override public void onCancelled() {
+                if (chrome != null) chrome.setVisible(chrome.isVisible(), true);
+            }
+            @Override public void onInfoRequested() {
+                showInfoDialog();
+            }
+        });
 
         if (!view_only) {
             String path;
@@ -347,6 +338,8 @@ public class ItemActivity extends ThemeableActivity {
                 if (viewHolder != null) {
                     onShowViewHolder(viewHolder);
                 }
+                pauseOffscreenVideos(position);
+                refreshFavouriteIcon();
             }
         });
 
@@ -840,6 +833,9 @@ public class ItemActivity extends ThemeableActivity {
             case R.id.share_button:
                 sharePhoto();
                 break;
+            case R.id.favourite_button:
+                toggleFavourite();
+                break;
             case R.id.edit_button:
                 editPhoto();
                 break;
@@ -851,9 +847,36 @@ public class ItemActivity extends ThemeableActivity {
         }
     }
 
+    private void toggleFavourite() {
+        if (albumItem == null || albumItem.getPath() == null) return;
+        boolean now = com.absolute.floral.data.FlagStore.favorites(this).toggle(albumItem.getPath());
+        ImageView fav = findViewById(R.id.favourite_button);
+        if (fav != null) fav.setImageResource(now ? R.drawable.ic_star_white : R.drawable.ic_star_border_white);
+        MenuItem favMenu = menu != null ? menu.findItem(R.id.favorite) : null;
+        if (favMenu != null) favMenu.setIcon(now ? R.drawable.ic_star_white : R.drawable.ic_star_border_white);
+    }
+
+    private void refreshFavouriteIcon() {
+        if (albumItem == null) return;
+        boolean on = com.absolute.floral.data.FlagStore.favorites(this).contains(albumItem.getPath());
+        ImageView fav = findViewById(R.id.favourite_button);
+        if (fav != null) fav.setImageResource(on ? R.drawable.ic_star_white : R.drawable.ic_star_border_white);
+    }
+
+    void pauseOffscreenVideos(int current) {
+        if (viewPager == null || viewPager.getAdapter() == null) return;
+        for (ViewHolder vh : ((ItemAdapter) viewPager.getAdapter()).viewHolders()) {
+            if (vh instanceof VideoViewHolder && vh.getPosition() != current) {
+                ((VideoViewHolder) vh).pausePlayback();
+            }
+        }
+    }
+
     public void imageOnClick() {
-        systemUiVisible = !systemUiVisible;
-        showSystemUI(systemUiVisible);
+        if (chrome != null) {
+            chrome.toggle();
+            systemUiVisible = chrome.isVisible();
+        }
     }
 
     public static void videoOnClick(Context context, AlbumItem albumItem) {
@@ -873,39 +896,7 @@ public class ItemActivity extends ThemeableActivity {
     }
 
     private void showUI(boolean show) {
-        float toolbar_translationY = show ? 0 : -(toolbar.getHeight());
-        float bottomBar_translationY = show ? 0
-                : ((View) bottomBar.getParent()).getHeight();
-        toolbar.animate()
-                .translationY(toolbar_translationY)
-                .setInterpolator(new AccelerateDecelerateInterpolator())
-                .start();
-
-        ((View) bottomBar.getParent()).animate()
-                .translationY(bottomBar_translationY)
-                .setInterpolator(new AccelerateDecelerateInterpolator())
-                .start();
-    }
-
-    private void showSystemUI(final boolean show) {
-        new Handler().post(new Runnable() {
-            @Override
-            public void run() {
-                getWindow().getDecorView().setSystemUiVisibility(show ?
-                        View.SYSTEM_UI_FLAG_LAYOUT_STABLE
-                                | View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
-                                | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN :
-                        View.SYSTEM_UI_FLAG_LAYOUT_STABLE
-                                | View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
-                                | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
-                                | View.SYSTEM_UI_FLAG_HIDE_NAVIGATION // hide nav bar
-                                | View.SYSTEM_UI_FLAG_FULLSCREEN // hide status bar
-                                | View.SYSTEM_UI_FLAG_IMMERSIVE
-                                | View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY);
-            }
-        });
-
-        showUI(show);
+        if (chrome != null) chrome.setVisible(show, true);
     }
 
     @Override
@@ -943,31 +934,33 @@ public class ItemActivity extends ThemeableActivity {
     @Override
     public void onBackPressed() {
         if (view_only) {
-            /*if (getIntent().getBooleanExtra(FINISH_AFTER, false)) {
-                this.finishAffinity();
-            } else {
-                this.finish();
-            }*/
             this.finish();
         } else {
-            if (!showAnimations()) {
-                setResultAndFinish();
+            dismissToGrid();
+        }
+    }
+
+    /** Animate back to the originating grid cell (shared-element return). */
+    private void dismissToGrid() {
+        if (chrome != null) chrome.hideForExit();
+        if (!showAnimations()) {
+            setResultAndFinish();
+            return;
+        }
+        if (viewPager != null && viewPager.getAdapter() != null && albumItem != null) {
+            ViewHolder viewHolder = ((ItemAdapter)
+                    viewPager.getAdapter()).findViewHolderByTag(albumItem.getPath());
+            if (viewHolder != null) {
+                viewHolder.onSharedElementExit(new ItemActivity.Callback() {
+                    @Override
+                    public void done() {
+                        setResultAndFinish();
+                    }
+                });
                 return;
             }
-            showUI(false);
-            if (viewPager != null && viewPager.getAdapter() != null && albumItem != null) {
-                ViewHolder viewHolder = ((ItemAdapter)
-                        viewPager.getAdapter()).findViewHolderByTag(albumItem.getPath());
-                if (viewHolder != null) {
-                    viewHolder.onSharedElementExit(new ItemActivity.Callback() {
-                        @Override
-                        public void done() {
-                            setResultAndFinish();
-                        }
-                    });
-                }
-            }
         }
+        setResultAndFinish();
     }
 
     public void setResultAndFinish() {

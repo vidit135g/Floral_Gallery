@@ -29,6 +29,18 @@ public class PhotoViewHolder extends ViewHolder {
     }
 
     @Override
+    public boolean isAtRest() {
+        if (itemView == null) return true;
+        View v = itemView.findViewById(R.id.subsampling);
+        if (v instanceof SubsamplingScaleImageView) {
+            SubsamplingScaleImageView ssiv = (SubsamplingScaleImageView) v;
+            if (v.getVisibility() != View.VISIBLE) return true;
+            return ssiv.getScale() <= ssiv.getMinScale() * 1.02f;
+        }
+        return true;
+    }
+
+    @Override
     public View inflateView(ViewGroup container) {
         ViewGroup v = super.inflatePhotoView(container);
         final View view = v.findViewById(R.id.subsampling);

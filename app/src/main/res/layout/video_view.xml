@@ -1,8 +1,19 @@
 <?xml version="1.0" encoding="utf-8"?>
-<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
+
+    <com.google.android.exoplayer2.ui.StyledPlayerView
+        android:id="@+id/player_view"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:visibility="gone"
+        app:resize_mode="fit"
+        app:use_controller="true"
+        app:show_buffering="when_playing"
+        app:hide_on_touch="false" />
 
     <ImageView
         android:id="@+id/image"
@@ -10,4 +21,12 @@
         android:layout_height="match_parent"
         android:scaleType="fitCenter"
         tools:ignore="ContentDescription" />
-</RelativeLayout>
+
+    <ImageView
+        android:id="@+id/play_badge"
+        android:layout_width="72dp"
+        android:layout_height="72dp"
+        android:layout_gravity="center"
+        android:src="@drawable/play_indicator"
+        tools:ignore="ContentDescription" />
+</FrameLayout>

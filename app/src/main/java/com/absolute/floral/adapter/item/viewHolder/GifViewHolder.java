@@ -19,6 +19,11 @@ public class GifViewHolder extends ViewHolder {
     }
 
     @Override
+    public boolean isAtRest() {
+        return attacher == null || attacher.getScale() <= 1.02f;
+    }
+
+    @Override
     public View inflateView(ViewGroup container) {
         ViewGroup v = super.inflatePhotoView(container);
         v.removeView(v.findViewById(R.id.subsampling));

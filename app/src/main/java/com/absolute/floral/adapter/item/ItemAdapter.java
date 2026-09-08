@@ -109,6 +109,14 @@ public class ItemAdapter extends PagerAdapter {
         return null;
     }
 
+    public ViewHolder viewHolderAt(int position) {
+        return findViewHolderByPosition(position);
+    }
+
+    public java.util.List<ViewHolder> viewHolders() {
+        return viewHolders;
+    }
+
     //for deleting items from the list
     @Override
     public int getItemPosition(@NonNull Object object) {

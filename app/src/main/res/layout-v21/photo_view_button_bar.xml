@@ -9,89 +9,104 @@
 
     <LinearLayout
         android:id="@+id/bottom_bar"
-        android:layout_width="wrap_content"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_gravity="center_horizontal"
-        android:layout_marginBottom="22dp"
         android:baselineAligned="false"
         android:orientation="horizontal"
-        android:elevation="8dp"
-        android:paddingTop="4dp"
-        android:paddingBottom="4dp"
-        android:paddingEnd="10dp"
-        android:paddingStart="10dp"
-        android:background="@drawable/viewer_bar_pill">
+        android:paddingTop="10dp"
+        android:paddingBottom="14dp"
+        android:paddingStart="8dp"
+        android:paddingEnd="8dp">
 
         <RelativeLayout
-            android:layout_width="52dp"
-            android:layout_height="wrap_content">
-
-            <ImageView
-                android:id="@+id/info_button"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_centerInParent="true"
-                android:layout_marginBottom="8dp"
-                android:layout_marginTop="8dp"
-                android:background="?selectableItemBackgroundBorderless"
-                android:contentDescription="@string/info"
-                android:onClick="bottomBarOnClick"
-                android:padding="8dp"
-                app:srcCompat="@drawable/ic_info_white" />
-        </RelativeLayout>
-
-        <RelativeLayout
-            android:layout_width="52dp"
-            android:layout_height="wrap_content">
-
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1">
             <ImageView
                 android:id="@+id/share_button"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_centerInParent="true"
-                android:layout_marginBottom="8dp"
                 android:layout_marginTop="8dp"
+                android:layout_marginBottom="8dp"
                 android:background="?selectableItemBackgroundBorderless"
                 android:contentDescription="@string/share"
                 android:onClick="bottomBarOnClick"
-                android:padding="8dp"
-                app:srcCompat="@drawable/ic_share_avd" />
+                android:padding="10dp"
+                app:srcCompat="@drawable/ic_share_white" />
         </RelativeLayout>
 
         <RelativeLayout
-            android:layout_width="52dp"
-            android:layout_height="wrap_content">
-
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1">
             <ImageView
-                android:id="@+id/edit_button"
+                android:id="@+id/favourite_button"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_centerInParent="true"
-                android:layout_marginBottom="8dp"
                 android:layout_marginTop="8dp"
+                android:layout_marginBottom="8dp"
                 android:background="?selectableItemBackgroundBorderless"
-                android:contentDescription="@string/edit"
+                android:contentDescription="Favourite"
                 android:onClick="bottomBarOnClick"
-                android:padding="8dp"
-                app:srcCompat="@drawable/ic_edit_avd" />
+                android:padding="10dp"
+                app:srcCompat="@drawable/ic_star_border_white" />
         </RelativeLayout>
 
         <RelativeLayout
-            android:layout_width="52dp"
-            android:layout_height="wrap_content">
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1">
+            <ImageView
+                android:id="@+id/info_button"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_centerInParent="true"
+                android:layout_marginTop="8dp"
+                android:layout_marginBottom="8dp"
+                android:background="?selectableItemBackgroundBorderless"
+                android:contentDescription="@string/info"
+                android:onClick="bottomBarOnClick"
+                android:padding="10dp"
+                app:srcCompat="@drawable/ic_info_white" />
+        </RelativeLayout>
 
+        <RelativeLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1">
             <ImageView
                 android:id="@+id/delete_button"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_centerInParent="true"
-                android:layout_marginBottom="8dp"
                 android:layout_marginTop="8dp"
+                android:layout_marginBottom="8dp"
                 android:background="?selectableItemBackgroundBorderless"
                 android:contentDescription="@string/delete"
                 android:onClick="bottomBarOnClick"
-                android:padding="8dp"
-                app:srcCompat="@drawable/ic_delete_avd" />
+                android:padding="10dp"
+                app:srcCompat="@drawable/ic_delete_white" />
+        </RelativeLayout>
+
+        <RelativeLayout
+            android:id="@+id/edit_button_wrap"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1">
+            <ImageView
+                android:id="@+id/edit_button"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_centerInParent="true"
+                android:layout_marginTop="8dp"
+                android:layout_marginBottom="8dp"
+                android:background="?selectableItemBackgroundBorderless"
+                android:contentDescription="@string/edit"
+                android:onClick="bottomBarOnClick"
+                android:padding="10dp"
+                app:srcCompat="@drawable/ic_edit_white" />
         </RelativeLayout>
     </LinearLayout>
 </LinearLayout>
