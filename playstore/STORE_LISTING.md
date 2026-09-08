@@ -4,7 +4,7 @@
 **Developer:** The Absolute Corporation
 **Category:** Photography
 **Content rating:** Everyone
-**versionCode:** 11 · **versionName:** 3.0
+**versionCode:** 12 · **versionName:** 3.1
 
 ---
 
@@ -23,20 +23,21 @@ A private, on-device gallery — timeline, memories, albums and people. No cloud
 Floral is a photo gallery that keeps everything on your device. No account, no
 sign-in, nothing uploaded — your library never leaves your phone.
 
-One continuously scrolling Library, laid out like the photos app you already
-know:
+Two tabs, laid out like the photos app you already know:
 
-— THE GRID —
-Every photo and video in one clean, date-sectioned timeline, newest first —
-Today, Yesterday, then by day and by month. Pinch to change how many sit in a
-row. Keep scrolling and the grid flows into Collections.
+— LIBRARY —
+Every photo and video in one clean, continuous grid, newest first. Pinch to
+change how many sit in a row. A "…" menu for Sort, Filter and View Options,
+Select for share / favourite / delete, and a floating tab pill with a separate
+Search button.
 
 — COLLECTIONS —
-Beneath the grid: Recent Days, Memories (auto-made from your own library),
-People & Pets grouped by faces found on your device, Places, Featured Photos,
-Media Types (Videos, Screenshots, Animated, Recently Added), Utilities
-(Duplicates, Hidden, Recently Deleted) and your device folders as My Albums.
-Soft bento-gradient cards throughout.
+Collapsible titled sections that remember how you leave them: Memories
+(auto-made from your own library), Pinned, Albums, People & Pets grouped by
+faces found on your device, Trips, Media Types (Videos, Selfies, Panoramas,
+Screenshots, Live Photos, RAW and more), Utilities (Favorites, Recently Saved,
+Hidden, Duplicates, Recently Viewed, Recently Shared, Recently Deleted) and
+Wallpaper Suggestions. Soft bento-gradient cards throughout.
 
 — THE VIEWER —
 Tap a photo for a full, edge-to-edge view. Everything fades away as you look;
@@ -63,6 +64,18 @@ No ads. No account. No cloud. Made with care in India.
 
 ## What’s new (release notes, 500 chars max)
 ```
+Floral 3.1 — a full two-tab Photos-style rebuild:
+• Library and Collections tabs in a floating pill + a separate Search button
+• Collections: collapsible Memories, Pinned, Albums, People & Pets, Trips,
+  Media Types, Utilities — each remembers how you leave it
+• Library "…" menu (Sort / Filter / View Options) and Select mode
+• A hand-built, grouped Settings sheet with green switches
+• A fresh app icon
+```
+
+<details><summary>Floral 3.0 notes</summary>
+
+```
 Floral 3.0 — rebuilt as a Photos-style gallery:
 • One continuously scrolling Library — the grid, then Collections
 • A full immersive viewer: chrome fades away, swipe down to dismiss,
@@ -70,6 +83,8 @@ Floral 3.0 — rebuilt as a Photos-style gallery:
 • Recent Days, Memories, People & Pets, Places, Media Types, Utilities
 • Light / Dark only; a much smaller Settings; a leaner, faster app
 ```
+
+</details>
 
 <details><summary>Floral 2.3 notes</summary>
 
@@ -136,7 +151,7 @@ Floral 2.0 — a ground-up rebuild:
 | App icon (hi-res) | `icon-512.png` | 512×512 PNG |
 | Feature graphic | `feature-graphic.png` | 1024×500 PNG |
 | Phone screenshots | `screenshots/*.png` | 1080×2400 PNG (min 2, max 8) |
-| Adaptive launcher icon | shipped in the APK/AAB | `@mipmap/ic_launcher` (gradient bg + pinwheel bloom + monochrome) |
+| Adaptive launcher icon | shipped in the APK/AAB | `@mipmap/ic_launcher` (teal→violet gradient + photo-stack mark + monochrome) |
 
 ## Data safety (suggested answers)
 - **No data collected and no data shared.** Photos, videos, faces and all
