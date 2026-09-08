@@ -120,8 +120,8 @@ public class ItemActivity extends ThemeableActivity {
         @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
         public void onMapSharedElements(List<String> names, Map<String, View> sharedElements) {
             if (isReturning) {
-                ViewGroup v = viewPager.findViewWithTag(albumItem.getPath());
-                View sharedElement = v.findViewById(R.id.image);
+                ViewGroup v = viewPager != null ? viewPager.findViewWithTag(albumItem.getPath()) : null;
+                View sharedElement = v != null ? v.findViewById(R.id.image) : null;
                 if (sharedElement == null) {
                     names.clear();
                     sharedElements.clear();
@@ -342,6 +342,11 @@ public class ItemActivity extends ThemeableActivity {
                 refreshFavouriteIcon();
             }
         });
+
+        // safety net — never let a missed shared-element callback freeze the viewer
+        viewPager.postDelayed(() -> {
+            try { startPostponedEnterTransition(); } catch (Throwable ignored) {}
+        }, 350);
 
         if (!enterTransitionPostponed()) {
             albumItem.isSharedElement = false;
@@ -948,36 +953,49 @@ public class ItemActivity extends ThemeableActivity {
 
     /** Animate back to the originating grid cell (shared-element return). */
     private void dismissToGrid() {
+        if (isReturning) return;
         if (chrome != null) chrome.hideForExit();
         if (!showAnimations()) {
             setResultAndFinish();
             return;
         }
+        // let the view holder do its exit flourish, but never wait forever on it
+        final boolean[] done = { false };
+        final Runnable finishNow = () -> {
+            if (done[0]) return;
+            done[0] = true;
+            setResultAndFinish();
+        };
         if (viewPager != null && viewPager.getAdapter() != null && albumItem != null) {
             ViewHolder viewHolder = ((ItemAdapter)
                     viewPager.getAdapter()).findViewHolderByTag(albumItem.getPath());
             if (viewHolder != null) {
-                viewHolder.onSharedElementExit(new ItemActivity.Callback() {
-                    @Override
-                    public void done() {
-                        setResultAndFinish();
-                    }
-                });
-                return;
+                try {
+                    viewHolder.onSharedElementExit(finishNow::run);
+                } catch (Throwable ignored) {}
             }
         }
-        setResultAndFinish();
+        new Handler().postDelayed(finishNow, 260);
     }
 
+    private boolean finishStarted;
+
     public void setResultAndFinish() {
+        if (finishStarted) return;
+        finishStarted = true;
         isReturning = true;
         Intent data = new Intent();
         data.setAction(SHARED_ELEMENT_RETURN_TRANSITION);
-        data.putExtra(AlbumActivity.ALBUM_PATH, album.getPath());
-        data.putExtra(AlbumActivity.EXTRA_CURRENT_ALBUM_POSITION, viewPager.getCurrentItem());
+        if (album != null) data.putExtra(AlbumActivity.ALBUM_PATH, album.getPath());
+        if (viewPager != null)
+            data.putExtra(AlbumActivity.EXTRA_CURRENT_ALBUM_POSITION, viewPager.getCurrentItem());
         setResult(RESULT_OK, data);
         if (showAnimations()) {
             ActivityCompat.finishAfterTransition(this);
+            // fallback — some return transitions never call back on newer OS versions
+            getWindow().getDecorView().postDelayed(() -> {
+                if (!isFinishing() && !isDestroyed()) finish();
+            }, 400);
         } else {
             finish();
         }
