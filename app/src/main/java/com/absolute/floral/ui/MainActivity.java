@@ -119,10 +119,17 @@ public class MainActivity extends ThemeableActivity implements CheckRefreshClick
     private RecyclerView recyclerView;
     private AbstractRecyclerViewAdapter<ArrayList<Album>> recyclerViewAdapter;
 
-    // iOS 18 single-scroll Library
+    // Apple-Photos two-tab shell: Library grid + Collections screen
     private com.absolute.floral.adapter.photos.PhotoGridAdapter photoAdapter;
     private GridLayoutManager gridLayoutManager;
     private int photoSpan = 3;
+    private com.absolute.floral.soma.PhotoNav photoNav;
+    private com.absolute.floral.soma.SearchFab searchFab;
+    private androidx.core.widget.NestedScrollView collectionsScroll;
+    private com.absolute.floral.bento.CollectionsScreen.Holder collections;
+    private final com.absolute.floral.bento.CollectionsScreen.Providers providers =
+            new com.absolute.floral.bento.CollectionsScreen.Providers();
+    private int currentTab = 0;
 
 
     private MediaProvider mediaProvider;
@@ -310,6 +317,12 @@ public class MainActivity extends ThemeableActivity implements CheckRefreshClick
                         recyclerView.getPaddingEnd() + insets.getSystemWindowInsetRight(),
                         recyclerView.getPaddingBottom() + insets.getSystemWindowInsetBottom());
 
+                View cs = findViewById(R.id.collectionsScroll);
+                if (cs != null) cs.setPadding(cs.getPaddingLeft() + insets.getSystemWindowInsetLeft(),
+                        cs.getPaddingTop() + insets.getSystemWindowInsetTop(),
+                        cs.getPaddingRight() + insets.getSystemWindowInsetRight(),
+                        cs.getPaddingBottom() + insets.getSystemWindowInsetBottom());
+
                 fab.setTranslationY(-insets.getSystemWindowInsetBottom());
                 fab.setTranslationX(-insets.getSystemWindowInsetRight());
 
@@ -386,7 +399,7 @@ public class MainActivity extends ThemeableActivity implements CheckRefreshClick
         photoAdapter = new com.absolute.floral.adapter.photos.PhotoGridAdapter(this,
                 com.absolute.floral.data.PhotoTimeline.from(albums));
         photoAdapter.setSpanCount(photoSpan);
-        photoAdapter.setAlbums(albums);
+        photoAdapter.setContinuous(true);
 
         gridLayoutManager.setSpanCount(photoSpan);
         gridLayoutManager.setSpanSizeLookup(photoAdapter.spanSizeLookup());
@@ -413,7 +426,74 @@ public class MainActivity extends ThemeableActivity implements CheckRefreshClick
         final FloatingActionButton fab = findViewById(R.id.fab);
         if (fab != null) fab.hide();
 
+        collectionsScroll = findViewById(R.id.collectionsScroll);
+
+        // floating tab pill (Library | Collections) + standalone search button
+        final ViewGroup host = (ViewGroup) recyclerView.getParent();
+        final float d = getResources().getDisplayMetrics().density;
+        photoNav = new com.absolute.floral.soma.PhotoNav(this);
+        photoNav.setSoma(soma);
+        FrameLayout.LayoutParams navLp = new FrameLayout.LayoutParams(
+                ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        navLp.gravity = android.view.Gravity.BOTTOM | android.view.Gravity.START;
+        navLp.leftMargin = Math.round(16 * d);
+        navLp.bottomMargin = Math.round(20 * d);
+        host.addView(photoNav, navLp);
+
+        searchFab = new com.absolute.floral.soma.SearchFab(this);
+        searchFab.setSoma(soma);
+        int fabSz = Math.round(46 * d);
+        FrameLayout.LayoutParams sfLp = new FrameLayout.LayoutParams(fabSz, fabSz);
+        sfLp.gravity = android.view.Gravity.BOTTOM | android.view.Gravity.END;
+        sfLp.rightMargin = Math.round(16 * d);
+        sfLp.bottomMargin = Math.round(20 * d);
+        host.addView(searchFab, sfLp);
+        searchFab.setOnClickListener(v ->
+                startActivity(new Intent(MainActivity.this, SearchActivity.class)));
+
+        // sit above the system nav bar: reuse the bottom inset the grid already got
+        recyclerView.post(() -> {
+            int b = recyclerView.getPaddingBottom() + Math.round(16 * d);
+            navLp.bottomMargin = b;
+            sfLp.bottomMargin = b;
+            photoNav.setLayoutParams(navLp);
+            searchFab.setLayoutParams(sfLp);
+        });
+
+        photoNav.setOnTab(this::selectTab);
+        selectTab(currentTab);
+
         recyclerView.post(() -> com.absolute.floral.soma.Anim.enterChildren(recyclerView, 20, 20));
+    }
+
+    /* ---------------- two-tab switching ---------------- */
+
+    private void selectTab(int tab) {
+        currentTab = tab;
+        final Toolbar toolbar = findViewById(R.id.toolbar);
+        final com.absolute.floral.soma.Soma soma = com.absolute.floral.soma.SomaSkin.read(this);
+        if (photoNav != null && photoNav.current() != tab) photoNav.select(tab, false);
+
+        boolean library = tab == com.absolute.floral.soma.PhotoNav.LIBRARY;
+        com.absolute.floral.soma.SomaSkin.wordmark(toolbar, soma, library ? "Library" : "Collections", "");
+
+        View show = library ? recyclerView : collectionsScroll;
+        View hide = library ? collectionsScroll : recyclerView;
+        if (hide != null && hide.getVisibility() == View.VISIBLE) {
+            hide.animate().alpha(0f).setDuration(120).withEndAction(() -> {
+                hide.setVisibility(View.GONE);
+                hide.setAlpha(1f);
+            }).start();
+        }
+        if (show != null) {
+            if (show == collectionsScroll && collections == null) {
+                collections = com.absolute.floral.bento.CollectionsScreen.build(this, providers);
+                collectionsScroll.addView(collections.view());
+            }
+            show.setVisibility(View.VISIBLE);
+            show.setAlpha(0f);
+            show.animate().alpha(1f).setDuration(160).start();
+        }
     }
 
     private void setLibrarySpan(int span) {
@@ -569,17 +649,20 @@ public class MainActivity extends ThemeableActivity implements CheckRefreshClick
                             if (photoAdapter != null) {
                                 photoAdapter.setTimeline(
                                         com.absolute.floral.data.PhotoTimeline.from(albumsWithVirtualDirs));
-                                photoAdapter.setMemories(
-                                        com.absolute.floral.data.Memories.build(albumsWithVirtualDirs));
-                                photoAdapter.setAlbums(albumsWithVirtualDirs);
+                                photoAdapter.setFavoritePaths(
+                                        com.absolute.floral.data.FlagStore.favorites(MainActivity.this).all());
+                                providers.albums = albumsWithVirtualDirs;
+                                providers.memories =
+                                        com.absolute.floral.data.Memories.build(albumsWithVirtualDirs);
+                                syncCollections();
                                 com.absolute.floral.people.PeopleIndex.get().ensure(MainActivity.this, ppl -> {
-                                    if (photoAdapter != null) photoAdapter.setPeople(ppl);
+                                    providers.people = ppl; syncCollections();
                                 });
                                 com.absolute.floral.bento.LibrarySnapshot.get(MainActivity.this, snap -> {
-                                    if (photoAdapter != null) photoAdapter.setSnapshot(snap);
+                                    providers.snap = snap; syncCollections();
                                 });
                                 com.absolute.floral.places.PlacesIndex.get().ensure(MainActivity.this, pl -> {
-                                    if (photoAdapter != null) photoAdapter.setPlaces(pl);
+                                    providers.places = pl; syncCollections();
                                 });
                             }
 
@@ -618,6 +701,10 @@ public class MainActivity extends ThemeableActivity implements CheckRefreshClick
         mediaProvider.loadAlbums(MainActivity.this, hiddenFolders, callback);
     }
 
+    private void syncCollections() {
+        if (collections != null) collections.refresh(providers);
+    }
+
     @Override
     protected void onStart() {
         super.onStart();
@@ -627,7 +714,8 @@ public class MainActivity extends ThemeableActivity implements CheckRefreshClick
                 java.util.ArrayList<Album> fresh = MediaProvider.getAlbumsWithVirtualDirectories(this);
                 if (fresh != null && !fresh.isEmpty()) {
                     photoAdapter.setTimeline(com.absolute.floral.data.PhotoTimeline.from(fresh));
-                    photoAdapter.setAlbums(fresh);
+                    providers.albums = fresh;
+                    syncCollections();
                 }
             }, 400);
         }
@@ -659,9 +747,6 @@ public class MainActivity extends ThemeableActivity implements CheckRefreshClick
       @Override
       public boolean onOptionsItemSelected(MenuItem item) {
        switch (item.getItemId()) {
-           case R.id.action_search:
-               startActivity(new Intent(MainActivity.this, SearchActivity.class));
-               break;
            case android.R.id.home:
            case R.id.locked_folder:
                final Intent intent=new Intent(MainActivity.this,PinningActivity.class);
@@ -859,8 +944,11 @@ public class MainActivity extends ThemeableActivity implements CheckRefreshClick
             return;
         }
 
-        com.absolute.floral.soma.SomaSkin.wordmark(toolbar, soma, "Library", "");
+        com.absolute.floral.soma.SomaSkin.wordmark(toolbar, soma,
+                currentTab == com.absolute.floral.soma.PhotoNav.COLLECTIONS ? "Collections" : "Library", "");
         toolbar.post(() -> com.absolute.floral.soma.SomaSkin.toolbarIcons(toolbar, soma));
+        if (photoNav != null) photoNav.setSoma(soma);
+        if (searchFab != null) searchFab.setSoma(soma);
 
         // gentle entrance for the wordmark + first albums
         com.absolute.floral.soma.Anim.enter(toolbar, 60);

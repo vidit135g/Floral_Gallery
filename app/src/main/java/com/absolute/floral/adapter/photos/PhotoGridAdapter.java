@@ -2,7 +2,6 @@ package com.absolute.floral.adapter.photos;
 
 import android.app.Activity;
 import android.content.Intent;
-import android.text.format.DateUtils;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -30,66 +29,29 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * The single-scroll Library: the flat, date-sectioned photo grid, followed by the
- * "Collections" stack ({@link com.absolute.floral.bento.LibrarySections}) as one
- * full-width row at the very bottom — Apple-Photos iOS 18 style.
+ * The <b>Library</b> tab grid — a flat photo/video grid, Apple-Photos iOS 18
+ * style. Continuous by default (no date section headers; the toolbar subtitle
+ * and the fast-scroller carry the date affordance). The Collections tab is a
+ * separate screen ({@link com.absolute.floral.bento.CollectionsScreen}).
  */
 public class PhotoGridAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
 
     private static final int TYPE_HEADER = 0;
     private static final int TYPE_ITEM = 1;
-    private static final int TYPE_COLLECTIONS = 2;
 
-    private java.util.List<com.absolute.floral.data.Memories.Memory> memories = new ArrayList<>();
-    private com.absolute.floral.bento.LibrarySnapshot snapshot;
-    private java.util.List<com.absolute.floral.people.PeopleIndex.Person> people = new ArrayList<>();
-    private java.util.List<com.absolute.floral.places.PlacesIndex.Place> places = new ArrayList<>();
-    private java.util.List<com.absolute.floral.data.models.Album> albums = new ArrayList<>();
-    private boolean bentoEnabled = true;
-
-    public void setBentoEnabled(boolean b) { this.bentoEnabled = b; }
-
-    public void setAlbums(java.util.List<com.absolute.floral.data.models.Album> a) {
-        this.albums = a == null ? new ArrayList<>() : a;
-        invalidateCollections();
-    }
-    public void setPlaces(java.util.List<com.absolute.floral.places.PlacesIndex.Place> p) {
-        this.places = p == null ? new ArrayList<>() : p;
-        invalidateCollections();
-    }
-    public void setMemories(java.util.List<com.absolute.floral.data.Memories.Memory> m) {
-        boolean was = hasCollections();
-        this.memories = m == null ? new ArrayList<>() : m;
-        if (was != hasCollections()) notifyDataSetChanged();
-        else invalidateCollections();
-    }
-    public void setSnapshot(com.absolute.floral.bento.LibrarySnapshot s) {
-        this.snapshot = s;
-        invalidateCollections();
-    }
-    public void setPeople(java.util.List<com.absolute.floral.people.PeopleIndex.Person> p) {
-        this.people = p == null ? new ArrayList<>() : p;
-        invalidateCollections();
-    }
-
-    private void invalidateCollections() {
-        if (hasCollections()) notifyItemChanged(collectionsPos());
-    }
-
-    /** The Collections stack shows whenever we have any library data to summarise. */
-    private boolean hasCollections() {
-        return bentoEnabled && (snapshot != null || (memories != null && !memories.isEmpty())
-                || (albums != null && !albums.isEmpty()));
-    }
-    private int collectionsPos() { return timeline == null ? 0 : timeline.rows.size(); }
-    private PhotoTimeline.Row rowAt(int position) { return timeline.rows.get(position); }
+    /** Optional filter applied to the timeline before display (Library ▸ … ▸ Filter). */
+    public enum Filter { ALL, FAVORITES, EDITED, PHOTOS, VIDEOS, SCREENSHOTS }
 
     public interface SelectionListener { void onSelectionChanged(int count); }
 
     private final Activity activity;
-    private PhotoTimeline timeline;
+    private PhotoTimeline fullTimeline;   // as supplied
+    private PhotoTimeline timeline;       // after filter
     private int spanCount = 3;
     private int lastAnimated = -1;
+    private boolean continuous = false;
+    private Filter filter = Filter.ALL;
+    private java.util.Set<String> favoritePaths = new java.util.HashSet<>();
 
     private boolean selectionMode = false;
     private final java.util.LinkedHashSet<String> selected = new java.util.LinkedHashSet<>();
@@ -97,49 +59,119 @@ public class PhotoGridAdapter extends RecyclerView.Adapter<RecyclerView.ViewHold
 
     public PhotoGridAdapter(Activity activity, PhotoTimeline timeline) {
         this.activity = activity;
-        this.timeline = timeline;
+        this.fullTimeline = timeline;
+        this.timeline = apply(timeline);
         setHasStableIds(true);
     }
 
     public void setTimeline(PhotoTimeline t) {
         if (t == null) return;
-        if (timeline != null && t.rows.size() == timeline.rows.size() && t.items.size() == timeline.items.size()) {
-            this.timeline = t;
+        this.fullTimeline = t;
+        PhotoTimeline next = apply(t);
+        if (timeline != null && next.rows.size() == timeline.rows.size()
+                && next.items.size() == timeline.items.size()) {
+            this.timeline = next;
             return;
         }
-        this.timeline = t;
+        this.timeline = next;
         lastAnimated = -1;
         notifyDataSetChanged();
     }
+
     public void setSpanCount(int s) { this.spanCount = s; }
     public void setSelectionListener(SelectionListener l) { this.selectionListener = l; }
+
+    /** Library uses continuous (no headers); Bucket / Search keep the date headers. */
+    public void setContinuous(boolean c) {
+        if (this.continuous == c) return;
+        this.continuous = c;
+        this.timeline = apply(fullTimeline);
+        lastAnimated = -1;
+        notifyDataSetChanged();
+    }
+
+    public void setFilter(Filter f) {
+        if (f == null) f = Filter.ALL;
+        if (this.filter == f) return;
+        this.filter = f;
+        this.timeline = apply(fullTimeline);
+        lastAnimated = -1;
+        notifyDataSetChanged();
+    }
+
+    public Filter getFilter() { return filter; }
+
+    public void setFavoritePaths(java.util.Set<String> paths) {
+        this.favoritePaths = paths == null ? new java.util.HashSet<>() : paths;
+        if (filter == Filter.FAVORITES) { this.timeline = apply(fullTimeline); notifyDataSetChanged(); }
+    }
+
+    /* -------- timeline shaping -------- */
+
+    private PhotoTimeline apply(PhotoTimeline src) {
+        if (src == null) return null;
+        List<AlbumItem> keep = new ArrayList<>();
+        java.util.Map<String, String> pathAlbum = new java.util.HashMap<>();
+        for (PhotoTimeline.Row r : src.rows) {
+            if (r.header || r.item == null) continue;
+            if (!passesFilter(r.item)) continue;
+            keep.add(r.item);
+            if (r.item.getPath() != null) pathAlbum.put(r.item.getPath(), r.albumPath);
+        }
+        PhotoTimeline out;
+        if (continuous || filter != Filter.ALL) {
+            out = PhotoTimeline.flat(keep, pathAlbum);
+        } else {
+            out = src;
+        }
+        return out;
+    }
+
+    private boolean passesFilter(AlbumItem it) {
+        String p = it.getPath() == null ? "" : it.getPath().toLowerCase(java.util.Locale.ROOT);
+        String n = it.getName() == null ? "" : it.getName().toLowerCase(java.util.Locale.ROOT);
+        boolean video = MediaType.isVideo(it.getPath()) || it instanceof Video;
+        switch (filter) {
+            case FAVORITES:   return it.getPath() != null && favoritePaths.contains(it.getPath());
+            case PHOTOS:      return !video;
+            case VIDEOS:      return video;
+            case SCREENSHOTS: return p.contains("screenshot") || n.contains("screenshot");
+            case EDITED:      return p.contains("/edited") || n.contains("edit") || p.contains("_edit");
+            case ALL:
+            default:          return true;
+        }
+    }
+
+    private PhotoTimeline.Row rowAt(int position) { return timeline.rows.get(position); }
 
     public GridLayoutManager.SpanSizeLookup spanSizeLookup() {
         return new GridLayoutManager.SpanSizeLookup() {
             @Override public int getSpanSize(int position) {
-                if (hasCollections() && position == collectionsPos()) return spanCount;
                 return rowAt(position).header ? spanCount : 1;
             }
         };
     }
 
-    @Override public int getItemCount() {
-        int n = timeline == null ? 0 : timeline.rows.size();
-        return n + (hasCollections() ? 1 : 0);
-    }
+    @Override public int getItemCount() { return timeline == null ? 0 : timeline.rows.size(); }
+
     @Override public int getItemViewType(int position) {
-        if (hasCollections() && position == collectionsPos()) return TYPE_COLLECTIONS;
         return rowAt(position).header ? TYPE_HEADER : TYPE_ITEM;
     }
+
     @Override public long getItemId(int position) {
-        if (hasCollections() && position == collectionsPos()) return "collections".hashCode();
         PhotoTimeline.Row r = rowAt(position);
-        return r.header ? ("h" + r.title).hashCode() : (r.item.getPath() == null ? position : r.item.getPath().hashCode());
+        return r.header ? ("h" + r.title).hashCode()
+                : (r.item.getPath() == null ? position : r.item.getPath().hashCode());
     }
 
     /* selection */
     public boolean isSelectionMode() { return selectionMode; }
     public List<String> selectedPaths() { return new ArrayList<>(selected); }
+    public void enterSelection() {
+        if (selectionMode) return;
+        selectionMode = true;
+        notifyDataSetChanged();
+    }
     public void clearSelection() {
         selectionMode = false; selected.clear();
         if (selectionListener != null) selectionListener.onSelectionChanged(0);
@@ -156,12 +188,6 @@ public class PhotoGridAdapter extends RecyclerView.Adapter<RecyclerView.ViewHold
     @NonNull @Override
     public RecyclerView.ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
         LayoutInflater inf = LayoutInflater.from(parent.getContext());
-        if (viewType == TYPE_COLLECTIONS) {
-            android.widget.FrameLayout box = new android.widget.FrameLayout(activity);
-            box.setLayoutParams(new RecyclerView.LayoutParams(
-                    RecyclerView.LayoutParams.MATCH_PARENT, RecyclerView.LayoutParams.WRAP_CONTENT));
-            return new MemoriesHolder(box);
-        }
         if (viewType == TYPE_HEADER)
             return new HeaderHolder(inf.inflate(R.layout.photos_grid_header, parent, false));
         return new ItemHolder(inf.inflate(R.layout.photos_grid_item, parent, false));
@@ -169,13 +195,6 @@ public class PhotoGridAdapter extends RecyclerView.Adapter<RecyclerView.ViewHold
 
     @Override
     public void onBindViewHolder(@NonNull RecyclerView.ViewHolder holder, int position) {
-        if (holder instanceof MemoriesHolder) {
-            android.widget.FrameLayout box = (android.widget.FrameLayout) holder.itemView;
-            box.removeAllViews();
-            box.addView(com.absolute.floral.bento.LibrarySections.build(
-                    activity, albums, memories, people, places, snapshot));
-            return;
-        }
         PhotoTimeline.Row row = rowAt(position);
         Soma soma = SomaSkin.read(activity);
         if (holder instanceof HeaderHolder) {
@@ -197,7 +216,7 @@ public class PhotoGridAdapter extends RecyclerView.Adapter<RecyclerView.ViewHold
                 .into(h.image);
 
         boolean isVideo = MediaType.isVideo(item.getPath()) || item instanceof Video;
-        if (isVideo && item.getDate() >= 0) {
+        if (isVideo) {
             h.dur.setVisibility(View.VISIBLE);
             h.dur.setText("▶");
         } else h.dur.setVisibility(View.GONE);
@@ -225,7 +244,6 @@ public class PhotoGridAdapter extends RecyclerView.Adapter<RecyclerView.ViewHold
             toggle(item.getPath());
             return true;
         });
-
     }
 
     @Override
@@ -244,13 +262,6 @@ public class PhotoGridAdapter extends RecyclerView.Adapter<RecyclerView.ViewHold
 
     static class HeaderHolder extends RecyclerView.ViewHolder {
         HeaderHolder(View v) { super(v); }
-    }
-    static class MemoriesHolder extends RecyclerView.ViewHolder {
-        MemoriesHolder(View v) {
-            super(v);
-            v.setLayoutParams(new RecyclerView.LayoutParams(
-                    RecyclerView.LayoutParams.MATCH_PARENT, RecyclerView.LayoutParams.WRAP_CONTENT));
-        }
     }
     static class ItemHolder extends RecyclerView.ViewHolder {
         final ImageView image; final TextView dur; final View scrim;

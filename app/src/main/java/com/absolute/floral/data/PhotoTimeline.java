@@ -66,6 +66,23 @@ public class PhotoTimeline {
         return t;
     }
 
+    /**
+     * A continuous (header-free) timeline over an already-ordered item list — the
+     * Apple-Photos iOS 18 Library grid, and any filtered view.
+     */
+    public static PhotoTimeline flat(List<AlbumItem> items, java.util.Map<String, String> pathAlbum) {
+        PhotoTimeline t = new PhotoTimeline();
+        if (items == null) return t;
+        for (AlbumItem it : items) {
+            if (it == null) continue;
+            String path = it.getPath();
+            String album = pathAlbum == null || path == null ? null : pathAlbum.get(path);
+            t.rows.add(new Row(it, album));
+            t.items.add(it);
+        }
+        return t;
+    }
+
     private static String headerLabel(Calendar cal, long dateMs, boolean byMonth) {
         if (dateMs <= 0) return "Undated";
         Calendar now = Calendar.getInstance();
