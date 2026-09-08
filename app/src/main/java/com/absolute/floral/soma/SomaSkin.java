@@ -50,12 +50,16 @@ public final class SomaSkin {
             t1.setTypeface(Soma.display(toolbar.getContext()), android.graphics.Typeface.BOLD);
             t1.setText(big);
             t1.setTextColor(s.ink);
-            t1.setTextSize(android.util.TypedValue.COMPLEX_UNIT_SP, 22f);
-            t1.setLetterSpacing(0f);
-            Toolbar.LayoutParams lp = new Toolbar.LayoutParams(
-                    Toolbar.LayoutParams.WRAP_CONTENT, Toolbar.LayoutParams.WRAP_CONTENT);
-            lp.gravity = android.view.Gravity.START | android.view.Gravity.CENTER_VERTICAL;
-            t1.setLayoutParams(lp);
+            t1.setTextSize(android.util.TypedValue.COMPLEX_UNIT_SP, 26f);
+            t1.setLetterSpacing(-0.02f);
+            // only when the title is a direct Toolbar child (older layouts) —
+            // the two-line layouts wrap it in a LinearLayout
+            if (t1.getParent() == toolbar) {
+                Toolbar.LayoutParams lp = new Toolbar.LayoutParams(
+                        Toolbar.LayoutParams.WRAP_CONTENT, Toolbar.LayoutParams.WRAP_CONTENT);
+                lp.gravity = android.view.Gravity.START | android.view.Gravity.CENTER_VERTICAL;
+                t1.setLayoutParams(lp);
+            }
         }
         // no navigation icon on the tab screens — GP keeps the title flush-left
         toolbar.setNavigationIcon(null);
@@ -65,6 +69,18 @@ public final class SomaSkin {
             t2.setText("");
             t2.setVisibility(View.GONE);
         }
+        subtitle(toolbar, s, small);
+    }
+
+    /** The small date-range line under a wordmark title (Apple-Photos Library). */
+    public static void subtitle(Toolbar toolbar, Soma s, String text) {
+        TextView sub = toolbar.findViewById(R.id.toolbar_subtitle);
+        if (sub == null) return;
+        if (text == null || text.isEmpty()) { sub.setVisibility(View.GONE); return; }
+        sub.setTypeface(Soma.body(toolbar.getContext()));
+        sub.setText(text);
+        sub.setTextColor(s.inkMute);
+        sub.setVisibility(View.VISIBLE);
     }
 
     /** Recolour a Toolbar's icons/overflow to the ink colour. */

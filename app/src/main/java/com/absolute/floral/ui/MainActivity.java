@@ -131,6 +131,8 @@ public class MainActivity extends ThemeableActivity implements CheckRefreshClick
     private final com.absolute.floral.bento.CollectionsScreen.Providers providers =
             new com.absolute.floral.bento.CollectionsScreen.Providers();
     private int currentTab = 0;
+    private com.absolute.floral.soma.Soma librarySoma;
+    private String lastSubtitle = "";
     private View selectionBar;
     private View selectionTop;
     private TextView selectionCount;
@@ -429,6 +431,10 @@ public class MainActivity extends ThemeableActivity implements CheckRefreshClick
                     else
                         com.bumptech.glide.Glide.with(MainActivity.this).resumeRequests();
                 } catch (Exception ignored) {}
+                if (state == RecyclerView.SCROLL_STATE_IDLE) updateLibrarySubtitle();
+            }
+            @Override public void onScrolled(RecyclerView rv, int dx, int dy) {
+                if (Math.abs(dy) > 4) updateLibrarySubtitle();
             }
         });
 
@@ -533,6 +539,9 @@ public class MainActivity extends ThemeableActivity implements CheckRefreshClick
 
         boolean library = tab == com.absolute.floral.soma.PhotoNav.LIBRARY;
         com.absolute.floral.soma.SomaSkin.wordmark(toolbar, soma, library ? "Library" : "Collections", "");
+        librarySoma = soma;
+        lastSubtitle = "";
+        if (library) recyclerView.post(this::updateLibrarySubtitle);
 
         View show = library ? recyclerView : collectionsScroll;
         View hide = library ? collectionsScroll : recyclerView;
@@ -551,6 +560,19 @@ public class MainActivity extends ThemeableActivity implements CheckRefreshClick
             show.setAlpha(0f);
             show.animate().alpha(1f).setDuration(160).start();
         }
+    }
+
+    private void updateLibrarySubtitle() {
+        if (photoAdapter == null || currentTab != com.absolute.floral.soma.PhotoNav.LIBRARY) return;
+        if (photoAdapter.isSelectionMode()) return;
+        int first = gridLayoutManager.findFirstVisibleItemPosition();
+        int last = gridLayoutManager.findLastVisibleItemPosition();
+        if (first < 0) return;
+        String label = photoAdapter.rangeLabel(first, last);
+        if (label.equals(lastSubtitle)) return;
+        lastSubtitle = label;
+        if (librarySoma == null) librarySoma = com.absolute.floral.soma.SomaSkin.read(this);
+        com.absolute.floral.soma.SomaSkin.subtitle(findViewById(R.id.toolbar), librarySoma, label);
     }
 
     private void setLibrarySpan(int span) {
@@ -1197,6 +1219,7 @@ public class MainActivity extends ThemeableActivity implements CheckRefreshClick
         com.absolute.floral.soma.SomaSkin.ground(this, rootView, soma);
         com.absolute.floral.soma.SomaSkin.statusBarIcons(this, soma);
         if (photoAdapter != null) { photoAdapter.refreshSkin(); photoAdapter.notifyDataSetChanged(); }
+        librarySoma = soma; lastSubtitle = "";
 
         if (pick_photos) {
             toolbar.setBackgroundColor(toolbarColor);

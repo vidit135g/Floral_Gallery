@@ -97,6 +97,34 @@ public class PhotoGridAdapter extends RecyclerView.Adapter<RecyclerView.ViewHold
     /** Re-read the palette once (call on theme change / data refresh), not per-bind. */
     public void refreshSkin() { this.skin = SomaSkin.read(activity); }
 
+    /** A short "Jan 3 – Feb 12" label for the date span of the given position range. */
+    public String rangeLabel(int first, int last) {
+        if (timeline == null || timeline.rows.isEmpty()) return "";
+        long lo = Long.MAX_VALUE, hi = Long.MIN_VALUE;
+        int n = timeline.rows.size();
+        for (int i = Math.max(0, first); i <= Math.min(n - 1, last); i++) {
+            PhotoTimeline.Row r = timeline.rows.get(i);
+            if (r.header || r.item == null) continue;
+            long d = r.item.getDate();
+            if (d <= 0) continue;
+            if (d < lo) lo = d;
+            if (d > hi) hi = d;
+        }
+        if (hi == Long.MIN_VALUE) return "";
+        java.util.Calendar a = java.util.Calendar.getInstance(), b = java.util.Calendar.getInstance();
+        a.setTimeInMillis(hi); b.setTimeInMillis(lo);   // newest first in the grid
+        boolean sameYear = a.get(java.util.Calendar.YEAR) == b.get(java.util.Calendar.YEAR);
+        java.util.Calendar now = java.util.Calendar.getInstance();
+        String fmtA = sameYear ? "MMM d" : "MMM d, yyyy";
+        String hiS = android.text.format.DateFormat.format(fmtA, hi).toString();
+        if (a.get(java.util.Calendar.YEAR) == b.get(java.util.Calendar.YEAR)
+                && a.get(java.util.Calendar.DAY_OF_YEAR) == b.get(java.util.Calendar.DAY_OF_YEAR))
+            return hiS;
+        String loS = android.text.format.DateFormat.format(
+                sameYear ? "MMM d" : "MMM d, yyyy", lo).toString();
+        return loS + " – " + hiS;
+    }
+
     private void recomputeThumb() {
         int screen = activity.getResources().getDisplayMetrics().widthPixels;
         thumbPx = Math.max(160, Math.min(640, Math.round((screen / (float) Math.max(1, spanCount)) * 1.15f)));

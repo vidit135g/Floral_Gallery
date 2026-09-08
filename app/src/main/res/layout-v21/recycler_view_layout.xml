@@ -34,15 +34,32 @@
         android:contentInsetStartWithNavigation="0dp"
         app:contentInsetStart="16dp">
 
-        <TextView
+        <LinearLayout
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Photos"
-            android:textSize="22sp"
-            android:textColor="#1F1F1F"
+            android:orientation="vertical"
             android:layout_gravity="start|center_vertical"
-            android:paddingStart="2dp"
-            android:id="@+id/toolbar_title" />
+            android:paddingStart="2dp">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Photos"
+                android:textSize="26sp"
+                android:textColor="#1F1F1F"
+                android:includeFontPadding="false"
+                android:id="@+id/toolbar_title" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textSize="12sp"
+                android:textColor="#5F6368"
+                android:includeFontPadding="false"
+                android:layout_marginTop="1dp"
+                android:visibility="gone"
+                android:id="@+id/toolbar_subtitle" />
+        </LinearLayout>
 
         <TextView
             android:layout_width="0dp"
