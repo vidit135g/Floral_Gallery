@@ -31,10 +31,12 @@ public class PeopleIndex {
     public static class Person {
         public final String id;
         public Bitmap cover;
+        public String name;              // user-assigned, null until named
         public final List<AlbumItem> photos = new ArrayList<>();
         float[] centroid;
         int n;
         Person(String id) { this.id = id; }
+        public float[] embedding() { return centroid; }
     }
 
     public interface Listener { void onPeople(List<Person> people); }
@@ -150,7 +152,16 @@ public class PeopleIndex {
         List<Person> keep = new ArrayList<>();
         for (Person p : clusters) if (!p.photos.isEmpty()) keep.add(p);
         Collections.sort(keep, (a, b) -> Integer.compare(b.photos.size(), a.photos.size()));
-        return keep.size() > 12 ? keep.subList(0, 12) : keep;
+        if (keep.size() > 12) keep = keep.subList(0, 12);
+        PeopleNames names = PeopleNames.get(ctx);
+        for (Person p : keep) p.name = names.nameFor(p.centroid);
+        // named people first
+        Collections.sort(keep, (a, b) -> {
+            int an = a.name != null ? 0 : 1, bn = b.name != null ? 0 : 1;
+            if (an != bn) return an - bn;
+            return Integer.compare(b.photos.size(), a.photos.size());
+        });
+        return keep;
     }
 
     private void merge(Person p, float[] emb) {

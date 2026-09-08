@@ -132,7 +132,9 @@ public class MainActivity extends ThemeableActivity implements CheckRefreshClick
             new com.absolute.floral.bento.CollectionsScreen.Providers();
     private int currentTab = 0;
     private View selectionBar;
+    private View selectionTop;
     private TextView selectionCount;
+    private TextView selectionTitle;
     private static final int REQUEST_CODE_BULK_DELETE = 892;
 
 
@@ -459,6 +461,37 @@ public class MainActivity extends ThemeableActivity implements CheckRefreshClick
         searchFab.setOnClickListener(v ->
                 startActivity(new Intent(MainActivity.this, SearchActivity.class)));
 
+        // drag-to-select across the grid (Apple Photos style)
+        final com.michaelflisar.dragselectrecyclerview.DragSelectTouchListener dsl =
+                new com.michaelflisar.dragselectrecyclerview.DragSelectTouchListener()
+                        .withSelectListener((start, end, isSelected) ->
+                                photoAdapter.dragSelectRange(start, end, isSelected));
+        recyclerView.addOnItemTouchListener(dsl);
+        photoAdapter.setDragStarter(dsl::startDragSelection);
+
+        // account avatar — top-right on every tab (opens Settings), Apple's account chip
+        final Toolbar toolbar2 = findViewById(R.id.toolbar);
+        TextView avatar = new TextView(this);
+        avatar.setText("F");
+        avatar.setGravity(android.view.Gravity.CENTER);
+        avatar.setTextColor(0xFFFFFFFF);
+        avatar.setTextSize(13);
+        avatar.setTypeface(com.absolute.floral.soma.Soma.body(this), Typeface.BOLD);
+        android.graphics.drawable.GradientDrawable ad = new android.graphics.drawable.GradientDrawable();
+        ad.setShape(android.graphics.drawable.GradientDrawable.OVAL);
+        ad.setColor(getResources().getColor(R.color.ios_blue));
+        avatar.setBackground(ad);
+        int av = Math.round(30 * d);
+        Toolbar.LayoutParams avlp = new Toolbar.LayoutParams(av, av);
+        avlp.gravity = android.view.Gravity.END | android.view.Gravity.CENTER_VERTICAL;
+        avlp.rightMargin = Math.round(6 * d);
+        avatar.setLayoutParams(avlp);
+        avatar.setOnClickListener(v -> {
+            SettingsActivity.sChanged = false;
+            startActivityForResult(new Intent(this, SettingsActivity.class), SETTINGS_REQUEST_CODE);
+        });
+        toolbar2.addView(avatar);
+
         // sit above the system nav bar: reuse the bottom inset the grid already got
         recyclerView.post(() -> {
             int b = recyclerView.getPaddingBottom() + Math.round(16 * d);
@@ -761,15 +794,8 @@ public class MainActivity extends ThemeableActivity implements CheckRefreshClick
            case android.R.id.home:
                startActivity(new Intent(MainActivity.this, PinningActivity.class));
                break;
-           case R.id.library_select:
-               if (photoAdapter != null) { photoAdapter.enterSelection(); showSelectionBar(0); }
-               break;
            case R.id.library_more:
                showLibraryMenu();
-               break;
-           case R.id.library_settings:
-               SettingsActivity.sChanged = false;
-               startActivityForResult(new Intent(this, SettingsActivity.class), SETTINGS_REQUEST_CODE);
                break;
                default:
                    break;
@@ -799,7 +825,9 @@ public class MainActivity extends ThemeableActivity implements CheckRefreshClick
         } catch (Exception ignored) {}
         pm.setOnMenuItemClickListener(mi -> {
             int id = mi.getItemId();
-            if (id == R.id.sort_recent || id == R.id.sort_captured) {
+            if (id == R.id.menu_select) {
+                if (photoAdapter != null) { photoAdapter.enterSelection(); showSelectionBar(0); }
+            } else if (id == R.id.sort_recent || id == R.id.sort_captured) {
                 lib.edit().putString("sort", id == R.id.sort_captured ? "captured" : "recent").apply();
             } else if (id == R.id.filter_all) setFilter(com.absolute.floral.adapter.photos.PhotoGridAdapter.Filter.ALL);
             else if (id == R.id.filter_favorites) setFilter(com.absolute.floral.adapter.photos.PhotoGridAdapter.Filter.FAVORITES);
@@ -855,16 +883,52 @@ public class MainActivity extends ThemeableActivity implements CheckRefreshClick
             host.addView(bar, lp);
             selectionBar = bar;
         }
+        if (selectionTop == null) {
+            final ViewGroup host = (ViewGroup) recyclerView.getParent();
+            LinearLayout top = new LinearLayout(this);
+            top.setOrientation(LinearLayout.HORIZONTAL);
+            top.setGravity(android.view.Gravity.CENTER_VERTICAL);
+            int padTop = findViewById(R.id.toolbar).getPaddingTop();
+            top.setPadding(Math.round(12 * d), padTop + Math.round(6 * d),
+                    Math.round(12 * d), Math.round(10 * d));
+            android.graphics.drawable.GradientDrawable tbg = new android.graphics.drawable.GradientDrawable();
+            tbg.setColor(soma.lightBase ? 0xFFFFFFFF : 0xFF131314);
+            top.setBackground(tbg);
+            top.setElevation(12 * d);
+            TextView cancel = mkBarText("Cancel", getResources().getColor(R.color.ios_blue), false);
+            cancel.setPadding(Math.round(6 * d), Math.round(8 * d), Math.round(10 * d), Math.round(8 * d));
+            cancel.setOnClickListener(v -> photoAdapter.clearSelection());
+            top.addView(cancel);
+            selectionTitle = mkBarText("Select Items", soma.ink, true);
+            selectionTitle.setGravity(android.view.Gravity.CENTER);
+            top.addView(selectionTitle, new LinearLayout.LayoutParams(0,
+                    ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
+            TextView all = mkBarText("Select All", getResources().getColor(R.color.ios_blue), false);
+            all.setPadding(Math.round(10 * d), Math.round(8 * d), Math.round(6 * d), Math.round(8 * d));
+            all.setOnClickListener(v -> {
+                photoAdapter.dragSelectRange(0, photoAdapter.getItemCount() - 1, true);
+            });
+            top.addView(all);
+            FrameLayout.LayoutParams tlp = new FrameLayout.LayoutParams(
+                    ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+            tlp.gravity = android.view.Gravity.TOP;
+            host.addView(top, tlp);
+            selectionTop = top;
+        }
+
         selectionBar.setVisibility(View.VISIBLE);
         selectionBar.setTranslationY(0f);
-        if (selectionCount != null)
-            selectionCount.setText(count + (count == 1 ? " selected" : " selected"));
+        selectionTop.setVisibility(View.VISIBLE);
+        String label = count == 0 ? "Select Items" : count + " Selected";
+        if (selectionCount != null) selectionCount.setText(label);
+        if (selectionTitle != null) selectionTitle.setText(label);
         if (photoNav != null) photoNav.setVisibility(View.GONE);
         if (searchFab != null) searchFab.setVisibility(View.GONE);
     }
 
     private void hideSelectionBar() {
         if (selectionBar != null) selectionBar.setVisibility(View.GONE);
+        if (selectionTop != null) selectionTop.setVisibility(View.GONE);
         if (photoNav != null) photoNav.setVisibility(View.VISIBLE);
         if (searchFab != null) searchFab.setVisibility(View.VISIBLE);
     }

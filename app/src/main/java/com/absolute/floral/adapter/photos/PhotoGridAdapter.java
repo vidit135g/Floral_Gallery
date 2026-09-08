@@ -43,6 +43,21 @@ public class PhotoGridAdapter extends RecyclerView.Adapter<RecyclerView.ViewHold
     public enum Filter { ALL, FAVORITES, EDITED, PHOTOS, VIDEOS, SCREENSHOTS }
 
     public interface SelectionListener { void onSelectionChanged(int count); }
+    public interface DragStarter { void startDragAt(int position); }
+    private DragStarter dragStarter;
+    public void setDragStarter(DragStarter d) { this.dragStarter = d; }
+
+    /** Select/deselect a contiguous run of grid positions (drag-select). */
+    public void dragSelectRange(int start, int end, boolean sel) {
+        selectionMode = true;
+        for (int i = start; i <= end && i < getItemCount(); i++) {
+            PhotoTimeline.Row r = rowAt(i);
+            if (r.header || r.item == null || r.item.getPath() == null) continue;
+            if (sel) selected.add(r.item.getPath()); else selected.remove(r.item.getPath());
+        }
+        if (selectionListener != null) selectionListener.onSelectionChanged(selected.size());
+        notifyDataSetChanged();
+    }
 
     private final Activity activity;
     private PhotoTimeline fullTimeline;   // as supplied
@@ -242,6 +257,10 @@ public class PhotoGridAdapter extends RecyclerView.Adapter<RecyclerView.ViewHold
         h.itemView.setOnLongClickListener(v -> {
             selectionMode = true;
             toggle(item.getPath());
+            if (dragStarter != null && item.getPath() != null && selected.contains(item.getPath())) {
+                int pos = h.getBindingAdapterPosition();
+                if (pos != RecyclerView.NO_POSITION) dragStarter.startDragAt(pos);
+            }
             return true;
         });
     }

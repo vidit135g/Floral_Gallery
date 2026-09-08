@@ -4,21 +4,9 @@
     xmlns:tools="http://schemas.android.com/tools">
 
     <item
-        android:id="@+id/library_select"
-        android:title="Select"
-        app:showAsAction="always" />
-
-    <item
         android:id="@+id/library_more"
         android:icon="@drawable/ic_more_horiz_white"
         android:title="More"
-        app:showAsAction="always"
-        tools:ignore="AlwaysShowAction" />
-
-    <item
-        android:id="@+id/library_settings"
-        android:icon="@drawable/ic_settings_white"
-        android:title="Settings"
         app:showAsAction="always"
         tools:ignore="AlwaysShowAction" />
 

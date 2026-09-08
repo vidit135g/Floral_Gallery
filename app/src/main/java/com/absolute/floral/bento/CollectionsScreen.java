@@ -162,8 +162,14 @@ public final class CollectionsScreen {
 
             /* Albums */
             final List<Album> nonEmpty = new ArrayList<>();
+            final java.util.Set<String> reserved = new java.util.HashSet<>(java.util.Arrays.asList(
+                    "people", "people & pets", "trips", "memories", "recent days",
+                    "featured photos", "media types", "utilities", "favorites", "favourites"));
             if (p.albums != null) for (Album al : p.albums)
-                if (al.getAlbumItems() != null && !al.getAlbumItems().isEmpty()) nonEmpty.add(al);
+                if (al.getAlbumItems() != null && !al.getAlbumItems().isEmpty()
+                        && (al.getName() == null
+                            || !reserved.contains(al.getName().trim().toLowerCase(Locale.ROOT))))
+                    nonEmpty.add(al);
             if (!nonEmpty.isEmpty()) {
                 section(s, ui, "albums", "Albums", true, null, null, body -> {
                     LinearLayout ag = new LinearLayout(a);
@@ -195,6 +201,19 @@ public final class CollectionsScreen {
                 });
             }
 
+            /* Recent Days */
+            final List<Day> days = recentDays(all, 20);
+            if (!days.isEmpty()) {
+                section(s, ui, "recentdays", "Recent Days", true, null, null, body -> {
+                    HorizontalScrollView hs = hs(a);
+                    LinearLayout row = (LinearLayout) hs.getChildAt(0);
+                    for (Day d : days)
+                        row.addView(bigCard(a, s, d.cover, d.label, d.items.size() + " photos",
+                                () -> openBucket(a, d.label, "", d.items)));
+                    body.addView(hs);
+                });
+            }
+
             /* People & Pets */
             if (p.people != null && !p.people.isEmpty()) {
                 section(s, ui, "people", "People & Pets", true, null, null, body -> {
@@ -203,6 +222,7 @@ public final class CollectionsScreen {
                     int n = 0;
                     for (PeopleIndex.Person person : p.people) {
                         final int num = ++n;
+                        final PeopleIndex.Person pp = person;
                         LinearLayout cell = new LinearLayout(a);
                         cell.setOrientation(LinearLayout.VERTICAL);
                         cell.setGravity(Gravity.CENTER_HORIZONTAL);
@@ -214,12 +234,19 @@ public final class CollectionsScreen {
                         else face.setBackgroundColor(s.surfaceStrong);
                         cell.addView(face, new LinearLayout.LayoutParams(dp(a, 78), dp(a, 78)));
                         TextView t = new TextView(a);
-                        t.setText("Person " + num);
-                        t.setTextColor(s.inkMute);
+                        boolean named = person.name != null && !person.name.isEmpty();
+                        t.setText(named ? person.name : "Add Name");
+                        t.setTextColor(named ? s.ink : a.getResources().getColor(R.color.ios_blue));
                         t.setTextSize(11);
+                        t.setTypeface(Soma.body(a), named ? Typeface.BOLD : Typeface.NORMAL);
                         t.setPadding(0, dp(a, 6), 0, 0);
                         cell.addView(t);
-                        cell.setOnClickListener(v -> openBucket(a, "Person " + num, "PEOPLE", person.photos));
+                        final String label = named ? person.name : "Person " + num;
+                        cell.setOnClickListener(v -> {
+                            if (named) openBucket(a, label, "PEOPLE", pp.photos);
+                            else renamePerson(pp);
+                        });
+                        cell.setOnLongClickListener(v -> { renamePerson(pp); return true; });
                         row.addView(cell);
                     }
                     body.addView(hs);
@@ -236,6 +263,23 @@ public final class CollectionsScreen {
                         final Trips.Trip tt = t;
                         row.addView(bigCard(a, s, t.cover(), t.title, t.items.size() + " photos",
                                 () -> openBucket(a, tt.title, "TRIP", tt.items)));
+                    }
+                    body.addView(hs);
+                });
+            }
+
+            /* Featured Photos */
+            final List<AlbumItem> feat = withPaths(all, FlagStore.favorites(a).all());
+            if (feat.isEmpty() && p.snap != null && p.snap.newest != null) feat.add(p.snap.newest);
+            if (!feat.isEmpty()) {
+                section(s, ui, "featured", "Featured Photos", true,
+                        () -> openBucket(a, "Featured Photos", "", feat), null, body -> {
+                    HorizontalScrollView hs = hs(a);
+                    LinearLayout row = (LinearLayout) hs.getChildAt(0);
+                    for (AlbumItem it : feat.subList(0, Math.min(14, feat.size()))) {
+                        final AlbumItem fit = it;
+                        row.addView(squareThumb(a, s, it,
+                                () -> openBucket(a, "Featured Photos", "", feat)));
                     }
                     body.addView(hs);
                 });
@@ -313,6 +357,29 @@ public final class CollectionsScreen {
 
         private Runnable pillEdit(Soma s) {
             return () -> Toast.makeText(a, "Editing Pinned is coming soon", Toast.LENGTH_SHORT).show();
+        }
+
+        private void renamePerson(final PeopleIndex.Person person) {
+            final android.widget.EditText in = new android.widget.EditText(a);
+            in.setHint("Name");
+            in.setText(person.name == null ? "" : person.name);
+            in.setSingleLine(true);
+            int pad = dp(a, 20);
+            android.widget.FrameLayout wrap = new android.widget.FrameLayout(a);
+            wrap.setPadding(pad, dp(a, 8), pad, 0);
+            wrap.addView(in);
+            new androidx.appcompat.app.AlertDialog.Builder(a)
+                    .setTitle("Name this person")
+                    .setView(wrap)
+                    .setPositiveButton("Save", (d, w) -> {
+                        String nm = in.getText().toString().trim();
+                        com.absolute.floral.people.PeopleNames.get(a).save(nm, person.embedding());
+                        person.name = nm.isEmpty() ? null : nm;
+                        signature = -1;
+                        scroll.post(this::build);
+                    })
+                    .setNegativeButton("Cancel", null)
+                    .show();
         }
 
         /* --------------------------------------------------------- section */
@@ -613,6 +680,51 @@ public final class CollectionsScreen {
         t.setOnClickListener(v -> onTap.run());
         c.addView(t);
         return c;
+    }
+
+    private static final class Day {
+        String label; AlbumItem cover; final List<AlbumItem> items = new ArrayList<>();
+    }
+
+    private static List<Day> recentDays(List<AlbumItem> all, int max) {
+        LinkedHashMap<String, Day> map = new LinkedHashMap<>();
+        long cutoff = System.currentTimeMillis() - 45L * 24 * 3600 * 1000;
+        Calendar c = Calendar.getInstance();
+        for (AlbumItem it : all) {
+            if (it.getDate() <= 0 || it.getDate() < cutoff) break;
+            c.setTimeInMillis(it.getDate());
+            String key = c.get(Calendar.YEAR) + "-" + c.get(Calendar.DAY_OF_YEAR);
+            Day d = map.get(key);
+            if (d == null) {
+                d = new Day();
+                d.cover = it;
+                d.label = android.text.format.DateFormat.format("EEEE, d MMM", it.getDate()).toString();
+                map.put(key, d);
+            }
+            d.items.add(it);
+        }
+        List<Day> out = new ArrayList<>(map.values());
+        return out.size() > max ? out.subList(0, max) : out;
+    }
+
+    private static View squareThumb(Activity a, Soma s, AlbumItem it, Runnable onTap) {
+        ImageView img = new ImageView(a);
+        int d = dp(a, 96);
+        LinearLayout.LayoutParams ilp = new LinearLayout.LayoutParams(d, d);
+        ilp.rightMargin = dp(a, 6);
+        img.setLayoutParams(ilp);
+        img.setScaleType(ImageView.ScaleType.CENTER_CROP);
+        img.setBackgroundColor(s.surfaceStrong);
+        img.setClipToOutline(true);
+        final float r = dp(a, 12);
+        img.setOutlineProvider(new ViewOutlineProvider() {
+            @Override public void getOutline(View v, android.graphics.Outline o) {
+                o.setRoundRect(0, 0, v.getWidth(), v.getHeight(), r);
+            }
+        });
+        com.bumptech.glide.Glide.with(a).load(cover(a, it)).centerCrop().into(img);
+        img.setOnClickListener(v -> onTap.run());
+        return img;
     }
 
     private static List<AlbumItem> flatten(List<Album> albums) {
