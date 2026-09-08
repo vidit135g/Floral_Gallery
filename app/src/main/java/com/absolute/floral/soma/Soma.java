@@ -99,35 +99,45 @@ public final class Soma {
     }
 
     /* ----- fonts -----
-       google.ttf (bundled, a Google-Sans-style face) is the app font. It is
-       already the global default via CustomFontApp; these helpers hand the same
-       face to the few views that set it explicitly. */
+       Poppins — a geometric, gently rounded sans that sits well with the
+       pastel/bento surfaces. Medium is the UI default (also the global default
+       via CustomFontApp); Bold carries titles and big numerals; Regular is the
+       long-form body weight. */
 
-    private static Typeface base;
+    private static Typeface base;     // Poppins Medium
+    private static Typeface bold;     // Poppins Bold
+    private static Typeface regular;  // Poppins Regular
+
+    private static Typeface asset(Context c, String file, Typeface fallback) {
+        try {
+            return Typeface.createFromAsset(c.getApplicationContext().getAssets(), file);
+        } catch (Exception e) {
+            return fallback;
+        }
+    }
 
     private static Typeface load(Context c) {
-        if (base == null) {
-            try {
-                base = Typeface.createFromAsset(c.getApplicationContext().getAssets(), "fonts/google.ttf");
-            } catch (Exception e) {
-                base = Typeface.SANS_SERIF;
-            }
-        }
+        if (base == null) base = asset(c, "fonts/google.ttf", Typeface.SANS_SERIF);
         return base;
     }
 
-    /** Titles / headers — a touch heavier. */
+    /** Titles / headers — Poppins Bold. */
     public static Typeface display(Context c) {
-        return Typeface.create(load(c), Typeface.NORMAL);
+        if (bold == null) bold = asset(c, "fonts/display.ttf", Typeface.create(load(c), Typeface.BOLD));
+        return bold;
     }
 
     /** Alias kept for old call-sites (no more serif). */
-    public static Typeface serif(Context c) { return load(c); }
+    public static Typeface serif(Context c) { return display(c); }
 
-    /** Body / labels. */
+    /** Body / labels — Poppins Medium. */
     public static Typeface body(Context c) { return load(c); }
 
-    public static Typeface bodyRegular(Context c) { return load(c); }
+    /** Long-form / secondary body — Poppins Regular. */
+    public static Typeface bodyRegular(Context c) {
+        if (regular == null) regular = asset(c, "fonts/regular.ttf", load(c));
+        return regular;
+    }
 
     /* ----- drawables ----- */
 
