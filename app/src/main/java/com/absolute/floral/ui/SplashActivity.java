@@ -47,11 +47,7 @@ public class SplashActivity extends AppCompatActivity {
         final Animation fadef = AnimationUtils.loadAnimation(getBaseContext(),R.anim.fadefirst);
         final Animation fadebut = AnimationUtils.loadAnimation(getBaseContext(),R.anim.fadebutton);
         hi.startAnimation(fadef);
-        new Handler().postDelayed(() -> {
-        }, 4000);
-            piximage.startAnimation(an);
-        new Handler().postDelayed(() -> {
-        }, 2000);
+        piximage.startAnimation(an);
         intro.startAnimation(fade);
         btn.startAnimation(fadebut);
 
@@ -71,7 +67,7 @@ public class SplashActivity extends AppCompatActivity {
                     startActivity(i);
                     progress.setVisibility(View.GONE);
                     prgtext.setVisibility(View.GONE);
-                }, 4000);
+                }, 600);
 
 
 

@@ -863,6 +863,12 @@ public class ItemActivity extends ThemeableActivity {
         if (fav != null) fav.setImageResource(on ? R.drawable.ic_star_white : R.drawable.ic_star_border_white);
     }
 
+    /** A video started playing inline — get the app chrome out of the way. */
+    public void onVideoInline() {
+        if (chrome != null) chrome.setVisible(false, true);
+        systemUiVisible = false;
+    }
+
     void pauseOffscreenVideos(int current) {
         if (viewPager == null || viewPager.getAdapter() == null) return;
         for (ViewHolder vh : ((ItemAdapter) viewPager.getAdapter()).viewHolders()) {

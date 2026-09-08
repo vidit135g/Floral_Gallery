@@ -58,6 +58,7 @@ public class VideoViewHolder extends ViewHolder {
         pv.setVisibility(View.VISIBLE);
         if (badge != null) badge.setVisibility(View.GONE);
         player.setPlayWhenReady(true);
+        try { ((ItemActivity) itemView.getContext()).onVideoInline(); } catch (Throwable ignored) {}
     }
 
     public void pausePlayback() {
