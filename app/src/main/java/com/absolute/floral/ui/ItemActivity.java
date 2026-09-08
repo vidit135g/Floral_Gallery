@@ -293,9 +293,20 @@ public class ItemActivity extends ThemeableActivity {
     private void onAlbumLoaded(Bundle savedInstanceState) {
         if (albumItem == null) {
             if (savedInstanceState == null) {
-                int position = getIntent().getIntExtra(ITEM_POSITION, 0);
-                if (album != null && position >= 0 && position < album.getAlbumItems().size()) {
+                // prefer the exact item that was tapped (grid passes it as a Parcelable)
+                AlbumItem tapped = null;
+                try { tapped = getIntent().getParcelableExtra(ALBUM_ITEM); }
+                catch (Exception ignored) {}
+                int position = getIntent().getIntExtra(ITEM_POSITION, -1);
+                if (tapped != null && album != null) {
+                    int idx = indexOfByPath(album, tapped);
+                    albumItem = idx >= 0 ? album.getAlbumItems().get(idx) : tapped;
+                    albumItem.isSharedElement = true;
+                } else if (album != null && position >= 0 && position < album.getAlbumItems().size()) {
                     albumItem = album.getAlbumItems().get(position);
+                    albumItem.isSharedElement = true;
+                } else if (album != null && !album.getAlbumItems().isEmpty()) {
+                    albumItem = album.getAlbumItems().get(0);
                     albumItem.isSharedElement = true;
                 }
             } else {

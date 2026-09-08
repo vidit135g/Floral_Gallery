@@ -43,9 +43,13 @@ public class LibrarySnapshot {
         final Context app = ctx.getApplicationContext();
         new Thread(() -> {
             LibrarySnapshot s = compute(app);
-            cached = s;
-            cachedAt = System.currentTimeMillis();
-            new android.os.Handler(android.os.Looper.getMainLooper()).post(() -> cb.onSnapshot(s));
+            // don't cache an empty read — the media provider may just not be ready yet
+            if (s.photos + s.videos + s.albums > 0) {
+                cached = s;
+                cachedAt = System.currentTimeMillis();
+            }
+            final LibrarySnapshot out = (s.photos + s.videos + s.albums == 0 && cached != null) ? cached : s;
+            new android.os.Handler(android.os.Looper.getMainLooper()).post(() -> cb.onSnapshot(out));
         }, "floral-snapshot").start();
     }
 

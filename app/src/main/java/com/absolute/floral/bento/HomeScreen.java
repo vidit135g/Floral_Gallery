@@ -192,11 +192,11 @@ public final class HomeScreen {
             f.setLayoutParams(flp);
             final float r = dp(26);
 
-            // a beautiful multi-stop gradient — rose → violet → indigo, on the
-            // Floral / iOS-18 family palette
+            // a soft twilight gradient — periwinkle → lilac → mauve; soothing,
+            // on the Floral / iOS-18 family palette
             GradientDrawable body = new GradientDrawable(
                     GradientDrawable.Orientation.TL_BR,
-                    new int[]{ 0xFFFF6FA3, 0xFFA24CD6, 0xFF5B54E0 });
+                    new int[]{ 0xFF7C8CC4, 0xFF9C8FCB, 0xFFB98FC0 });
             body.setCornerRadius(r);
             GradientDrawable sheen = new GradientDrawable();
             sheen.setShape(GradientDrawable.RECTANGLE);
@@ -214,6 +214,28 @@ public final class HomeScreen {
                 }
             });
             f.setElevation(dp(3));
+
+            // the newest photo as a soft cover behind the gradient tint
+            if (cover != null) {
+                ImageView img = new ImageView(a);
+                img.setScaleType(ImageView.ScaleType.CENTER_CROP);
+                img.setImageAlpha(88);
+                com.bumptech.glide.Glide.with(a)
+                        .load(CollectionsScreen.cover(a, cover)).centerCrop().into(img);
+                f.addView(img, new FrameLayout.LayoutParams(
+                        ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
+                // twilight wash so the card keeps its colour whatever the photo is
+                View tint = new View(a);
+                tint.setBackground(new GradientDrawable(GradientDrawable.Orientation.TL_BR,
+                        new int[]{ 0x995F6FB8, 0x593F7BC0, 0xAA6E4E9C }));
+                f.addView(tint, new FrameLayout.LayoutParams(
+                        ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
+            }
+            View scrim = new View(a);
+            scrim.setBackground(new GradientDrawable(GradientDrawable.Orientation.TOP_BOTTOM,
+                    new int[]{ 0x00000000, 0x2E000000, 0x82000000 }));
+            f.addView(scrim, new FrameLayout.LayoutParams(
+                    ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
 
             LinearLayout cap = new LinearLayout(a);
             cap.setOrientation(LinearLayout.VERTICAL);

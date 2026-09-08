@@ -164,7 +164,8 @@ public class SettingsActivity extends ThemeableActivity {
         });
 
         LibrarySnapshot.get(this, snap -> {
-            if (snap != null) sub.setText(snap.photos + " Photos, " + snap.videos + " Videos");
+            if (snap != null && snap.photos + snap.videos > 0)
+                sub.setText(snap.photos + " Photos, " + snap.videos + " Videos");
         });
     }
 

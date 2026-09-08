@@ -818,6 +818,7 @@ public class MainActivity extends ThemeableActivity implements CheckRefreshClick
     protected void onStart() {
         super.onStart();
         refreshPhotos();
+        if (profileAvatar != null) profileAvatar.refresh();
         // reflect favourites / deletes made in the viewer
         providers.version++;
         if (photoAdapter != null) {
