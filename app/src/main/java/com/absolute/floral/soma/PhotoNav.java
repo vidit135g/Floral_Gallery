@@ -9,19 +9,18 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 
 /**
- * The Apple-Photos-style floating tab pill — a translucent rounded bar, docked
- * bottom-left, with just <b>Library</b> and <b>Collections</b>. The active tab
- * gets a filled accent chip. Search lives in its own circular button
- * ({@link SearchFab}), exactly like iOS 18.
+ * The floating tab pill — a translucent rounded bar, docked bottom-left, with
+ * <b>Home · Library · Collections</b>. The active tab gets a filled accent chip.
+ * Search lives in its own circular button ({@link SearchFab}).
  */
 public class PhotoNav extends LinearLayout {
 
     public interface OnTab { void onTab(int index); }
 
-    public static final int LIBRARY = 0, COLLECTIONS = 1;
-    private static final String[] LABELS = { "Library", "Collections" };
+    public static final int HOME = 0, LIBRARY = 1, COLLECTIONS = 2;
+    private static final String[] LABELS = { "Home", "Library", "Collections" };
 
-    private final TextView[] tabs = new TextView[2];
+    private final TextView[] tabs = new TextView[LABELS.length];
     private int current = 0;
     private OnTab listener;
     private Soma soma;
@@ -34,7 +33,7 @@ public class PhotoNav extends LinearLayout {
         setGravity(Gravity.CENTER_VERTICAL);
         int pad = dp(5);
         setPadding(pad, pad, pad, pad);
-        for (int i = 0; i < 2; i++) {
+        for (int i = 0; i < LABELS.length; i++) {
             final int idx = i;
             TextView t = new TextView(getContext());
             t.setText(LABELS[i]);
@@ -42,7 +41,7 @@ public class PhotoNav extends LinearLayout {
             t.setTextSize(TypedValue.COMPLEX_UNIT_SP, 13);
             t.setGravity(Gravity.CENTER);
             t.setSingleLine(true);
-            t.setPadding(dp(18), dp(9), dp(18), dp(9));
+            t.setPadding(dp(15), dp(9), dp(15), dp(9));
             t.setOnClickListener(v -> select(idx, true));
             LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(
                     LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT);
@@ -76,7 +75,7 @@ public class PhotoNav extends LinearLayout {
     private void restyle() {
         if (soma == null) return;
         int active = getResources().getColor(com.absolute.floral.R.color.ios_blue);
-        for (int i = 0; i < 2; i++) {
+        for (int i = 0; i < tabs.length; i++) {
             boolean on = i == current;
             tabs[i].setTextColor(on ? 0xFFFFFFFF : soma.inkMute);
             GradientDrawable chip = new GradientDrawable();

@@ -160,11 +160,10 @@ public class Settings {
         String theme = getTheme();
         Resources res = context.getResources();
 
-            if (theme.equals(res.getString(R.string.LIGHT_THEME_VALUE))) {
-                return new LightTheme();
+            if (theme.equals(res.getString(R.string.BLACK_THEME_VALUE))) {
+                return new BlackTheme();
             } else if (theme.equals("DARK")
-                    || theme.equals(res.getString(R.string.BLACK_THEME_VALUE))) {
-                // BLACK/AMOLED was retired — upgraders fall back to Dark
+                    || theme.equals(res.getString(R.string.DARK_THEME_VALUE))) {
                 return new DarkTheme();
             } else {
                 return new LightTheme();

@@ -562,7 +562,7 @@ public final class CollectionsScreen {
 
     /* ------------------------------------------------- ported helpers */
 
-    private static HorizontalScrollView hs(Activity a) {
+    static HorizontalScrollView hs(Activity a) {
         HorizontalScrollView h = new HorizontalScrollView(a);
         h.setHorizontalScrollBarEnabled(false);
         h.setClipToPadding(false);
@@ -573,7 +573,7 @@ public final class CollectionsScreen {
         return h;
     }
 
-    private static View bigCard(Activity a, Soma s, AlbumItem cover, String title, String sub, Runnable onTap) {
+    static View bigCard(Activity a, Soma s, AlbumItem cover, String title, String sub, Runnable onTap) {
         FrameLayout f = new FrameLayout(a);
         int w = dp(a, 220), ht = dp(a, 150);
         LinearLayout.LayoutParams flp = new LinearLayout.LayoutParams(w, ht);
@@ -620,7 +620,7 @@ public final class CollectionsScreen {
         return f;
     }
 
-    private static View albumCard(Activity a, Soma s, Album al) {
+    static View albumCard(Activity a, Soma s, Album al) {
         LinearLayout card = new LinearLayout(a);
         card.setOrientation(LinearLayout.VERTICAL);
         com.absolute.floral.ui.widget.SquareFrameLayout box =
@@ -707,7 +707,7 @@ public final class CollectionsScreen {
         return out.size() > max ? out.subList(0, max) : out;
     }
 
-    private static View squareThumb(Activity a, Soma s, AlbumItem it, Runnable onTap) {
+    static View squareThumb(Activity a, Soma s, AlbumItem it, Runnable onTap) {
         ImageView img = new ImageView(a);
         int d = dp(a, 96);
         LinearLayout.LayoutParams ilp = new LinearLayout.LayoutParams(d, d);
@@ -727,7 +727,7 @@ public final class CollectionsScreen {
         return img;
     }
 
-    private static List<AlbumItem> flatten(List<Album> albums) {
+    static List<AlbumItem> flatten(List<Album> albums) {
         List<AlbumItem> l = new ArrayList<>();
         java.util.HashSet<String> seen = new java.util.HashSet<>();
         if (albums != null) for (Album al : albums)
@@ -790,7 +790,7 @@ public final class CollectionsScreen {
         a.startActivity(new Intent(a, BucketActivity.class));
     }
 
-    private static Object cover(Activity a, AlbumItem it) {
+    static Object cover(Activity a, AlbumItem it) {
         if (it == null) return null;
         Object u = it.getUri(a);
         return u != null ? u : it.getPath();
@@ -805,7 +805,7 @@ public final class CollectionsScreen {
         });
     }
 
-    private static int dp(Activity a, float v) {
+    static int dp(Activity a, float v) {
         return Math.round(v * a.getResources().getDisplayMetrics().density);
     }
 }

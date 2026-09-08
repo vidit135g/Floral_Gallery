@@ -127,7 +127,9 @@ public class MainActivity extends ThemeableActivity implements CheckRefreshClick
     private com.absolute.floral.soma.PhotoNav photoNav;
     private com.absolute.floral.soma.SearchFab searchFab;
     private androidx.core.widget.NestedScrollView collectionsScroll;
+    private androidx.core.widget.NestedScrollView homeScroll;
     private com.absolute.floral.bento.CollectionsScreen.Holder collections;
+    private com.absolute.floral.bento.HomeScreen.Holder home;
     private final com.absolute.floral.bento.CollectionsScreen.Providers providers =
             new com.absolute.floral.bento.CollectionsScreen.Providers();
     private int currentTab = 0;
@@ -460,8 +462,17 @@ public class MainActivity extends ThemeableActivity implements CheckRefreshClick
 
         collectionsScroll = findViewById(R.id.collectionsScroll);
 
-        // floating tab pill (Library | Collections) + standalone search button
+        // floating tab pill (Home | Library | Collections) + standalone search button
         final ViewGroup host = (ViewGroup) recyclerView.getParent();
+
+        // the Soma home — a bento dashboard, first tab
+        homeScroll = new androidx.core.widget.NestedScrollView(this);
+        homeScroll.setId(R.id.homeScroll);
+        homeScroll.setVisibility(View.GONE);
+        homeScroll.setClipToPadding(false);
+        host.addView(homeScroll, new FrameLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
+        homeScroll.post(() -> homeScroll.setPadding(0, recyclerView.getPaddingTop(), 0, 0));
         final float d = getResources().getDisplayMetrics().density;
         photoNav = new com.absolute.floral.soma.PhotoNav(this);
         photoNav.setSoma(soma);
@@ -515,23 +526,33 @@ public class MainActivity extends ThemeableActivity implements CheckRefreshClick
         if (photoNav != null && photoNav.current() != tab) photoNav.select(tab, false);
 
         boolean library = tab == com.absolute.floral.soma.PhotoNav.LIBRARY;
-        com.absolute.floral.soma.SomaSkin.wordmark(toolbar, soma, library ? "Library" : "Collections", "");
+        boolean isHome = tab == com.absolute.floral.soma.PhotoNav.HOME;
+        String title = isHome ? "Home" : library ? "Library" : "Collections";
+        com.absolute.floral.soma.SomaSkin.wordmark(toolbar, soma, title, "");
         librarySoma = soma;
         lastSubtitle = "";
         if (library) recyclerView.post(this::updateLibrarySubtitle);
 
-        View show = library ? recyclerView : collectionsScroll;
-        View hide = library ? collectionsScroll : recyclerView;
-        if (hide != null && hide.getVisibility() == View.VISIBLE) {
-            hide.animate().alpha(0f).setDuration(120).withEndAction(() -> {
-                hide.setVisibility(View.GONE);
-                hide.setAlpha(1f);
-            }).start();
+        View show = isHome ? homeScroll : library ? recyclerView : collectionsScroll;
+        for (View v : new View[]{ homeScroll, recyclerView, collectionsScroll }) {
+            if (v == null || v == show) continue;
+            if (v.getVisibility() == View.VISIBLE) {
+                final View vv = v;
+                v.animate().alpha(0f).setDuration(120).withEndAction(() -> {
+                    vv.setVisibility(View.GONE);
+                    vv.setAlpha(1f);
+                }).start();
+            }
         }
         if (show != null) {
             if (show == collectionsScroll && collections == null) {
                 collections = com.absolute.floral.bento.CollectionsScreen.build(this, providers);
                 collectionsScroll.addView(collections.view());
+            }
+            if (show == homeScroll && home == null) {
+                home = com.absolute.floral.bento.HomeScreen.build(this, providers);
+                home.setOnOpenLibrary(() -> selectTab(com.absolute.floral.soma.PhotoNav.LIBRARY));
+                homeScroll.addView(home.view());
             }
             show.setVisibility(View.VISIBLE);
             show.setAlpha(0f);
@@ -762,6 +783,7 @@ public class MainActivity extends ThemeableActivity implements CheckRefreshClick
 
     private void syncCollections() {
         if (collections != null) collections.refresh(providers);
+        if (home != null) home.refresh(providers);
     }
 
     @Override
@@ -1209,7 +1231,8 @@ public class MainActivity extends ThemeableActivity implements CheckRefreshClick
         }
 
         com.absolute.floral.soma.SomaSkin.wordmark(toolbar, soma,
-                currentTab == com.absolute.floral.soma.PhotoNav.COLLECTIONS ? "Collections" : "Library", "");
+                currentTab == com.absolute.floral.soma.PhotoNav.HOME ? "Home"
+                        : currentTab == com.absolute.floral.soma.PhotoNav.COLLECTIONS ? "Collections" : "Library", "");
         toolbar.post(() -> com.absolute.floral.soma.SomaSkin.toolbarIcons(toolbar, soma));
         if (photoNav != null) photoNav.setSoma(soma);
         if (searchFab != null) searchFab.setSoma(soma);

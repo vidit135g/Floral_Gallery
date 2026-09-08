@@ -2,4 +2,5 @@
 <resources>
     <item name="soma_ground" type="id" />
     <item name="soma_scrim" type="id" />
+    <item name="homeScroll" type="id" />
 </resources>

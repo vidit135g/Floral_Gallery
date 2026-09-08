@@ -144,10 +144,14 @@ public class SettingsActivity extends ThemeableActivity {
         sectionHeader("DISPLAY");
         LinearLayout card = groupCard();
         Settings st = Settings.getInstance(this);
-        boolean dark = "DARK".equals(st.getTheme());
-        addNav(card, "Theme", dark ? "Dark" : "Light", true, () -> {
-            String next = dark ? "LIGHT" : "DARK";
-            st.setTheme(this, next);
+        final String[] vals = { "LIGHT", "DARK", "BLACK" };
+        final String[] names = { "Light", "Dark", "Black (OLED)" };
+        int cur = 0;
+        for (int i = 0; i < vals.length; i++) if (vals[i].equals(st.getTheme())) cur = i;
+        final int shown = cur;
+        addNav(card, "Appearance", names[shown], true, () -> {
+            int nx = (shown + 1) % vals.length;
+            st.setTheme(this, vals[nx]);
             sChanged = true; setResult(RESULT_OK); recreate();
         });
         col.addView(card);

@@ -12,10 +12,12 @@
     <string-array name="theme_values">
         <item>@string/LIGHT_THEME_VALUE</item>
         <item>@string/DARK_THEME_VALUE</item>
+        <item>@string/BLACK_THEME_VALUE</item>
     </string-array>
     <string-array name="theme_names">
         <item>@string/LIGHT_THEME_NAME</item>
         <item>@string/DARK_THEME_NAME</item>
+        <item>@string/BLACK_THEME_NAME</item>
     </string-array>
 
     <!--Style preference-->
