@@ -4,7 +4,7 @@
 **Developer:** The Absolute Corporation
 **Category:** Photography
 **Content rating:** Everyone
-**versionCode:** 9 · **versionName:** 2.3
+**versionCode:** 11 · **versionName:** 3.0
 
 ---
 
@@ -23,58 +23,56 @@ A private, on-device gallery — timeline, memories, albums and people. No cloud
 Floral is a photo gallery that keeps everything on your device. No account, no
 sign-in, nothing uploaded — your library never leaves your phone.
 
-It’s laid out the way you expect a modern gallery to be:
+One continuously scrolling Library, laid out like the photos app you already
+know:
 
-— PHOTOS —
-One clean, scrollable timeline of every photo and video, newest first. Recent
-days are grouped as Today, Yesterday and by date; older stretches condense to
-the month so long periods fill the screen instead of trickling by. Pinch to
-change how many photos sit in a row. Tap any picture for the full-screen
-viewer, with a star to favourite, share, edit and archive one tap away.
-
-— MEMORIES —
-A carousel across the top surfaces moments automatically: “The last few weeks”,
-“Around this time” from previous years, and a “Best of <month>” for months you
-shot a lot. Open one to see just those photos.
+— THE GRID —
+Every photo and video in one clean, date-sectioned timeline, newest first —
+Today, Yesterday, then by day and by month. Pinch to change how many sit in a
+row. Keep scrolling and the grid flows into Collections.
 
 — COLLECTIONS —
-Favourites, Archive and Trash pinned at the top. Your device folders show up as
-albums with a cover and a count. A People & pets row groups faces found
-entirely on your device — no names, no recognition service, nothing sent
-anywhere.
+Beneath the grid: Recent Days, Memories (auto-made from your own library),
+People & Pets grouped by faces found on your device, Places, Featured Photos,
+Media Types (Videos, Screenshots, Animated, Recently Added), Utilities
+(Duplicates, Hidden, Recently Deleted) and your device folders as My Albums.
+Soft bento-gradient cards throughout.
 
-— CREATE —
-Combine two to nine photos into a single collage — four layouts, five
-backgrounds — and save it straight to your gallery.
-
-— SEARCH —
-Opens on a discovery page: the people, places and “things” (Food, Nature,
-Sky, Beaches, Animals, Cityscape…) found in your library entirely on-device,
-plus quick lists for Videos, Screenshots and recent shots. Type to find
-photos by file name, folder, month, a place or a category.
+— THE VIEWER —
+Tap a photo for a full, edge-to-edge view. Everything fades away as you look;
+swipe down and the photo follows your finger to dismiss, swipe up for the
+info sheet — date, camera and EXIF, and a map for geotagged shots. Videos
+play inline with a scrubber. The bottom bar is share, favourite, info, trash.
 
 — PLACES & MAP —
-Photos with a location are grouped by city (read from the photo, geocoded on
-your device) and plotted on “Your map” — an offline photo-map you can pan and
-zoom. No map tiles are ever downloaded.
+Photos with a location are grouped by city (read from the photo and geocoded
+on your device) and plotted on “Your map” — an offline photo-map you can pan
+and zoom. No map tiles are ever downloaded.
 
-— INSIGHTS & COLOUR —
-A colourful bento dashboard: how many photos and videos you have, your
-busiest month, an animated “photos through the year” chart, and your
-library’s top colours — all computed on your device. “Search by colour” lets
-you pick a hue and see every photo that matches.
+— SETTINGS —
+Deliberately small. Light or Dark, and the handful of switches that change how
+your library is read. Nothing to sign into.
 
 — MORE —
-• A colourful bento layout — memories, people and stats as bright, tappable tiles
-• Light, dark and true-black (AMOLED) themes
 • A home-screen “Memories” widget that shows a different photo each day
-• Fast HD viewing, EXIF details, hidden folders, file manager, set as wallpaper
+• Favourites, Hidden folder, EXIF editor, set as wallpaper, file manager
 • Works offline, always
 
 No ads. No account. No cloud. Made with care in India.
 ```
 
 ## What’s new (release notes, 500 chars max)
+```
+Floral 3.0 — rebuilt as a Photos-style gallery:
+• One continuously scrolling Library — the grid, then Collections
+• A full immersive viewer: chrome fades away, swipe down to dismiss,
+  swipe up for info, videos play inline
+• Recent Days, Memories, People & Pets, Places, Media Types, Utilities
+• Light / Dark only; a much smaller Settings; a leaner, faster app
+```
+
+<details><summary>Floral 2.3 notes</summary>
+
 ```
 Floral 2.3 — a place for everything:
 • "Your map" — every geotagged place on an offline photo-map you can
@@ -108,6 +106,8 @@ Floral 2.1 — best of Apple & Google Photos, on-device:
   Collage, and Free up space (screenshots, big videos, look-alikes)
 • Search icon now springs in as you scroll
 ```
+
+</details>
 
 </details>
 
