@@ -66,6 +66,7 @@ public final class CollectionsScreen {
         public List<PeopleIndex.Person> people = new ArrayList<>();
         public List<PlacesIndex.Place> places = new ArrayList<>();
         public LibrarySnapshot snap;
+        public java.util.LinkedHashMap<String, List<AlbumItem>> mediaTypes = new java.util.LinkedHashMap<>();
     }
 
     public static final class Holder {
@@ -242,38 +243,45 @@ public final class CollectionsScreen {
 
             /* Media Types */
             section(s, ui, "media", "Media Types", true, null, null, body -> {
-                LinkedHashMap<String, List<AlbumItem>> media = mediaTypes(all);
-                LinearLayout grid = tileGrid(a);
-                int mi = 0;
-                int[] accents = { 6, 9, 1, 3, 8 };
+                LinkedHashMap<String, List<AlbumItem>> media =
+                        p.mediaTypes != null && !p.mediaTypes.isEmpty() ? p.mediaTypes : mediaTypes(all);
+                java.util.LinkedHashMap<String, com.absolute.floral.things.MediaRows.Row> rows =
+                        new java.util.LinkedHashMap<>();
                 for (Map.Entry<String, List<AlbumItem>> e : media.entrySet()) {
                     final String nm = e.getKey();
                     final List<AlbumItem> set = e.getValue();
-                    AlbumItem cov = set.isEmpty() ? null : set.get(0);
-                    addTile(grid, s, tile(a, s, cov, accents[mi % accents.length], nm, set.size(), 0,
-                            () -> openBucket(a, nm, "MEDIA TYPE", set)));
-                    mi++;
+                    rows.put(nm, new com.absolute.floral.things.MediaRows.Row(
+                            set.size(), 0, () -> openBucket(a, nm, "MEDIA TYPE", set)));
                 }
-                body.addView(grid);
+                body.addView(com.absolute.floral.things.MediaRows.pillRows(a, s, rows));
             });
 
             /* Utilities */
             section(s, ui, "utilities", "Utilities", true, null, null, body -> {
-                LinearLayout util = new LinearLayout(a);
-                util.setOrientation(LinearLayout.VERTICAL);
-                Card.surface(util, s, 18f, 1.5f);
-                LinearLayout.LayoutParams ulp = new LinearLayout.LayoutParams(
-                        ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-                ulp.setMargins(dp(a, 16), 0, dp(a, 16), 0);
-                util.setLayoutParams(ulp);
-                util.addView(utilRow(a, s, "Duplicates",
-                        () -> a.startActivity(new Intent(a, CleanupActivity.class)), false));
-                util.addView(utilRow(a, s, "Hidden",
-                        () -> a.startActivity(new Intent(a, PinningActivity.class)), true));
+                final List<AlbumItem> favs2 = withPaths(all, FlagStore.favorites(a).all());
+                final List<AlbumItem> saved = new ArrayList<>();
+                long mAgo = System.currentTimeMillis() - 30L * 24 * 3600 * 1000;
+                for (AlbumItem it : all) { if (it.getDate() < mAgo) break; saved.add(it); }
+                final List<AlbumItem> vw = RecentStore.resolve(a, RecentStore.viewed(a), all);
+                final List<AlbumItem> sh = RecentStore.resolve(a, RecentStore.shared(a), all);
+                java.util.LinkedHashMap<String, com.absolute.floral.things.MediaRows.Row> rows =
+                        new java.util.LinkedHashMap<>();
+                rows.put("Favorites", new com.absolute.floral.things.MediaRows.Row(favs2.size(), 0,
+                        () -> openBucket(a, "Favorites", "", favs2)));
+                rows.put("Recently Saved", new com.absolute.floral.things.MediaRows.Row(saved.size(), 0,
+                        () -> openBucket(a, "Recently Saved", "", saved)));
+                rows.put("Hidden", new com.absolute.floral.things.MediaRows.Row(0, 0,
+                        () -> a.startActivity(new Intent(a, PinningActivity.class))));
+                rows.put("Duplicates", new com.absolute.floral.things.MediaRows.Row(0, 0,
+                        () -> a.startActivity(new Intent(a, CleanupActivity.class))));
+                rows.put("Recently Viewed", new com.absolute.floral.things.MediaRows.Row(vw.size(), 0,
+                        () -> openBucket(a, "Recently Viewed", "", vw)));
+                rows.put("Recently Shared", new com.absolute.floral.things.MediaRows.Row(sh.size(), 0,
+                        () -> openBucket(a, "Recently Shared", "", sh)));
                 if (android.os.Build.VERSION.SDK_INT >= 30)
-                    util.addView(utilRow(a, s, "Recently Deleted",
-                            () -> openBucket(a, "Recently Deleted", "", trashed(a)), true));
-                body.addView(util);
+                    rows.put("Recently Deleted", new com.absolute.floral.things.MediaRows.Row(0, 0,
+                            () -> openBucket(a, "Recently Deleted", "", trashed(a))));
+                body.addView(com.absolute.floral.things.MediaRows.pillRows(a, s, rows));
             });
 
             /* Wallpaper Suggestions — header + chevron only */
@@ -434,6 +442,8 @@ public final class CollectionsScreen {
             n = n * 31 + (p.memories == null ? 0 : p.memories.size());
             n = n * 31 + (p.people == null ? 0 : p.people.size());
             n = n * 31 + (p.places == null ? 0 : p.places.size());
+            if (p.mediaTypes != null) for (List<AlbumItem> v : p.mediaTypes.values())
+                n = n * 31 + (v == null ? 0 : v.size());
             return n;
         }
 

@@ -672,6 +672,9 @@ public class MainActivity extends ThemeableActivity implements CheckRefreshClick
                                 com.absolute.floral.places.PlacesIndex.get().ensure(MainActivity.this, pl -> {
                                     providers.places = pl; syncCollections();
                                 });
+                                com.absolute.floral.things.MediaTypeIndex.get().ensure(MainActivity.this, mt -> {
+                                    providers.mediaTypes = mt; syncCollections();
+                                });
                             }
 
                             if (mediaProvider != null) {

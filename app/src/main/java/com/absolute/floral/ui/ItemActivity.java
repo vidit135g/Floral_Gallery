@@ -305,6 +305,8 @@ public class ItemActivity extends ThemeableActivity {
         if (albumItem == null) {
             return;
         }
+        if (albumItem.getPath() != null)
+            com.absolute.floral.data.RecentStore.markViewed(this, albumItem.getPath());
 
         final ActionBar actionBar = getSupportActionBar();
         if (actionBar != null) {
@@ -325,6 +327,8 @@ public class ItemActivity extends ThemeableActivity {
             public void onPageSelected(int position) {
                 //set new AlbumItem
                 albumItem = album.getAlbumItems().get(position);
+                if (albumItem.getPath() != null)
+                    com.absolute.floral.data.RecentStore.markViewed(ItemActivity.this, albumItem.getPath());
                 ColorFade.fadeToolbarTitleColor(toolbar, color,
                         new ColorFade.ToolbarTitleFadeCallback() {
                             @Override
@@ -531,6 +535,9 @@ public class ItemActivity extends ThemeableActivity {
 
     public void sharePhoto() {
         Uri uri = albumItem.getUri(this);
+        if (albumItem.getPath() != null)
+            com.absolute.floral.data.RecentStore.markShared(this,
+                    java.util.Collections.singletonList(albumItem.getPath()));
 
         Intent shareIntent = ShareCompat.IntentBuilder.from(this)
                 .addStream(uri)

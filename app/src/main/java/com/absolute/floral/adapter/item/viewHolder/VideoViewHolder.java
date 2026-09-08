@@ -45,7 +45,9 @@ public class VideoViewHolder extends ViewHolder {
         if (player == null) {
             player = new ExoPlayer.Builder(itemView.getContext()).build();
             player.setMediaItem(MediaItem.fromUri(albumItem.getUri(itemView.getContext())));
-            player.setRepeatMode(Player.REPEAT_MODE_ONE);
+            player.setRepeatMode(
+                    com.absolute.floral.data.Settings.getInstance(itemView.getContext()).loopVideos()
+                            ? Player.REPEAT_MODE_ONE : Player.REPEAT_MODE_OFF);
             player.prepare();
             player.addListener(new Player.Listener() {
                 @Override public void onRenderedFirstFrame() {
