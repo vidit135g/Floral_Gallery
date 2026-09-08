@@ -67,6 +67,10 @@ public final class CollectionsScreen {
         public List<PlacesIndex.Place> places = new ArrayList<>();
         public LibrarySnapshot snap;
         public java.util.LinkedHashMap<String, List<AlbumItem>> mediaTypes = new java.util.LinkedHashMap<>();
+        /** bumped on any favourite / delete so Home + Collections rebuild even
+         *  when album counts are unchanged. */
+        public int version = 0;
+        public boolean favoritesDirty = false;
     }
 
     public static final class Holder {
@@ -91,7 +95,7 @@ public final class CollectionsScreen {
 
         public void refresh(Providers next) {
             if (next != null) this.p = next;
-            int sig = sigOf(p);
+            int sig = sigOf(p) * 31 + p.version;
             if (sig == signature && col.getChildCount() > 0) return;
             signature = sig;
             build();

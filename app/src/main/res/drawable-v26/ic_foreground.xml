@@ -4,18 +4,26 @@
     android:height="108dp"
     android:viewportWidth="108"
     android:viewportHeight="108">
-  <group android:scaleX="0.94" android:scaleY="0.94" android:pivotX="54" android:pivotY="55">
+  <group android:scaleX="0.58" android:scaleY="0.58" android:pivotX="54" android:pivotY="56">
 
-    <!-- centre flame, behind -->
-    <path android:fillColor="#FFB01C5B"
+    <!-- soft drop shadow -->
+    <group android:translateX="0" android:translateY="2.5">
+        <path android:fillColor="#26000000"
+            android:pathData="M54,14 C47.5,24 46.5,34 49.5,44 C50.6,48 52.7,50.5 54,50.5 C55.3,50.5 57.4,48 58.5,44 C61.5,34 60.5,24 54,14 Z" />
+        <path android:fillColor="#26000000"
+            android:pathData="M54,96 C38,96 23.5,88 17.5,70 C12.5,54 14.5,33.5 26,23.5 C34,16.5 44,17.5 50,26 C52,29 54,32 54,32 C54,32 56,29 58,26 C64,17.5 74,16.5 82,23.5 C93.5,33.5 95.5,54 90.5,70 C84.5,88 70,96 54,96 Z" />
+    </group>
+
+    <!-- centre flame -->
+    <path android:fillColor="#FFF7A9CE"
         android:pathData="M54,14 C47.5,24 46.5,34 49.5,44 C50.6,48 52.7,50.5 54,50.5 C55.3,50.5 57.4,48 58.5,44 C61.5,34 60.5,24 54,14 Z" />
 
-    <!-- full tulip body (reads as the right / back petal) -->
-    <path android:fillColor="#FFDA2A78"
+    <!-- full tulip body -->
+    <path android:fillColor="#FFFFFFFF"
         android:pathData="M54,96 C38,96 23.5,88 17.5,70 C12.5,54 14.5,33.5 26,23.5 C34,16.5 44,17.5 50,26 C52,29 54,32 54,32 C54,32 56,29 58,26 C64,17.5 74,16.5 82,23.5 C93.5,33.5 95.5,54 90.5,70 C84.5,88 70,96 54,96 Z" />
 
-    <!-- left petal, lighter; the gentle centre seam is its right edge -->
-    <path android:fillColor="#FFEC4C96"
+    <!-- left petal, pink for the three-petal tulip read -->
+    <path android:fillColor="#FFF6D3E4"
         android:pathData="M54,32 C54,32 52,29 50,26 C44,17.5 34,16.5 26,23.5 C14.5,33.5 12.5,54 17.5,70 C23.5,88 38,96 54,96 C49,79 47,55 54,32 Z" />
   </group>
 </vector>

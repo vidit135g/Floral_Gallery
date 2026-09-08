@@ -128,6 +128,21 @@ public abstract class AlbumItem
         return path;
     }
 
+    /** Identity is the file path — so a deserialised copy from an Intent still
+     *  matches the one in a loaded album ({@code indexOf} / {@code remove}). */
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof AlbumItem)) return false;
+        String op = ((AlbumItem) o).path;
+        return path != null ? path.equals(op) : op == null;
+    }
+
+    @Override
+    public int hashCode() {
+        return path != null ? path.hashCode() : 0;
+    }
+
     public void setDate(long dateTaken) {
         this.dateTaken = dateTaken;
     }

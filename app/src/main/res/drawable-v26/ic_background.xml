@@ -5,14 +5,41 @@
     android:height="108dp"
     android:viewportWidth="108"
     android:viewportHeight="108">
+
+    <!-- bento gradient — rose → magenta → violet, TL→BR -->
     <path android:pathData="M0,0h108v108h-108z">
         <aapt:attr name="android:fillColor">
             <gradient
-                android:startX="10" android:startY="0"
-                android:endX="98" android:endY="108"
+                android:startX="8" android:startY="2"
+                android:endX="100" android:endY="106"
                 android:type="linear">
-                <item android:offset="0.0" android:color="#FFFFF3F7" />
-                <item android:offset="1.0" android:color="#FFFBE3EC" />
+                <item android:offset="0.0"  android:color="#FFFF7FB0" />
+                <item android:offset="0.5"  android:color="#FFE24C97" />
+                <item android:offset="1.0"  android:color="#FF8A46D6" />
+            </gradient>
+        </aapt:attr>
+    </path>
+
+    <!-- iOS-18 top-left bloom -->
+    <path android:pathData="M0,0h108v108h-108z">
+        <aapt:attr name="android:fillColor">
+            <gradient
+                android:centerX="28" android:centerY="20" android:gradientRadius="80"
+                android:type="radial">
+                <item android:offset="0.0" android:color="#4DFFFFFF" />
+                <item android:offset="1.0" android:color="#00FFFFFF" />
+            </gradient>
+        </aapt:attr>
+    </path>
+
+    <!-- soft bottom vignette -->
+    <path android:pathData="M0,0h108v108h-108z">
+        <aapt:attr name="android:fillColor">
+            <gradient
+                android:startX="0" android:startY="72" android:endX="0" android:endY="108"
+                android:type="linear">
+                <item android:offset="0.0" android:color="#00000000" />
+                <item android:offset="1.0" android:color="#26000000" />
             </gradient>
         </aapt:attr>
     </path>

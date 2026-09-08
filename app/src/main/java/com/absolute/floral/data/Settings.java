@@ -119,6 +119,14 @@ public class Settings {
 
     /* ---- Apple-Photos Settings sheet: persisting setters ---- */
 
+    public String getProfileName(Context c) {
+        return PreferenceManager.getDefaultSharedPreferences(c)
+                .getString("pref_profile_name", "Vidit Gupta");
+    }
+    public void setProfileName(Context c, String v) {
+        saveString(c, "pref_profile_name", v == null ? "" : v.trim());
+    }
+
     public boolean autoPlayMotion() { return autoPlayMotion; }
     public void setAutoPlayMotion(Context c, boolean v) {
         autoPlayMotion = v; saveBoolean(c, "pref_key_autoplay_motion", v);

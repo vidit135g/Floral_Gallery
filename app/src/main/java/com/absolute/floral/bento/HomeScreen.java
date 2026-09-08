@@ -67,7 +67,7 @@ public final class HomeScreen {
 
         public void refresh(CollectionsScreen.Providers next) {
             if (next != null) p = next;
-            int sig = sig(p);
+            int sig = sig(p) * 31 + p.version;
             if (sig == signature && col.getChildCount() > 0) return;
             signature = sig;
             build();
@@ -187,28 +187,37 @@ public final class HomeScreen {
         private View hero(Soma s, AlbumItem cover, int photos, int videos, int albums) {
             FrameLayout f = new FrameLayout(a);
             LinearLayout.LayoutParams flp = new LinearLayout.LayoutParams(
-                    ViewGroup.LayoutParams.MATCH_PARENT, dp(196));
+                    ViewGroup.LayoutParams.MATCH_PARENT, dp(190));
             flp.topMargin = dp(6);
             f.setLayoutParams(flp);
-            final float r = dp(24);
-            Card.pastel(f, 4, 24f);
-            if (cover != null) {
-                ImageView img = new ImageView(a);
-                img.setScaleType(ImageView.ScaleType.CENTER_CROP);
-                img.setImageAlpha(120);
-                com.bumptech.glide.Glide.with(a).load(CollectionsScreen.cover(a, cover)).centerCrop().into(img);
-                f.addView(img, new FrameLayout.LayoutParams(
-                        ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
-            }
-            View scrim = new View(a);
-            scrim.setBackground(new GradientDrawable(GradientDrawable.Orientation.TOP_BOTTOM,
-                    new int[]{ 0x00000000, 0x33000000, 0x88000000 }));
-            f.addView(scrim, new FrameLayout.LayoutParams(
-                    ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
+            final float r = dp(26);
+
+            // a beautiful multi-stop gradient — rose → violet → indigo, on the
+            // Floral / iOS-18 family palette
+            GradientDrawable body = new GradientDrawable(
+                    GradientDrawable.Orientation.TL_BR,
+                    new int[]{ 0xFFFF6FA3, 0xFFA24CD6, 0xFF5B54E0 });
+            body.setCornerRadius(r);
+            GradientDrawable sheen = new GradientDrawable();
+            sheen.setShape(GradientDrawable.RECTANGLE);
+            sheen.setCornerRadius(r);
+            sheen.setGradientType(GradientDrawable.RADIAL_GRADIENT);
+            sheen.setColors(new int[]{ 0x40FFFFFF, 0x0FFFFFFF, 0x00FFFFFF });
+            sheen.setGradientCenter(0.16f, 0.0f);
+            sheen.setGradientRadius(dp(260));
+            f.setBackground(new android.graphics.drawable.LayerDrawable(
+                    new android.graphics.drawable.Drawable[]{ body, sheen }));
+            f.setClipToOutline(true);
+            f.setOutlineProvider(new ViewOutlineProvider() {
+                @Override public void getOutline(View v, android.graphics.Outline o) {
+                    o.setRoundRect(0, 0, v.getWidth(), v.getHeight(), r);
+                }
+            });
+            f.setElevation(dp(3));
 
             LinearLayout cap = new LinearLayout(a);
             cap.setOrientation(LinearLayout.VERTICAL);
-            cap.setPadding(dp(18), 0, dp(18), dp(16));
+            cap.setPadding(dp(20), 0, dp(20), dp(18));
             FrameLayout.LayoutParams clp = new FrameLayout.LayoutParams(
                     ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
             clp.gravity = Gravity.BOTTOM;

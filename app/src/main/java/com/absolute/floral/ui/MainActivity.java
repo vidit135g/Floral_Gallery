@@ -126,6 +126,7 @@ public class MainActivity extends ThemeableActivity implements CheckRefreshClick
     private int photoSpan = 3;
     private com.absolute.floral.soma.PhotoNav photoNav;
     private com.absolute.floral.soma.SearchFab searchFab;
+    private com.absolute.floral.soma.ProfileAvatar profileAvatar;
     private androidx.core.widget.NestedScrollView collectionsScroll;
     private androidx.core.widget.NestedScrollView homeScroll;
     private com.absolute.floral.bento.CollectionsScreen.Holder collections;
@@ -384,7 +385,14 @@ public class MainActivity extends ThemeableActivity implements CheckRefreshClick
         int c3 = getResources().getColor(R.color.ggreen);
         int c4=getResources().getColor(R.color.gyellow);
         mSwipeRefreshLayout.setColorSchemeColors(c1,c2,c3,c4);
-        mSwipeRefreshLayout.setOnRefreshListener(() -> refreshPhotos());
+        mSwipeRefreshLayout.setOnRefreshListener(() -> { providers.version++; refreshPhotos(); });
+        // pull-to-refresh has to consult whichever tab's scroller is showing
+        mSwipeRefreshLayout.setOnChildScrollUpCallback((parent, child) -> {
+            View v = currentTab == com.absolute.floral.soma.PhotoNav.HOME ? homeScroll
+                    : currentTab == com.absolute.floral.soma.PhotoNav.COLLECTIONS ? collectionsScroll
+                    : recyclerView;
+            return v != null && v.canScrollVertically(-1);
+        });
         setSystemUiFlags();
 
         if (!pick_photos) {
@@ -470,7 +478,8 @@ public class MainActivity extends ThemeableActivity implements CheckRefreshClick
         homeScroll.setId(R.id.homeScroll);
         homeScroll.setVisibility(View.GONE);
         homeScroll.setClipToPadding(false);
-        host.addView(homeScroll, new FrameLayout.LayoutParams(
+        // keep it below the toolbar so the profile avatar stays tappable
+        host.addView(homeScroll, host.indexOfChild(collectionsScroll) + 1, new FrameLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
         homeScroll.post(() -> homeScroll.setPadding(0, recyclerView.getPaddingTop(), 0, 0));
         final float d = getResources().getDisplayMetrics().density;
@@ -493,6 +502,20 @@ public class MainActivity extends ThemeableActivity implements CheckRefreshClick
         host.addView(searchFab, sfLp);
         searchFab.setOnClickListener(v ->
                 startActivity(new Intent(MainActivity.this, SearchActivity.class)));
+
+        // letter-based profile avatar, top-right on every tab -> Settings
+        final Toolbar tb = findViewById(R.id.toolbar);
+        profileAvatar = new com.absolute.floral.soma.ProfileAvatar(this);
+        int avSz = Math.round(32 * d);
+        Toolbar.LayoutParams avlp = new Toolbar.LayoutParams(avSz, avSz);
+        avlp.gravity = android.view.Gravity.END | android.view.Gravity.CENTER_VERTICAL;
+        avlp.rightMargin = Math.round(4 * d);
+        profileAvatar.setLayoutParams(avlp);
+        profileAvatar.setOnClickListener(v -> {
+            SettingsActivity.sChanged = false;
+            startActivityForResult(new Intent(this, SettingsActivity.class), SETTINGS_REQUEST_CODE);
+        });
+        tb.addView(profileAvatar);
 
         // drag-to-select across the grid (Apple Photos style)
         final com.michaelflisar.dragselectrecyclerview.DragSelectTouchListener dsl =
@@ -529,6 +552,11 @@ public class MainActivity extends ThemeableActivity implements CheckRefreshClick
         boolean isHome = tab == com.absolute.floral.soma.PhotoNav.HOME;
         String title = isHome ? "Home" : library ? "Library" : "Collections";
         com.absolute.floral.soma.SomaSkin.wordmark(toolbar, soma, title, "");
+        if (optionsMenu != null) {
+            MenuItem more = optionsMenu.findItem(R.id.library_more);
+            if (more != null) more.setVisible(library);
+        }
+        if (profileAvatar != null) { profileAvatar.refresh(); profileAvatar.bringToFront(); }
         librarySoma = soma;
         lastSubtitle = "";
         if (library) recyclerView.post(this::updateLibrarySubtitle);
@@ -790,14 +818,18 @@ public class MainActivity extends ThemeableActivity implements CheckRefreshClick
     protected void onStart() {
         super.onStart();
         refreshPhotos();
+        // reflect favourites / deletes made in the viewer
+        providers.version++;
         if (photoAdapter != null) {
+            photoAdapter.setFavoritePaths(
+                    com.absolute.floral.data.FlagStore.favorites(this).all());
             recyclerView.postDelayed(() -> {
                 java.util.ArrayList<Album> fresh = MediaProvider.getAlbumsWithVirtualDirectories(this);
                 if (fresh != null && !fresh.isEmpty()) {
                     photoAdapter.setTimeline(com.absolute.floral.data.PhotoTimeline.from(fresh));
                     providers.albums = fresh;
-                    syncCollections();
                 }
+                syncCollections();
             }, 400);
         }
     }
@@ -817,10 +849,15 @@ public class MainActivity extends ThemeableActivity implements CheckRefreshClick
         context.startActivity(sendIntent);
     }
 
+    private Menu optionsMenu;
+
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         super.onCreateOptionsMenu(menu);
         getMenuInflater().inflate(R.menu.main, menu);
+        optionsMenu = menu;
+        MenuItem more = menu.findItem(R.id.library_more);
+        if (more != null) more.setVisible(currentTab == com.absolute.floral.soma.PhotoNav.LIBRARY);
         return true;
     }
 
@@ -1021,21 +1058,26 @@ public class MainActivity extends ThemeableActivity implements CheckRefreshClick
         for (String p : photoAdapter.selectedPaths()) fav.toggle(p);
         photoAdapter.setFavoritePaths(fav.all());
         photoAdapter.clearSelection();
+        providers.version++;
         syncCollections();
     }
 
     private void bulkDelete() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-            java.util.ArrayList<Uri> uris = new java.util.ArrayList<>(selectedUris());
-            if (uris.isEmpty()) return;
-            try {
-                android.app.PendingIntent pi =
-                        MediaStore.createDeleteRequest(getContentResolver(), uris);
-                startIntentSenderForResult(pi.getIntentSender(), REQUEST_CODE_BULK_DELETE, null, 0, 0, 0);
-                return;
-            } catch (Exception e) { e.printStackTrace(); }
-        }
         java.util.List<String> paths = photoAdapter.selectedPaths();
+        if (paths.isEmpty()) return;
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            android.app.PendingIntent pi = com.absolute.floral.util.MediaOps.deleteRequest(
+                    this, com.absolute.floral.util.MediaOps.urisFor(this, paths));
+            if (pi != null) {
+                try {
+                    startIntentSenderForResult(pi.getIntentSender(), REQUEST_CODE_BULK_DELETE, null, 0, 0, 0);
+                    return;
+                } catch (android.content.IntentSender.SendIntentException e) { e.printStackTrace(); }
+            }
+            Toast.makeText(this, R.string.error, Toast.LENGTH_SHORT).show();
+            photoAdapter.clearSelection();
+            return;
+        }
         com.absolute.floral.data.models.File_POJO[] files =
                 new com.absolute.floral.data.models.File_POJO[paths.size()];
         for (int i = 0; i < files.length; i++) files[i] =

@@ -103,16 +103,12 @@ public class SettingsActivity extends ThemeableActivity {
         p.setGravity(Gravity.CENTER_VERTICAL);
         p.setPadding(dp(14), dp(14), dp(14), dp(14));
 
-        TextView avatar = new TextView(this);
-        avatar.setText(initials());
+        final Settings settings = Settings.getInstance(this);
+        final TextView avatar = new TextView(this);
         avatar.setGravity(Gravity.CENTER);
         avatar.setTextColor(0xFFFFFFFF);
         avatar.setTextSize(18);
         avatar.setTypeface(Soma.body(this), Typeface.BOLD);
-        GradientDrawable ad = new GradientDrawable();
-        ad.setShape(GradientDrawable.OVAL);
-        ad.setColor(getResources().getColor(R.color.ios_blue));
-        avatar.setBackground(ad);
         int as = dp(48);
         LinearLayout.LayoutParams alp = new LinearLayout.LayoutParams(as, as);
         alp.rightMargin = dp(14);
@@ -120,8 +116,7 @@ public class SettingsActivity extends ThemeableActivity {
 
         LinearLayout txt = new LinearLayout(this);
         txt.setOrientation(LinearLayout.VERTICAL);
-        TextView name = new TextView(this);
-        name.setText("This device");
+        final TextView name = new TextView(this);
         name.setTypeface(Soma.body(this), Typeface.BOLD);
         name.setTextSize(16);
         name.setTextColor(s.ink);
@@ -134,6 +129,39 @@ public class SettingsActivity extends ThemeableActivity {
         p.addView(txt);
         card.addView(p);
         col.addView(card);
+
+        final Runnable paint = () -> {
+            String n = settings.getProfileName(this);
+            name.setText(n == null || n.trim().isEmpty() ? "This device" : n);
+            avatar.setText(com.absolute.floral.soma.ProfileAvatar.initials(n));
+            GradientDrawable ad = new GradientDrawable(
+                    GradientDrawable.Orientation.TL_BR,
+                    com.absolute.floral.soma.ProfileAvatar.hueGradient(n));
+            ad.setShape(GradientDrawable.OVAL);
+            avatar.setBackground(ad);
+        };
+        paint.run();
+
+        p.setOnClickListener(v -> {
+            final android.widget.EditText in = new android.widget.EditText(this);
+            in.setSingleLine(true);
+            in.setText(settings.getProfileName(this));
+            in.setSelection(in.getText().length());
+            int pad = dp(20);
+            android.widget.FrameLayout wrap = new android.widget.FrameLayout(this);
+            wrap.setPadding(pad, dp(8), pad, 0);
+            wrap.addView(in);
+            new androidx.appcompat.app.AlertDialog.Builder(this)
+                    .setTitle("Profile name")
+                    .setView(wrap)
+                    .setPositiveButton("Save", (di, w) -> {
+                        settings.setProfileName(this, in.getText().toString());
+                        paint.run();
+                        mark();
+                    })
+                    .setNegativeButton("Cancel", null)
+                    .show();
+        });
 
         LibrarySnapshot.get(this, snap -> {
             if (snap != null) sub.setText(snap.photos + " Photos, " + snap.videos + " Videos");

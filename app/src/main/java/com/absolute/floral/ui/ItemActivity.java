@@ -280,6 +280,16 @@ public class ItemActivity extends ThemeableActivity {
         }
     }
 
+    private static int indexOfByPath(Album album, AlbumItem item) {
+        if (album == null || item == null || item.getPath() == null) return -1;
+        java.util.List<AlbumItem> items = album.getAlbumItems();
+        for (int i = 0; i < items.size(); i++) {
+            AlbumItem it = items.get(i);
+            if (it != null && item.getPath().equals(it.getPath())) return i;
+        }
+        return -1;
+    }
+
     private void onAlbumLoaded(Bundle savedInstanceState) {
         if (albumItem == null) {
             if (savedInstanceState == null) {
@@ -315,7 +325,8 @@ public class ItemActivity extends ThemeableActivity {
 
         viewPager = findViewById(R.id.view_pager);
         viewPager.setAdapter(new ItemAdapter(album));
-        int currentItem = album.getAlbumItems().indexOf(albumItem);
+        int currentItem = indexOfByPath(album, albumItem);
+        if (currentItem >= 0) albumItem = album.getAlbumItems().get(currentItem);
         viewPager.setCurrentItem(currentItem >= 0 ? currentItem : 0, false);
         if (showAnimations()) {
             viewPager.setPageTransformer(false, new ParallaxTransformer());
@@ -616,16 +627,22 @@ public class ItemActivity extends ThemeableActivity {
         }
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-            Uri uri = albumItem.getUri(this);
-            if (uri != null) {
+            Uri uri = com.absolute.floral.util.MediaOps.contentUri(this, albumItem.getPath());
+            if (uri == null) uri = albumItem.getUri(this);
+            android.app.PendingIntent pi = com.absolute.floral.util.MediaOps
+                    .deleteRequest(this, java.util.Collections.singletonList(uri));
+            if (pi != null) {
                 try {
-                    PendingIntent pi = MediaStore.createDeleteRequest(getContentResolver(), Collections.singletonList(uri));
                     startIntentSenderForResult(pi.getIntentSender(), REQUEST_CODE_DELETE_ITEM, null, 0, 0, 0);
                     return;
-                } catch (Exception e) {
+                } catch (android.content.IntentSender.SendIntentException e) {
                     e.printStackTrace();
                 }
             }
+            // API 30+ but couldn't resolve a MediaStore URI — the legacy path
+            // crashes here ("Mutation of _data is not allowed"), so bail safely.
+            Toast.makeText(this, R.string.error, Toast.LENGTH_SHORT).show();
+            return;
         }
 
         final File_POJO[] files = new File_POJO[]{new File_POJO(albumItem.getPath(), true)};
@@ -1111,21 +1128,26 @@ public class ItemActivity extends ThemeableActivity {
         if (requestCode == REQUEST_CODE_DELETE_ITEM) {
             if (resultCode == RESULT_OK) {
                 MediaProvider.dataChanged = true;
-                String path = albumItem.getPath();
-                Intent i = new Intent(AlbumActivity.ALBUM_ITEM_REMOVED)
-                        .putExtra(ALBUM_ITEM_PATH, path);
-                LocalBroadcastManager.getInstance(ItemActivity.this).sendBroadcast(i);
+                String path = albumItem != null ? albumItem.getPath() : null;
+                if (path != null) {
+                    LocalBroadcastManager.getInstance(ItemActivity.this).sendBroadcast(
+                            new Intent(AlbumActivity.ALBUM_ITEM_REMOVED).putExtra(ALBUM_ITEM_PATH, path));
+                }
+                if (album == null || viewPager == null || viewPager.getAdapter() == null) {
+                    setResult(RESULT_OK); finish(); return;
+                }
 
                 album.getAlbumItems().remove(albumItem);
                 viewPager.getAdapter().notifyDataSetChanged();
 
-                if (album.getAlbumItems().size() == 0) {
+                if (album.getAlbumItems().isEmpty()) {
                     ItemActivity.this.setResult(RESULT_OK);
                     finish();
                     return;
                 }
 
-                albumItem = album.getAlbumItems().get(viewPager.getCurrentItem());
+                int pos = Math.min(viewPager.getCurrentItem(), album.getAlbumItems().size() - 1);
+                albumItem = album.getAlbumItems().get(pos);
                 ItemAdapter adapter = (ItemAdapter) viewPager.getAdapter();
                 ViewHolder viewHolder = adapter.findViewHolderByTag(albumItem.getPath());
                 onShowViewHolder(viewHolder);
