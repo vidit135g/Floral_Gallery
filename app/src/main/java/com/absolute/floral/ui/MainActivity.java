@@ -491,29 +491,6 @@ public class MainActivity extends ThemeableActivity implements CheckRefreshClick
         recyclerView.addOnItemTouchListener(dsl);
         photoAdapter.setDragStarter(dsl::startDragSelection);
 
-        // account avatar — top-right on every tab (opens Settings), Apple's account chip
-        final Toolbar toolbar2 = findViewById(R.id.toolbar);
-        TextView avatar = new TextView(this);
-        avatar.setText("F");
-        avatar.setGravity(android.view.Gravity.CENTER);
-        avatar.setTextColor(0xFFFFFFFF);
-        avatar.setTextSize(13);
-        avatar.setTypeface(com.absolute.floral.soma.Soma.body(this), Typeface.BOLD);
-        android.graphics.drawable.GradientDrawable ad = new android.graphics.drawable.GradientDrawable();
-        ad.setShape(android.graphics.drawable.GradientDrawable.OVAL);
-        ad.setColor(getResources().getColor(R.color.ios_blue));
-        avatar.setBackground(ad);
-        int av = Math.round(30 * d);
-        Toolbar.LayoutParams avlp = new Toolbar.LayoutParams(av, av);
-        avlp.gravity = android.view.Gravity.END | android.view.Gravity.CENTER_VERTICAL;
-        avlp.rightMargin = Math.round(6 * d);
-        avatar.setLayoutParams(avlp);
-        avatar.setOnClickListener(v -> {
-            SettingsActivity.sChanged = false;
-            startActivityForResult(new Intent(this, SettingsActivity.class), SETTINGS_REQUEST_CODE);
-        });
-        toolbar2.addView(avatar);
-
         // sit above the system nav bar: reuse the bottom inset the grid already got
         recyclerView.post(() -> {
             int b = recyclerView.getPaddingBottom() + Math.round(16 * d);
@@ -875,6 +852,10 @@ public class MainActivity extends ThemeableActivity implements CheckRefreshClick
             else if (id == R.id.filter_screenshots) setFilter(com.absolute.floral.adapter.photos.PhotoGridAdapter.Filter.SCREENSHOTS);
             else if (id == R.id.view_zoom_in && photoSpan > 2) setLibrarySpan(photoSpan - 1);
             else if (id == R.id.view_zoom_out && photoSpan < 5) setLibrarySpan(photoSpan + 1);
+            else if (id == R.id.menu_settings) {
+                SettingsActivity.sChanged = false;
+                startActivityForResult(new Intent(this, SettingsActivity.class), SETTINGS_REQUEST_CODE);
+            }
             return true;
         });
         pm.show();

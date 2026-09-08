@@ -28,4 +28,6 @@
         </menu>
     </item>
 
+    <item android:id="@+id/menu_settings" android:title="Settings" />
+
 </menu>

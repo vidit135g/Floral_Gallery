@@ -4,32 +4,18 @@
     android:height="108dp"
     android:viewportWidth="108"
     android:viewportHeight="108">
-  <group android:scaleX="0.86" android:scaleY="0.86" android:pivotX="54" android:pivotY="54">
+  <group android:scaleX="0.94" android:scaleY="0.94" android:pivotX="54" android:pivotY="55">
 
-    <!-- three fanned "photos" — translucent white, rotated, overlapping so the
-         glass blends where they cross. Reads as a stack, iOS-18 layered depth. -->
-    <group android:rotation="-26" android:pivotX="54" android:pivotY="58">
-        <path android:fillColor="#75FFFFFF"
-            android:pathData="M28,32 L80,32 A11,11 0 0 1 91,43 L91,73 A11,11 0 0 1 80,84 L28,84 A11,11 0 0 1 17,73 L17,43 A11,11 0 0 1 28,32 Z" />
-    </group>
+    <!-- centre flame, behind -->
+    <path android:fillColor="#FFB01C5B"
+        android:pathData="M54,14 C47.5,24 46.5,34 49.5,44 C50.6,48 52.7,50.5 54,50.5 C55.3,50.5 57.4,48 58.5,44 C61.5,34 60.5,24 54,14 Z" />
 
-    <group android:rotation="24" android:pivotX="54" android:pivotY="58">
-        <path android:fillColor="#ABFFFFFF"
-            android:pathData="M28,32 L80,32 A11,11 0 0 1 91,43 L91,73 A11,11 0 0 1 80,84 L28,84 A11,11 0 0 1 17,73 L17,43 A11,11 0 0 1 28,32 Z" />
-    </group>
+    <!-- full tulip body (reads as the right / back petal) -->
+    <path android:fillColor="#FFDA2A78"
+        android:pathData="M54,96 C38,96 23.5,88 17.5,70 C12.5,54 14.5,33.5 26,23.5 C34,16.5 44,17.5 50,26 C52,29 54,32 54,32 C54,32 56,29 58,26 C64,17.5 74,16.5 82,23.5 C93.5,33.5 95.5,54 90.5,70 C84.5,88 70,96 54,96 Z" />
 
-    <!-- front card, upright, opaque with a small scene -->
-    <path android:fillColor="#33000000"
-        android:pathData="M28,29 L80,29 A11,11 0 0 1 91,40 L91,72 A11,11 0 0 1 80,83 L28,83 A11,11 0 0 1 17,72 L17,40 A11,11 0 0 1 28,29 Z" />
-    <path android:fillColor="#FFFFFFFF"
-        android:pathData="M28,27 L80,27 A11,11 0 0 1 91,38 L91,70 A11,11 0 0 1 80,81 L28,81 A11,11 0 0 1 17,70 L17,38 A11,11 0 0 1 28,27 Z" />
-
-    <group>
-        <clip-path android:pathData="M28,33 L74,33 A6,6 0 0 1 80,39 L80,69 A6,6 0 0 1 74,75 L28,75 A6,6 0 0 1 22,69 L22,39 A6,6 0 0 1 28,33 Z" />
-        <path android:fillColor="#FFBFE6FF" android:pathData="M22,33 h58 v42 h-58 z" />
-        <path android:fillColor="#FFFFC658" android:pathData="M66,44 m-6,0 a6,6 0 1,0 12,0 a6,6 0 1,0 -12,0 Z" />
-        <path android:fillColor="#FF3E86C9" android:pathData="M22,75 L40,52 L54,75 Z" />
-        <path android:fillColor="#FF54B27A" android:pathData="M38,75 L56,48 L80,75 L80,75 Z" />
-    </group>
+    <!-- left petal, lighter; the gentle centre seam is its right edge -->
+    <path android:fillColor="#FFEC4C96"
+        android:pathData="M54,32 C54,32 52,29 50,26 C44,17.5 34,16.5 26,23.5 C14.5,33.5 12.5,54 17.5,70 C23.5,88 38,96 54,96 C49,79 47,55 54,32 Z" />
   </group>
 </vector>

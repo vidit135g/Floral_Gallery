@@ -5,42 +5,14 @@
     android:height="108dp"
     android:viewportWidth="108"
     android:viewportHeight="108">
-
-    <!-- iOS 18 vibrant sunset mesh: indigo -> violet -> magenta -> coral -->
     <path android:pathData="M0,0h108v108h-108z">
         <aapt:attr name="android:fillColor">
             <gradient
-                android:startX="6" android:startY="0"
-                android:endX="102" android:endY="108"
+                android:startX="10" android:startY="0"
+                android:endX="98" android:endY="108"
                 android:type="linear">
-                <item android:offset="0.0"  android:color="#FF4B37D6" />
-                <item android:offset="0.34" android:color="#FF8A34C9" />
-                <item android:offset="0.64" android:color="#FFD43C86" />
-                <item android:offset="1.0"  android:color="#FFFF7A45" />
-            </gradient>
-        </aapt:attr>
-    </path>
-
-    <!-- warm bloom, top-left -->
-    <path android:pathData="M0,0h108v108h-108z">
-        <aapt:attr name="android:fillColor">
-            <gradient
-                android:centerX="26" android:centerY="20" android:gradientRadius="72"
-                android:type="radial">
-                <item android:offset="0.0" android:color="#59FFD9A8" />
-                <item android:offset="1.0" android:color="#00FFD9A8" />
-            </gradient>
-        </aapt:attr>
-    </path>
-
-    <!-- cool depth, bottom-right -->
-    <path android:pathData="M0,0h108v108h-108z">
-        <aapt:attr name="android:fillColor">
-            <gradient
-                android:centerX="92" android:centerY="96" android:gradientRadius="70"
-                android:type="radial">
-                <item android:offset="0.0" android:color="#3D3A1E8C" />
-                <item android:offset="1.0" android:color="#003A1E8C" />
+                <item android:offset="0.0" android:color="#FFFFF3F7" />
+                <item android:offset="1.0" android:color="#FFFBE3EC" />
             </gradient>
         </aapt:attr>
     </path>
