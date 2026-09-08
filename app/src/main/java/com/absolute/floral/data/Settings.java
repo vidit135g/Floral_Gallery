@@ -42,6 +42,8 @@ public class Settings {
     private boolean showAnimations;
     private boolean maxBrightness;
     private float prevBrightness;
+    private boolean autoPlayMotion = true;
+    private boolean loopVideos = true;
 
     private static Settings instance;
 
@@ -110,6 +112,43 @@ public class Settings {
         maxBrightness = sharedPreferences.getBoolean(
                 context.getString(R.string.pref_key_max_brightness),
                 false);
+
+        autoPlayMotion = sharedPreferences.getBoolean("pref_key_autoplay_motion", true);
+        loopVideos = sharedPreferences.getBoolean("pref_key_loop_videos", true);
+    }
+
+    /* ---- Apple-Photos Settings sheet: persisting setters ---- */
+
+    public boolean autoPlayMotion() { return autoPlayMotion; }
+    public void setAutoPlayMotion(Context c, boolean v) {
+        autoPlayMotion = v; saveBoolean(c, "pref_key_autoplay_motion", v);
+    }
+
+    public boolean loopVideos() { return loopVideos; }
+    public void setLoopVideos(Context c, boolean v) {
+        loopVideos = v; saveBoolean(c, "pref_key_loop_videos", v);
+    }
+
+    public void useStorageRetriever(Context c, boolean v) {
+        storageRetriever = v; saveBoolean(c, c.getString(R.string.pref_key_media_retriever), v);
+    }
+    public void use8BitColor(Context c, boolean v) {
+        use8BitColor = v; saveBoolean(c, c.getString(R.string.pref_key_8_bit_color), v);
+    }
+    public void setCameraShortcut(Context c, boolean v) {
+        cameraShortcut = v; saveBoolean(c, c.getString(R.string.pref_key_camera_shortcut), v);
+    }
+    public void showAnimations(Context c, boolean v) {
+        showAnimations = v; saveBoolean(c, c.getString(R.string.pref_key_animations), v);
+    }
+    public void showVideos(Context c, boolean v) {
+        showVideos = v; saveBoolean(c, c.getString(R.string.pref_key_show_videos), v);
+    }
+    public void setMaxBrightness(Context c, boolean v) {
+        maxBrightness = v; saveBoolean(c, c.getString(R.string.pref_key_max_brightness), v);
+    }
+    public void setTheme(Context c, String v) {
+        theme = v; saveString(c, c.getString(R.string.pref_key_theme), v);
     }
 
     /*Getter & Setter*/

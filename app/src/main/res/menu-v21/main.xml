@@ -15,4 +15,11 @@
         app:showAsAction="always"
         tools:ignore="AlwaysShowAction" />
 
+    <item
+        android:id="@+id/library_settings"
+        android:icon="@drawable/ic_settings_white"
+        android:title="Settings"
+        app:showAsAction="always"
+        tools:ignore="AlwaysShowAction" />
+
 </menu>

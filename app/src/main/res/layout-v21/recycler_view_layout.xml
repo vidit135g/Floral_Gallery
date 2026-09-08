@@ -24,7 +24,7 @@
         android:id="@+id/fastScroller"
         android:layout_width="wrap_content"
         android:layout_height="match_parent"
-        app:rfs_touchTargetWidth="24dp"
+        app:rfs_touchTargetWidth="0.5dp"
         android:layout_gravity="end" />
 
     <androidx.appcompat.widget.Toolbar android:id="@+id/toolbar"

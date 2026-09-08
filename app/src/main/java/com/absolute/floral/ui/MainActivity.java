@@ -764,6 +764,10 @@ public class MainActivity extends ThemeableActivity implements CheckRefreshClick
            case R.id.library_more:
                showLibraryMenu();
                break;
+           case R.id.library_settings:
+               SettingsActivity.sChanged = false;
+               startActivityForResult(new Intent(this, SettingsActivity.class), SETTINGS_REQUEST_CODE);
+               break;
                default:
                    break;
        }

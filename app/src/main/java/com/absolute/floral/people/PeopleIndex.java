@@ -51,6 +51,12 @@ public class PeopleIndex {
 
     public List<Person> current() { return people; }
 
+    /** Forget the grouped faces so the next {@link #ensure} rescans from scratch. */
+    public void clear() {
+        people = new ArrayList<>();
+        builtAt = 0;
+    }
+
     public void ensure(Context ctx, Listener cb) {
         if (!people.isEmpty() && System.currentTimeMillis() - builtAt < 5 * 60_000L) {
             cb.onPeople(people);

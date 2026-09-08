@@ -2,420 +2,312 @@ package com.absolute.floral.ui;
 
 import android.content.Intent;
 import android.graphics.Typeface;
-import android.os.Build;
+import android.graphics.drawable.GradientDrawable;
 import android.os.Bundle;
-import androidx.annotation.Nullable;
-import androidx.annotation.RequiresApi;
-import androidx.preference.SwitchPreference;
-import androidx.fragment.app.DialogFragment;
-import androidx.fragment.app.Fragment;
-import androidx.appcompat.app.ActionBar;
-import androidx.preference.ListPreference;
-import androidx.preference.Preference;
-import androidx.preference.PreferenceFragmentCompat;
-import androidx.preference.TwoStatePreference;
-import androidx.appcompat.widget.Toolbar;
-import android.util.Log;
-import android.view.MenuItem;
+import android.view.Gravity;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.ViewTreeObserver;
-import android.view.WindowInsets;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 
-import java.util.Arrays;
+import androidx.annotation.Nullable;
+import androidx.appcompat.widget.SwitchCompat;
+import androidx.core.widget.NestedScrollView;
 
 import com.absolute.floral.R;
-import com.absolute.floral.themes.Theme;
+import com.absolute.floral.bento.LibrarySnapshot;
 import com.absolute.floral.data.Settings;
-import com.absolute.floral.util.Util;
+import com.absolute.floral.people.PeopleIndex;
+import com.absolute.floral.soma.Soma;
+import com.absolute.floral.soma.SomaSkin;
+import com.absolute.floral.themes.Theme;
 
+/**
+ * Apple-Photos-style Settings — a hand-built grouped table: profile header,
+ * rounded section cards, green switches, blue Reset actions. Only rows that do
+ * something real (no inert cloud / HDR / shared-library rows).
+ */
 public class SettingsActivity extends ThemeableActivity {
 
-    private static boolean recreated = false;
+    private interface BoolCb { void accept(boolean v); }
+
+    private static final int GREEN = 0xFF34C759;
+    /** survives the recreate() a theme change triggers */
+    public static boolean sChanged = false;
+    private LinearLayout col;
+    private Soma s;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_settings);
+        s = SomaSkin.read(this);
 
-        final Toolbar toolbar = findViewById(R.id.toolbar);
-        setSupportActionBar(toolbar);
-        for (int i = 0; i < toolbar.getChildCount(); i++) {
-            View view = toolbar.getChildAt(i);
-            if (view instanceof TextView) {
-                TextView tv = (TextView) view;
-                if (tv.getText().equals(toolbar.getTitle())) {
-                    tv.setTypeface(Typeface.createFromAsset(getApplicationContext().getAssets(), "fonts/google.ttf"));
-                    break;
-                }
-            }
-        }
-        ActionBar actionBar = getSupportActionBar();
-        if (actionBar != null) {
-            actionBar.setDisplayHomeAsUpEnabled(true);
-        }
+        NestedScrollView scroll = new NestedScrollView(this);
+        scroll.setId(R.id.root_view);
+        scroll.setFillViewport(true);
+        scroll.setBackgroundColor(s.ground[0]);
 
-        //setting window insets manually
-        final View rootView = findViewById(R.id.root_view);
-        final View container = findViewById(R.id.preference_fragment_container);
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT_WATCH) {
-            rootView.setOnApplyWindowInsetsListener(new View.OnApplyWindowInsetsListener() {
-                @Override
-                @RequiresApi(api = Build.VERSION_CODES.KITKAT_WATCH)
-                public WindowInsets onApplyWindowInsets(View view, WindowInsets insets) {
-                    toolbar.setPadding(toolbar.getPaddingStart() /*+ insets.getSystemWindowInsetLeft()*/,
-                            toolbar.getPaddingTop() + insets.getSystemWindowInsetTop(),
-                            toolbar.getPaddingEnd() /*+ insets.getSystemWindowInsetRight()*/,
-                            toolbar.getPaddingBottom());
+        col = new LinearLayout(this);
+        col.setOrientation(LinearLayout.VERTICAL);
+        col.setPadding(dp(16), dp(10), dp(16), dp(40));
+        scroll.addView(col, new NestedScrollView.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+        setContentView(scroll);
 
-                    ViewGroup.MarginLayoutParams toolbarParams
-                            = (ViewGroup.MarginLayoutParams) toolbar.getLayoutParams();
-                    toolbarParams.leftMargin += insets.getSystemWindowInsetLeft();
-                    toolbarParams.rightMargin += insets.getSystemWindowInsetRight();
-                    toolbar.setLayoutParams(toolbarParams);
-
-                    container.setPadding(container.getPaddingStart() + insets.getSystemWindowInsetLeft(),
-                            container.getPaddingTop(),
-                            container.getPaddingEnd() + insets.getSystemWindowInsetRight(),
-                            container.getPaddingBottom() + insets.getSystemWindowInsetBottom());
-
-                    // clear this listener so insets aren't re-applied
-                    rootView.setOnApplyWindowInsetsListener(null);
-                    return insets.consumeSystemWindowInsets();
-                }
-            });
-        } else {
-            rootView.getViewTreeObserver()
-                    .addOnGlobalLayoutListener(
-                            new ViewTreeObserver.OnGlobalLayoutListener() {
-                                @Override
-                                public void onGlobalLayout() {
-                                    // hacky way of getting window insets on pre-Lollipop
-                                    // somewhat works...
-                                    int[] screenSize = Util.getScreenSize(SettingsActivity.this);
-
-                                    int[] windowInsets = new int[]{
-                                            Math.abs(screenSize[0] - rootView.getLeft()),
-                                            Math.abs(screenSize[1] - rootView.getTop()),
-                                            Math.abs(screenSize[2] - rootView.getRight()),
-                                            Math.abs(screenSize[3] - rootView.getBottom())};
-
-                                    Log.d("MainActivity", "windowInsets: " + Arrays.toString(windowInsets));
-
-                                    toolbar.setPadding(toolbar.getPaddingStart(),
-                                            toolbar.getPaddingTop() + windowInsets[1],
-                                            toolbar.getPaddingEnd(),
-                                            toolbar.getPaddingBottom());
-
-                                    ViewGroup.MarginLayoutParams toolbarParams
-                                            = (ViewGroup.MarginLayoutParams) toolbar.getLayoutParams();
-                                    toolbarParams.leftMargin += windowInsets[0];
-                                    toolbarParams.rightMargin += windowInsets[2];
-                                    toolbar.setLayoutParams(toolbarParams);
-
-                                    container.setPadding(container.getPaddingStart() + windowInsets[0],
-                                            container.getPaddingTop(),
-                                            container.getPaddingEnd() + windowInsets[2],
-                                            container.getPaddingBottom() + windowInsets[3]);
-
-                                    rootView.getViewTreeObserver().removeOnGlobalLayoutListener(this);
-                                }
-                            });
-        }
-
-
-        SettingsFragment fragment = new SettingsFragment();
-        getSupportFragmentManager().beginTransaction()
-                .replace(R.id.preference_fragment_container, fragment)
-                .commit();
-
-        fragment.setCallback(new SettingsFragment.OnSettingChangedCallback() {
-            @Override
-            public void onSettingChanged() {
-                setResult(RESULT_OK);
-            }
+        scroll.setOnApplyWindowInsetsListener((v, insets) -> {
+            col.setPadding(dp(16), dp(10) + insets.getSystemWindowInsetTop(),
+                    dp(16), dp(40) + insets.getSystemWindowInsetBottom());
+            return insets;
         });
 
+        buildHeader();
+        buildDisplay();
+        buildViewOptions();
+        buildLibraryReading();
+        buildReset();
         setSystemUiFlags();
     }
 
-    @Override
-    protected void onPostCreate(@Nullable Bundle savedInstanceState) {
-        super.onPostCreate(savedInstanceState);
+    /* ------------------------------------------------------------ sections */
+
+    private void buildHeader() {
+        LinearLayout row = new LinearLayout(this);
+        row.setGravity(Gravity.CENTER_VERTICAL);
+        row.setPadding(dp(4), dp(6), dp(4), dp(18));
+
+        TextView title = new TextView(this);
+        title.setText("Settings");
+        title.setTypeface(Soma.display(this), Typeface.BOLD);
+        title.setTextSize(30);
+        title.setTextColor(s.ink);
+        row.addView(title, new LinearLayout.LayoutParams(0,
+                ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
+
+        TextView close = new TextView(this);
+        close.setText("✕");
+        close.setTextSize(17);
+        close.setGravity(Gravity.CENTER);
+        close.setTextColor(s.ink);
+        GradientDrawable disc = new GradientDrawable();
+        disc.setShape(GradientDrawable.OVAL);
+        disc.setColor(s.surfaceStrong);
+        close.setBackground(disc);
+        int d = dp(34);
+        close.setOnClickListener(v -> finish());
+        row.addView(close, new LinearLayout.LayoutParams(d, d));
+        col.addView(row);
+
+        // profile card
+        LinearLayout card = groupCard();
+        LinearLayout p = new LinearLayout(this);
+        p.setGravity(Gravity.CENTER_VERTICAL);
+        p.setPadding(dp(14), dp(14), dp(14), dp(14));
+
+        TextView avatar = new TextView(this);
+        avatar.setText(initials());
+        avatar.setGravity(Gravity.CENTER);
+        avatar.setTextColor(0xFFFFFFFF);
+        avatar.setTextSize(18);
+        avatar.setTypeface(Soma.body(this), Typeface.BOLD);
+        GradientDrawable ad = new GradientDrawable();
+        ad.setShape(GradientDrawable.OVAL);
+        ad.setColor(getResources().getColor(R.color.ios_blue));
+        avatar.setBackground(ad);
+        int as = dp(48);
+        LinearLayout.LayoutParams alp = new LinearLayout.LayoutParams(as, as);
+        alp.rightMargin = dp(14);
+        p.addView(avatar, alp);
+
+        LinearLayout txt = new LinearLayout(this);
+        txt.setOrientation(LinearLayout.VERTICAL);
+        TextView name = new TextView(this);
+        name.setText("This device");
+        name.setTypeface(Soma.body(this), Typeface.BOLD);
+        name.setTextSize(16);
+        name.setTextColor(s.ink);
+        txt.addView(name);
+        final TextView sub = new TextView(this);
+        sub.setText("Your library");
+        sub.setTextSize(13);
+        sub.setTextColor(s.inkMute);
+        txt.addView(sub);
+        p.addView(txt);
+        card.addView(p);
+        col.addView(card);
+
+        LibrarySnapshot.get(this, snap -> {
+            if (snap != null) sub.setText(snap.photos + " Photos, " + snap.videos + " Videos");
+        });
     }
 
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        switch (item.getItemId()) {
-            case android.R.id.home:
-                onBackPressed();
-                break;
-            default:
-                break;
-        }
-        return super.onOptionsItemSelected(item);
+    private void buildDisplay() {
+        sectionHeader("DISPLAY");
+        LinearLayout card = groupCard();
+        Settings st = Settings.getInstance(this);
+        boolean dark = "DARK".equals(st.getTheme());
+        addNav(card, "Theme", dark ? "Dark" : "Light", true, () -> {
+            String next = dark ? "LIGHT" : "DARK";
+            st.setTheme(this, next);
+            sChanged = true; setResult(RESULT_OK); recreate();
+        });
+        col.addView(card);
     }
 
-    @Override
-    public void recreate() {
-        recreated = true;
-        super.recreate();
+    private void buildViewOptions() {
+        sectionHeader("VIEW OPTIONS");
+        LinearLayout card = groupCard();
+        Settings st = Settings.getInstance(this);
+        addSwitch(card, "Auto-Play Motion", st.autoPlayMotion(),
+                v -> { st.setAutoPlayMotion(this, v); mark(); }, true);
+        addSwitch(card, "Loop Videos", st.loopVideos(),
+                v -> { st.setLoopVideos(this, v); mark(); }, true);
+        addSwitch(card, "Show Videos", st.showVideos(),
+                v -> { st.showVideos(this, v); mark(); }, false);
+        col.addView(card);
     }
 
-    @Override
-    public void onBackPressed() {
-        if (recreated) {
-            setResult(RESULT_OK);
-        }
-        super.onBackPressed();
+    private void buildLibraryReading() {
+        sectionHeader("READING YOUR LIBRARY");
+        LinearLayout card = groupCard();
+        Settings st = Settings.getInstance(this);
+        addSwitch(card, "MediaStore Retriever", st.useStorageRetriever(),
+                v -> { st.useStorageRetriever(this, v); mark(); }, true);
+        addSwitch(card, "8-bit Colour", st.use8BitColor(),
+                v -> { st.use8BitColor(this, v); mark(); }, true);
+        addSwitch(card, "Camera Shortcut", st.getCameraShortcut(),
+                v -> { st.setCameraShortcut(this, v); mark(); }, true);
+        addSwitch(card, "Max Brightness in Viewer", st.isMaxBrightness(),
+                v -> { st.setMaxBrightness(this, v); mark(); }, true);
+        addNav(card, "Excluded Paths", "", true,
+                () -> startActivity(new Intent(this, ExcludePathsActivity.class)));
+        addNav(card, "Virtual Albums", "", false,
+                () -> startActivity(new Intent(this, VirtualAlbumsActivity.class)));
+        col.addView(card);
     }
 
-    @Override
-    public int getDarkThemeRes() {
-        return R.style.CameraRoll_Theme_Settings;
+    private void buildReset() {
+        sectionHeader("RESET");
+        LinearLayout card = groupCard();
+        addAction(card, "Reset People & Pets Suggestions", () -> {
+            PeopleIndex.get().clear();
+            android.widget.Toast.makeText(this, "People & Pets will rescan", android.widget.Toast.LENGTH_SHORT).show();
+        }, false);
+        col.addView(card);
     }
 
-    @Override
-    public int getLightThemeRes() {
-        return R.style.CameraRoll_Theme_Light_Settings;
+    /* ------------------------------------------------------------ helpers */
+
+    private void mark() { sChanged = true; setResult(RESULT_OK); }
+
+    private void sectionHeader(String t) {
+        TextView h = new TextView(this);
+        h.setText(t);
+        h.setTextSize(12);
+        h.setLetterSpacing(0.06f);
+        h.setTypeface(Soma.body(this), Typeface.BOLD);
+        h.setTextColor(s.inkMute);
+        h.setPadding(dp(10), dp(22), dp(10), dp(8));
+        col.addView(h);
     }
 
-    @Override
-    public void onThemeApplied(Theme theme) {
-        Toolbar toolbar = findViewById(R.id.toolbar);
-        toolbar.setBackgroundColor(toolbarColor);
-        toolbar.setTitleTextColor(textColorPrimary);
-
-        if (theme.darkStatusBarIcons() &&
-                Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            Util.setDarkStatusBarIcons(findViewById(R.id.root_view));
-        }
-
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-            int statusBarColor = getStatusBarColor();
-            getWindow().setStatusBarColor(statusBarColor);
-        }
+    private LinearLayout groupCard() {
+        LinearLayout c = new LinearLayout(this);
+        c.setOrientation(LinearLayout.VERTICAL);
+        GradientDrawable g = new GradientDrawable();
+        g.setColor(s.surface);
+        g.setCornerRadius(dp(16));
+        g.setStroke(Math.round(Soma.dp(this, 1)), s.hairline);
+        c.setBackground(g);
+        c.setClipToOutline(true);
+        return c;
     }
 
+    private void divider(LinearLayout card) {
+        View d = new View(this);
+        d.setBackgroundColor(s.hairline);
+        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, 1);
+        lp.leftMargin = dp(14);
+        card.addView(d, lp);
+    }
 
-    public static class SettingsFragment extends PreferenceFragmentCompat
-            implements Preference.OnPreferenceChangeListener {
+    private LinearLayout rowBase(LinearLayout card, String label, boolean dividerAfterNeeded) {
+        LinearLayout row = new LinearLayout(this);
+        row.setGravity(Gravity.CENTER_VERTICAL);
+        row.setPadding(dp(14), dp(13), dp(14), dp(13));
+        TextView t = new TextView(this);
+        t.setText(label);
+        t.setTextSize(15);
+        t.setTextColor(s.ink);
+        t.setTypeface(Soma.body(this));
+        row.addView(t, new LinearLayout.LayoutParams(0,
+                ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
+        card.addView(row);
+        if (dividerAfterNeeded) divider(card);
+        return row;
+    }
 
-        private static final String DIALOG_FRAGMENT_TAG
-                = "android.support.v7.preference.PreferenceFragment.DIALOG";
-        private static final String SHOWN_DIALOG_FRAGMENT = "SHOWN_DIALOG_FRAGMENT";
-        private static final int NONE = 0;
-        private static final int STYLE_DIALOG_FRAGMENT = 1;
-        private static final int COLUMN_COUNT_DIALOG_FRAGMENT = 2;
+    private void addSwitch(LinearLayout card, String label, boolean on,
+                           final BoolCb cb, boolean div) {
+        LinearLayout row = rowBase(card, label, div);
+        SwitchCompat sw = new SwitchCompat(this);
+        sw.setChecked(on);
+        int[][] st = { {android.R.attr.state_checked}, {} };
+        sw.setThumbTintList(new android.content.res.ColorStateList(st, new int[]{ 0xFFFFFFFF, 0xFFFFFFFF }));
+        sw.setTrackTintList(new android.content.res.ColorStateList(st, new int[]{ GREEN, s.hairline }));
+        sw.setOnCheckedChangeListener((b, v) -> cb.accept(v));
+        row.addView(sw);
+    }
 
-        private int shownDialogFragment = NONE;
-        private OnSettingChangedCallback callback;
-
-        interface OnSettingChangedCallback {
-            void onSettingChanged();
+    private void addNav(LinearLayout card, String label, String value, boolean div, final Runnable r) {
+        LinearLayout row = rowBase(card, label, div);
+        if (value != null && !value.isEmpty()) {
+            TextView vt = new TextView(this);
+            vt.setText(value);
+            vt.setTextSize(14);
+            vt.setTextColor(s.inkMute);
+            row.addView(vt);
         }
+        TextView chev = new TextView(this);
+        chev.setText(" ›");
+        chev.setTextSize(18);
+        chev.setTextColor(s.inkMute);
+        row.addView(chev);
+        row.setOnClickListener(v -> r.run());
+    }
 
-        @Override
-        public void onViewCreated(View view, @Nullable Bundle savedInstanceState) {
-            super.onViewCreated(view, savedInstanceState);
-            try {
-                com.absolute.floral.soma.Soma s = com.absolute.floral.soma.SomaSkin.read(requireActivity());
-                setDivider(new android.graphics.drawable.ColorDrawable(0x00000000));
-                setDividerHeight(0);
-                androidx.recyclerview.widget.RecyclerView rv = getListView();
-                float d = getResources().getDisplayMetrics().density;
-                int m = Math.round(14 * d);
-                rv.setClipToPadding(false);
-                rv.setPadding(m, Math.round(8 * d), m, Math.round(24 * d));
-                android.graphics.drawable.GradientDrawable card = new android.graphics.drawable.GradientDrawable();
-                card.setColor(s.surface);
-                card.setCornerRadius(Math.round(22 * d));
-                card.setStroke(Math.round(d), s.hairline);
-                rv.setBackground(card);
-                ((View) rv.getParent()).setPadding(m, m, m, 0);
-                view.setBackgroundColor(com.absolute.floral.soma.Soma.blend(s.ground[0], s.accentSoft, 0.35f));
-            } catch (Throwable ignored) {}
-        }
+    private void addAction(LinearLayout card, String label, final Runnable r, boolean div) {
+        LinearLayout row = new LinearLayout(this);
+        row.setPadding(dp(14), dp(13), dp(14), dp(13));
+        TextView t = new TextView(this);
+        t.setText(label);
+        t.setTextSize(15);
+        t.setTextColor(getResources().getColor(R.color.ios_blue));
+        t.setTypeface(Soma.body(this));
+        row.addView(t);
+        row.setOnClickListener(v -> r.run());
+        card.addView(row);
+        if (div) divider(card);
+    }
 
-        @Override
-        public void onCreatePreferences(Bundle savedInstanceState, String rootKey) {
-            addPreferencesFromResource(R.xml.preferences);
+    private String initials() {
+        return "F";
+    }
 
-            Settings settings = Settings.getInstance(getContext());
+    private int dp(float v) { return Math.round(v * getResources().getDisplayMetrics().density); }
 
-            initExcludedPathsPref();
-            initVirtualDirectoriesPref();
-            initThemePref(settings.getTheme());
-            initShowVideos(settings.showVideos());
-            initMediaRetrieverPref(settings.useStorageRetriever());
-            init8BitColorPref(settings.use8BitColor());
-            initCameraShortcutPref(settings.getCameraShortcut());
-            initAnimationsPref(settings.showAnimations());
-            initMaxBrightnessPref(settings.isMaxBrightness());
-        }
+    @Override public void finish() {
+        setResult(sChanged ? RESULT_OK : RESULT_CANCELED);
+        super.finish();
+    }
 
-        private void initExcludedPathsPref() {
-            Preference pref = findPreference(getString(R.string.pref_key_excluded_paths));
-            pref.setOnPreferenceClickListener(new Preference.OnPreferenceClickListener() {
-                @Override
-                public boolean onPreferenceClick(Preference preference) {
-                    if (callback != null) {
-                        callback.onSettingChanged();
-                    }
-                    Intent intent = new Intent(getContext(), ExcludePathsActivity.class);
-                    getContext().startActivity(intent);
-                    return false;
-                }
-            });
-        }
+    @Override public int getDarkThemeRes() { return R.style.CameraRoll_Theme_Settings; }
+    @Override public int getLightThemeRes() { return R.style.CameraRoll_Theme_Light_Settings; }
 
-        private void initVirtualDirectoriesPref() {
-            Preference pref = findPreference(getString(R.string.pref_key_virtual_directories));
-            pref.setOnPreferenceClickListener(new Preference.OnPreferenceClickListener() {
-                @Override
-                public boolean onPreferenceClick(Preference preference) {
-                    if (callback != null) {
-                        callback.onSettingChanged();
-                    }
-                    Intent intent = new Intent(getContext(), VirtualAlbumsActivity.class);
-                    getContext().startActivity(intent);
-                    return false;
-                }
-            });
-        }
-
-        private void initThemePref(String theme) {
-            ListPreference themePref = (ListPreference)
-                    findPreference(getString(R.string.pref_key_theme));
-
-            String theme_name = Settings.Utils.getThemeName(getActivity(), theme);
-            if(theme_name.equals("Light"))
-                themePref.setSummary("Light");
-            if(theme_name.equals("Dark"))
-                themePref.setSummary("Dark");
-            if(theme_name.equals("Black"))
-                themePref.setSummary("Black");
-            themePref.setOnPreferenceChangeListener(this);
-        }
-
-        private void initShowVideos(boolean hide) {
-            SwitchPreference prefs = (SwitchPreference) findPreference(getString(R.string.pref_key_show_videos));
-            prefs.setChecked(hide);
-            prefs.setOnPreferenceChangeListener(this);
-        }
-
-        private void initMediaRetrieverPref(boolean storageRetriever) {
-            TwoStatePreference mediaRetrieverPref =
-                    (TwoStatePreference) findPreference(getString(R.string.pref_key_media_retriever));
-
-            mediaRetrieverPref.setChecked(storageRetriever);
-            mediaRetrieverPref.setOnPreferenceChangeListener(this);
-        }
-
-        private void init8BitColorPref(boolean use8BitColor) {
-            TwoStatePreference use8BitColorPref =
-                    (TwoStatePreference) findPreference(getString(R.string.pref_key_8_bit_color));
-
-            use8BitColorPref.setChecked(use8BitColor);
-            use8BitColorPref.setOnPreferenceChangeListener(this);
-        }
-
-        private void initCameraShortcutPref(boolean cameraShortcut) {
-            TwoStatePreference cameraShortcutPref =
-                    (TwoStatePreference) findPreference(getString(R.string.pref_key_camera_shortcut));
-
-            cameraShortcutPref.setChecked(cameraShortcut);
-            cameraShortcutPref.setOnPreferenceChangeListener(this);
-        }
-
-        private void initAnimationsPref(boolean showAnimations) {
-            TwoStatePreference animationsPref =
-                    (TwoStatePreference) findPreference(getString(R.string.pref_key_animations));
-
-            animationsPref.setChecked(showAnimations);
-            animationsPref.setOnPreferenceChangeListener(this);
-        }
-
-        private void initMaxBrightnessPref(boolean maxBrightness) {
-            TwoStatePreference animationsPref =
-                    (TwoStatePreference) findPreference(getString(R.string.pref_key_max_brightness));
-
-            animationsPref.setChecked(maxBrightness);
-            animationsPref.setOnPreferenceChangeListener(this);
-        }
-
-        @Override
-        public void onDisplayPreferenceDialog(Preference preference) {
-            if (callback != null) {
-                callback.onSettingChanged();
-            }
-
-            super.onDisplayPreferenceDialog(preference);
-        }
-
-
-
-        @Override
-        public void onPause() {
-            super.onPause();
-
-            if (getActivity().isChangingConfigurations()) {
-                Fragment fragment =
-                        getFragmentManager().findFragmentByTag(DIALOG_FRAGMENT_TAG);
-                if (fragment != null && fragment instanceof DialogFragment) {
-                    /*if (fragment instanceof StylePreferenceDialogFragment) {
-                        shownDialogFragment = STYLE_DIALOG_FRAGMENT;
-                    } else if (fragment instanceof ColumnCountPreferenceDialogFragment) {
-                        shownDialogFragment = COLUMN_COUNT_DIALOG_FRAGMENT;
-                    }*/
-
-                    ((DialogFragment) fragment).dismiss();
-                }
-            }
-        }
-
-        @Override
-        public void onSaveInstanceState(Bundle outState) {
-            super.onSaveInstanceState(outState);
-            outState.putInt(SHOWN_DIALOG_FRAGMENT, shownDialogFragment);
-        }
-
-        @Override
-        public boolean onPreferenceChange(Preference preference, Object o) {
-            Log.d("SettingsActivity", "onPreferenceChange() called with: preference = [" + preference + "], o = [" + o + "]");
-            if (callback != null) {
-                callback.onSettingChanged();
-            }
-
-            Settings settings = Settings.getInstance(getActivity());
-            if (preference.getKey().equals(getString(R.string.pref_key_theme))) {
-                String themeValue = (String) o;
-                settings.setTheme(themeValue);
-
-                String theme_name = Settings.Utils.getThemeName(getActivity(), themeValue);
-                preference.setSummary(theme_name);
-
-                //update Activities
-                getActivity().recreate();
-            } else if (preference.getKey().equals(getString(R.string.pref_key_media_retriever))) {
-                settings.useStorageRetriever((boolean) o);
-            } else if (preference.getKey().equals(getString(R.string.pref_key_8_bit_color))) {
-                settings.use8BitColor((boolean) o);
-            } else if (preference.getKey().equals(getString(R.string.pref_key_camera_shortcut))) {
-                settings.setCameraShortcut((boolean) o);
-            } else if (preference.getKey().equals(getString(R.string.pref_key_animations))) {
-                settings.showAnimations((boolean) o);
-            } else if (preference.getKey().equals(getString(R.string.pref_key_show_videos))) {
-                settings.showVideos((boolean) o);
-            } else if (preference.getKey().equals(getString(R.string.pref_key_max_brightness))) {
-                settings.setMaxBrightness((boolean) o);
-            }
-            return true;
-        }
-
-        void setCallback(OnSettingChangedCallback callback) {
-            this.callback = callback;
-        }
+    @Override public void onThemeApplied(Theme theme) {
+        Soma soma = SomaSkin.read(this);
+        View root = findViewById(R.id.root_view);
+        if (root != null) root.setBackgroundColor(soma.ground[0]);
+        SomaSkin.statusBarIcons(this, soma);
     }
 }
