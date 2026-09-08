@@ -159,7 +159,7 @@ public class MainActivity extends ThemeableActivity implements CheckRefreshClick
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        refreshPhotos();
+        refreshPhotos(false);
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             getWindow().getDecorView();
         }
@@ -732,10 +732,44 @@ public class MainActivity extends ThemeableActivity implements CheckRefreshClick
                 .getDefaultIntent(this, com.absolute.floral.data.fileOperations.FileOperation.DELETE, filesToDelete));
     }
 
-    public void refreshPhotos() {
+    public void refreshPhotos() { refreshPhotos(true); }
+
+    public void refreshPhotos(boolean force) {
         if (mediaProvider != null) {
             mediaProvider.onDestroy();
             mediaProvider = null;
+        }
+
+        // warm, unchanged library — rebuild from the in-memory cache instead of
+        // re-scanning storage, so reopening the app doesn't reload everything.
+        if (!force && !MediaProvider.dataChanged && MediaProvider.getAlbums() != null) {
+            java.util.ArrayList<Album> cached =
+                    MediaProvider.getAlbumsWithVirtualDirectories(this);
+            if (cached != null && !cached.isEmpty()) {
+                this.albums = cached;
+                if (recyclerViewAdapter != null) recyclerViewAdapter.setData(cached);
+                if (photoAdapter != null) {
+                    photoAdapter.setTimeline(com.absolute.floral.data.PhotoTimeline.from(cached));
+                    photoAdapter.setFavoritePaths(
+                            com.absolute.floral.data.FlagStore.favorites(this).all());
+                    providers.albums = cached;
+                    providers.memories = com.absolute.floral.data.Memories.build(cached);
+                    com.absolute.floral.people.PeopleIndex.get().ensure(this, ppl -> {
+                        providers.people = ppl; syncCollections();
+                    });
+                    com.absolute.floral.bento.LibrarySnapshot.get(this, snap -> {
+                        providers.snap = snap; syncCollections();
+                    });
+                    com.absolute.floral.places.PlacesIndex.get().ensure(this, pl -> {
+                        providers.places = pl; syncCollections();
+                    });
+                    com.absolute.floral.things.MediaTypeIndex.get().ensure(this, mt -> {
+                        providers.mediaTypes = mt; syncCollections();
+                    });
+                    syncCollections();
+                }
+                return;
+            }
         }
 
 
@@ -814,24 +848,35 @@ public class MainActivity extends ThemeableActivity implements CheckRefreshClick
         if (home != null) home.refresh(providers);
     }
 
+    private int lastFavSig = Integer.MIN_VALUE;
+
     @Override
     protected void onStart() {
         super.onStart();
-        refreshPhotos();
         if (profileAvatar != null) profileAvatar.refresh();
-        // reflect favourites / deletes made in the viewer
-        providers.version++;
+
+        boolean noData = MediaProvider.getAlbums() == null;
+        boolean mediaChanged = MediaProvider.dataChanged;
+        int favSig = com.absolute.floral.data.FlagStore.favorites(this).all().hashCode();
+        boolean favChanged = favSig != lastFavSig;
+        lastFavSig = favSig;
+
+        if (noData || mediaChanged) {
+            // real change (or first load) — do the full rescan
+            refreshPhotos();
+            return;
+        }
+
+        // warm resume: nothing on disk changed — don't re-scan or rebuild the
+        // grid (that caused the "reloads every time" flash). Just reflect any
+        // favourite toggled in the viewer.
         if (photoAdapter != null) {
             photoAdapter.setFavoritePaths(
                     com.absolute.floral.data.FlagStore.favorites(this).all());
-            recyclerView.postDelayed(() -> {
-                java.util.ArrayList<Album> fresh = MediaProvider.getAlbumsWithVirtualDirectories(this);
-                if (fresh != null && !fresh.isEmpty()) {
-                    photoAdapter.setTimeline(com.absolute.floral.data.PhotoTimeline.from(fresh));
-                    providers.albums = fresh;
-                }
-                syncCollections();
-            }, 400);
+        }
+        if (favChanged) {
+            providers.version++;
+            syncCollections();
         }
     }
 

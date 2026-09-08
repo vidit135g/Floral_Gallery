@@ -11,7 +11,7 @@
         android:scaleType="fitCenter"
         tools:ignore="ContentDescription" />
 
-    <com.davemorrissey.labs.subscaleview.SubsamplingScaleImageView
+    <com.absolute.floral.ui.widget.PagerScaleImageView
         android:id="@+id/subsampling"
         android:layout_width="match_parent"
         android:layout_height="match_parent" />
