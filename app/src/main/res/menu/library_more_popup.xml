@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <group android:checkableBehavior="single" android:id="@+id/grp_sort">
+        <item android:id="@+id/sort_recent" android:title="Recently Added" />
+        <item android:id="@+id/sort_captured" android:title="Date Captured" />
+    </group>
+
+    <item android:id="@+id/menu_filter" android:title="Filter">
+        <menu>
+            <group android:checkableBehavior="single" android:id="@+id/grp_filter">
+                <item android:id="@+id/filter_all" android:title="All Items" />
+                <item android:id="@+id/filter_favorites" android:title="Favorites" />
+                <item android:id="@+id/filter_edited" android:title="Edited" />
+                <item android:id="@+id/filter_photos" android:title="Photos" />
+                <item android:id="@+id/filter_videos" android:title="Videos" />
+                <item android:id="@+id/filter_screenshots" android:title="Screenshots" />
+            </group>
+        </menu>
+    </item>
+
+    <item android:id="@+id/menu_view" android:title="View Options">
+        <menu>
+            <item android:id="@+id/view_zoom_in" android:title="Zoom In" />
+            <item android:id="@+id/view_zoom_out" android:title="Zoom Out" />
+        </menu>
+    </item>
+
+</menu>

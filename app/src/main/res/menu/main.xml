@@ -4,16 +4,15 @@
     xmlns:tools="http://schemas.android.com/tools">
 
     <item
-        android:id="@+id/bottommenu"
-        android:icon="@drawable/camerablack"
-        android:title="menu"
-        android:visible="true"
-        app:showAsAction="always"
-        tools:ignore="AlwaysShowAction" />
+        android:id="@+id/library_select"
+        android:title="Select"
+        app:showAsAction="always" />
 
     <item
-        android:id="@+id/locked_folder"
-        android:title="Locked folder"
-        app:showAsAction="never" />
+        android:id="@+id/library_more"
+        android:icon="@drawable/ic_more_horiz_white"
+        android:title="More"
+        app:showAsAction="always"
+        tools:ignore="AlwaysShowAction" />
 
 </menu>

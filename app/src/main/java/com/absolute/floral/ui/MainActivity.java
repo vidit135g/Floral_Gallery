@@ -35,6 +35,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.view.ViewTreeObserver;
 import android.widget.FrameLayout;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -130,6 +131,9 @@ public class MainActivity extends ThemeableActivity implements CheckRefreshClick
     private final com.absolute.floral.bento.CollectionsScreen.Providers providers =
             new com.absolute.floral.bento.CollectionsScreen.Providers();
     private int currentTab = 0;
+    private View selectionBar;
+    private TextView selectionCount;
+    private static final int REQUEST_CODE_BULK_DELETE = 892;
 
 
     private MediaProvider mediaProvider;
@@ -400,6 +404,10 @@ public class MainActivity extends ThemeableActivity implements CheckRefreshClick
                 com.absolute.floral.data.PhotoTimeline.from(albums));
         photoAdapter.setSpanCount(photoSpan);
         photoAdapter.setContinuous(true);
+        photoAdapter.setSelectionListener(count -> {
+            if (photoAdapter.isSelectionMode()) showSelectionBar(count);
+            else hideSelectionBar();
+        });
 
         gridLayoutManager.setSpanCount(photoSpan);
         gridLayoutManager.setSpanSizeLookup(photoAdapter.spanSizeLookup());
@@ -748,21 +756,181 @@ public class MainActivity extends ThemeableActivity implements CheckRefreshClick
       public boolean onOptionsItemSelected(MenuItem item) {
        switch (item.getItemId()) {
            case android.R.id.home:
-           case R.id.locked_folder:
-               final Intent intent=new Intent(MainActivity.this,PinningActivity.class);
-               startActivity(intent);
+               startActivity(new Intent(MainActivity.this, PinningActivity.class));
                break;
-           case R.id.bottommenu:
-               ShowRoundDialogFragment showRoundDialogFragment =
-                       ShowRoundDialogFragment.newInstance();
-               showRoundDialogFragment.show(getSupportFragmentManager(),
-                       "add_menu_fragment");
+           case R.id.library_select:
+               if (photoAdapter != null) { photoAdapter.enterSelection(); showSelectionBar(0); }
+               break;
+           case R.id.library_more:
+               showLibraryMenu();
                break;
                default:
                    break;
        }
         return super.onOptionsItemSelected(item);
       }
+
+    private void showLibraryMenu() {
+        View anchor = findViewById(R.id.library_more);
+        if (anchor == null) anchor = findViewById(R.id.toolbar);
+        androidx.appcompat.widget.PopupMenu pm =
+                new androidx.appcompat.widget.PopupMenu(this, anchor);
+        pm.getMenuInflater().inflate(R.menu.library_more_popup, pm.getMenu());
+        final android.content.SharedPreferences lib =
+                getSharedPreferences("library_ui", MODE_PRIVATE);
+        boolean captured = "captured".equals(lib.getString("sort", "recent"));
+        pm.getMenu().findItem(captured ? R.id.sort_captured : R.id.sort_recent).setChecked(true);
+        int f = photoAdapter == null ? 0 : photoAdapter.getFilter().ordinal();
+        int[] fids = { R.id.filter_all, R.id.filter_favorites, R.id.filter_edited,
+                R.id.filter_photos, R.id.filter_videos, R.id.filter_screenshots };
+        pm.getMenu().findItem(fids[f]).setChecked(true);
+        try {
+            java.lang.reflect.Field mf = pm.getClass().getDeclaredField("mPopup");
+            mf.setAccessible(true);
+            Object helper = mf.get(pm);
+            helper.getClass().getMethod("setForceShowIcon", boolean.class).invoke(helper, true);
+        } catch (Exception ignored) {}
+        pm.setOnMenuItemClickListener(mi -> {
+            int id = mi.getItemId();
+            if (id == R.id.sort_recent || id == R.id.sort_captured) {
+                lib.edit().putString("sort", id == R.id.sort_captured ? "captured" : "recent").apply();
+            } else if (id == R.id.filter_all) setFilter(com.absolute.floral.adapter.photos.PhotoGridAdapter.Filter.ALL);
+            else if (id == R.id.filter_favorites) setFilter(com.absolute.floral.adapter.photos.PhotoGridAdapter.Filter.FAVORITES);
+            else if (id == R.id.filter_edited) setFilter(com.absolute.floral.adapter.photos.PhotoGridAdapter.Filter.EDITED);
+            else if (id == R.id.filter_photos) setFilter(com.absolute.floral.adapter.photos.PhotoGridAdapter.Filter.PHOTOS);
+            else if (id == R.id.filter_videos) setFilter(com.absolute.floral.adapter.photos.PhotoGridAdapter.Filter.VIDEOS);
+            else if (id == R.id.filter_screenshots) setFilter(com.absolute.floral.adapter.photos.PhotoGridAdapter.Filter.SCREENSHOTS);
+            else if (id == R.id.view_zoom_in && photoSpan > 2) setLibrarySpan(photoSpan - 1);
+            else if (id == R.id.view_zoom_out && photoSpan < 5) setLibrarySpan(photoSpan + 1);
+            return true;
+        });
+        pm.show();
+    }
+
+    private void setFilter(com.absolute.floral.adapter.photos.PhotoGridAdapter.Filter f) {
+        if (photoAdapter == null) return;
+        photoAdapter.setFavoritePaths(
+                com.absolute.floral.data.FlagStore.favorites(this).all());
+        photoAdapter.setFilter(f);
+    }
+
+    /* ---------------- Library Select action bar ---------------- */
+
+    private void showSelectionBar(int count) {
+        final com.absolute.floral.soma.Soma soma = com.absolute.floral.soma.SomaSkin.read(this);
+        final float d = getResources().getDisplayMetrics().density;
+        if (selectionBar == null) {
+            final ViewGroup host = (ViewGroup) recyclerView.getParent();
+            LinearLayout bar = new LinearLayout(this);
+            bar.setOrientation(LinearLayout.HORIZONTAL);
+            bar.setGravity(android.view.Gravity.CENTER_VERTICAL);
+            bar.setPadding(Math.round(14 * d), Math.round(10 * d), Math.round(14 * d), Math.round(10 * d));
+            android.graphics.drawable.GradientDrawable bg = new android.graphics.drawable.GradientDrawable();
+            bg.setColor(soma.lightBase ? 0xF7FFFFFF : 0xF71E1F20);
+            bar.setBackground(bg);
+            bar.setElevation(10 * d);
+
+            selectionCount = mkBarText("1 selected", soma.ink, false);
+            bar.addView(selectionCount, new LinearLayout.LayoutParams(0,
+                    ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
+            bar.addView(mkBarAction("Share", soma, () -> bulkShare()));
+            bar.addView(mkBarAction("Favourite", soma, () -> bulkFavourite()));
+            bar.addView(mkBarAction("Delete", soma, () -> bulkDelete()));
+            TextView done = mkBarText("Done", getResources().getColor(R.color.ios_blue), true);
+            done.setPadding(Math.round(12 * d), Math.round(8 * d), Math.round(4 * d), Math.round(8 * d));
+            done.setOnClickListener(v -> { photoAdapter.clearSelection(); });
+            bar.addView(done);
+
+            FrameLayout.LayoutParams lp = new FrameLayout.LayoutParams(
+                    ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+            lp.gravity = android.view.Gravity.BOTTOM;
+            lp.bottomMargin = recyclerView.getPaddingBottom();
+            host.addView(bar, lp);
+            selectionBar = bar;
+        }
+        selectionBar.setVisibility(View.VISIBLE);
+        selectionBar.setTranslationY(0f);
+        if (selectionCount != null)
+            selectionCount.setText(count + (count == 1 ? " selected" : " selected"));
+        if (photoNav != null) photoNav.setVisibility(View.GONE);
+        if (searchFab != null) searchFab.setVisibility(View.GONE);
+    }
+
+    private void hideSelectionBar() {
+        if (selectionBar != null) selectionBar.setVisibility(View.GONE);
+        if (photoNav != null) photoNav.setVisibility(View.VISIBLE);
+        if (searchFab != null) searchFab.setVisibility(View.VISIBLE);
+    }
+
+    private TextView mkBarText(String s, int color, boolean bold) {
+        TextView t = new TextView(this);
+        t.setText(s);
+        t.setTextColor(color);
+        t.setTextSize(14);
+        t.setTypeface(com.absolute.floral.soma.Soma.body(this),
+                bold ? Typeface.BOLD : Typeface.NORMAL);
+        return t;
+    }
+
+    private View mkBarAction(String label, com.absolute.floral.soma.Soma soma, Runnable r) {
+        float d = getResources().getDisplayMetrics().density;
+        TextView t = mkBarText(label, soma.ink, false);
+        t.setPadding(Math.round(10 * d), Math.round(8 * d), Math.round(10 * d), Math.round(8 * d));
+        t.setOnClickListener(v -> r.run());
+        return t;
+    }
+
+    private List<Uri> selectedUris() {
+        List<Uri> uris = new ArrayList<>();
+        if (photoAdapter == null) return uris;
+        for (String p : photoAdapter.selectedPaths()) {
+            com.absolute.floral.data.models.AlbumItem it =
+                    com.absolute.floral.data.models.AlbumItem.getInstance(this, p);
+            Uri u = it == null ? null : it.getUri(this);
+            if (u != null) uris.add(u);
+        }
+        return uris;
+    }
+
+    private void bulkShare() {
+        java.util.ArrayList<Uri> uris = new java.util.ArrayList<>(selectedUris());
+        if (uris.isEmpty()) return;
+        com.absolute.floral.data.RecentStore.markShared(this, photoAdapter.selectedPaths());
+        Intent send = new Intent(Intent.ACTION_SEND_MULTIPLE);
+        send.setType("*/*");
+        send.putParcelableArrayListExtra(Intent.EXTRA_STREAM, uris);
+        send.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+        startActivity(Intent.createChooser(send, "Share"));
+    }
+
+    private void bulkFavourite() {
+        com.absolute.floral.data.FlagStore fav =
+                com.absolute.floral.data.FlagStore.favorites(this);
+        for (String p : photoAdapter.selectedPaths()) fav.toggle(p);
+        photoAdapter.setFavoritePaths(fav.all());
+        photoAdapter.clearSelection();
+        syncCollections();
+    }
+
+    private void bulkDelete() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            java.util.ArrayList<Uri> uris = new java.util.ArrayList<>(selectedUris());
+            if (uris.isEmpty()) return;
+            try {
+                android.app.PendingIntent pi =
+                        MediaStore.createDeleteRequest(getContentResolver(), uris);
+                startIntentSenderForResult(pi.getIntentSender(), REQUEST_CODE_BULK_DELETE, null, 0, 0, 0);
+                return;
+            } catch (Exception e) { e.printStackTrace(); }
+        }
+        java.util.List<String> paths = photoAdapter.selectedPaths();
+        com.absolute.floral.data.models.File_POJO[] files =
+                new com.absolute.floral.data.models.File_POJO[paths.size()];
+        for (int i = 0; i < files.length; i++) files[i] =
+                new com.absolute.floral.data.models.File_POJO(paths.get(i), true);
+        startService(FileOperation.getDefaultIntent(this, FileOperation.DELETE, files));
+        photoAdapter.clearSelection();
+    }
 
     private void resortAlbums() {
         final Snackbar snackbar = Snackbar.make(findViewById(R.id.root_view),
@@ -849,6 +1017,10 @@ public class MainActivity extends ThemeableActivity implements CheckRefreshClick
                 if (resultCode == RESULT_OK) {
                     refreshPhotos();
                 }
+                break;
+            case REQUEST_CODE_BULK_DELETE:
+                if (photoAdapter != null) photoAdapter.clearSelection();
+                if (resultCode == RESULT_OK) refreshPhotos();
                 break;
             case AlbumActivity.FILE_OP_DIALOG_REQUEST:
                 if (resultCode == RESULT_OK) {
