@@ -61,6 +61,7 @@ public class SettingsActivity extends ThemeableActivity {
         });
 
         buildHeader();
+        buildPrivacy();
         buildDisplay();
         buildViewOptions();
         buildLibraryReading();
@@ -167,6 +168,16 @@ public class SettingsActivity extends ThemeableActivity {
             if (snap != null && snap.photos + snap.videos > 0)
                 sub.setText(snap.photos + " Photos, " + snap.videos + " Videos");
         });
+    }
+
+    private void buildPrivacy() {
+        sectionHeader("PRIVACY");
+        LinearLayout card = groupCard();
+        boolean on = com.absolute.floral.data.GuestMode.active(this);
+        addNav(card, "Guest Mode",
+                on ? "On — " + com.absolute.floral.data.GuestMode.allowed(this).size() + " photos" : "Off",
+                false, () -> startActivity(new Intent(this, GuestModeActivity.class)));
+        col.addView(card);
     }
 
     private void buildDisplay() {

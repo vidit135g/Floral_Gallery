@@ -1,0 +1,330 @@
+package com.absolute.floral.ui;
+
+import android.animation.ValueAnimator;
+import android.graphics.Typeface;
+import android.graphics.drawable.GradientDrawable;
+import android.os.Bundle;
+import android.text.InputType;
+import android.view.Gravity;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.EditText;
+import android.widget.FrameLayout;
+import android.widget.LinearLayout;
+import android.widget.ScrollView;
+import android.widget.TextView;
+import android.widget.Toast;
+
+import androidx.annotation.Nullable;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.recyclerview.widget.GridLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
+
+import com.absolute.floral.adapter.photos.PhotoGridAdapter;
+import com.absolute.floral.data.FlagStore;
+import com.absolute.floral.data.GuestMode;
+import com.absolute.floral.data.PhotoTimeline;
+import com.absolute.floral.data.models.Album;
+import com.absolute.floral.data.models.AlbumItem;
+import com.absolute.floral.data.provider.MediaProvider;
+import com.absolute.floral.soma.Anim;
+import com.absolute.floral.soma.Soma;
+import com.absolute.floral.soma.SomaSkin;
+
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+
+/**
+ * Set up and start a Guest Mode session — pick exactly the photos a guest may
+ * see, set a PIN, then hand over the phone. Bento styling, a lock-closing
+ * animation on start.
+ */
+public class GuestModeActivity extends AppCompatActivity {
+
+    private Soma soma;
+    private final Set<String> chosen = new HashSet<>();
+    private TextView chosenLabel, startBtn, lockGlyph;
+    private EditText pin1;
+    private PhotoGridAdapter grid;
+
+    @Override protected void onCreate(@Nullable Bundle s) {
+        super.onCreate(s);
+        soma = SomaSkin.read(this);
+        chosen.addAll(GuestMode.allowed(this));
+
+        FrameLayout host = new FrameLayout(this);
+        host.setBackgroundColor(soma.ground[0]);
+        setContentView(host);
+        SomaSkin.statusBarIcons(this, soma);
+
+        ScrollView sv = new ScrollView(this);
+        sv.setFillViewport(true);
+        host.addView(sv, new FrameLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
+        LinearLayout col = new LinearLayout(this);
+        col.setOrientation(LinearLayout.VERTICAL);
+        sv.addView(col, new FrameLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+
+        int p = dp(20);
+
+        // header
+        LinearLayout head = new LinearLayout(this);
+        head.setOrientation(LinearLayout.VERTICAL);
+        head.setPadding(p, dp(44), p, dp(6));
+        TextView title = new TextView(this);
+        title.setText("Guest Mode");
+        title.setTextColor(soma.ink);
+        title.setTextSize(30);
+        title.setTypeface(Soma.display(this), Typeface.BOLD);
+        title.setLetterSpacing(-0.02f);
+        head.addView(title);
+        TextView sub = new TextView(this);
+        sub.setText("Lend your phone without lending your whole gallery.");
+        sub.setTextColor(soma.inkMute);
+        sub.setTextSize(13.5f);
+        sub.setTypeface(Soma.body(this));
+        head.addView(sub);
+        col.addView(head);
+        Anim.enter(head, 20);
+
+        // hero bento card
+        FrameLayout hero = new FrameLayout(this);
+        GradientDrawable hg = new GradientDrawable(GradientDrawable.Orientation.TL_BR,
+                new int[]{ 0xFF7C4DFF, 0xFFB14CE0, 0xFFFF6FA3 });
+        hg.setCornerRadius(dp(24));
+        hero.setBackground(hg);
+        LinearLayout.LayoutParams hlp = new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, dp(150));
+        hlp.setMargins(p, dp(10), p, dp(8));
+        col.addView(hero, hlp);
+        lockGlyph = new TextView(this);
+        lockGlyph.setText("🔓");           // 🔓 -> 🔒 on start
+        lockGlyph.setTextSize(40);
+        FrameLayout.LayoutParams lg = new FrameLayout.LayoutParams(
+                ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        lg.gravity = Gravity.CENTER_VERTICAL; lg.leftMargin = dp(20);
+        hero.addView(lockGlyph, lg);
+        TextView heroText = new TextView(this);
+        heroText.setText("Only the photos you choose\nwill be visible. Everything\nelse stays private.");
+        heroText.setTextColor(0xFFFFFFFF);
+        heroText.setTextSize(14);
+        heroText.setLineSpacing(dp(3), 1f);
+        heroText.setTypeface(Soma.body(this), Typeface.BOLD);
+        FrameLayout.LayoutParams ht = new FrameLayout.LayoutParams(
+                ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        ht.gravity = Gravity.CENTER_VERTICAL; ht.leftMargin = dp(96);
+        hero.addView(heroText, ht);
+        Anim.enter(hero, 60);
+
+        // quick actions
+        LinearLayout quick = new LinearLayout(this);
+        quick.setOrientation(LinearLayout.HORIZONTAL);
+        quick.setPadding(p, dp(4), p, dp(4));
+        quick.addView(chip("Add all Favourites", () -> {
+            chosen.addAll(FlagStore.favorites(this).all());
+            syncGrid(); updateChosen();
+        }), lpWeight());
+        View gap = new View(this); quick.addView(gap, new LinearLayout.LayoutParams(dp(10), 1));
+        quick.addView(chip("Clear", () -> { chosen.clear(); syncGrid(); updateChosen(); }), lpWeight());
+        col.addView(quick);
+
+        chosenLabel = new TextView(this);
+        chosenLabel.setTextColor(soma.inkMute);
+        chosenLabel.setTextSize(12);
+        chosenLabel.setTypeface(Soma.body(this));
+        chosenLabel.setPadding(p, dp(6), p, dp(4));
+        col.addView(chosenLabel);
+
+        // the picker grid
+        TextView pickHint = new TextView(this);
+        pickHint.setText("Tap photos to include them");
+        pickHint.setTextColor(soma.inkMute);
+        pickHint.setTextSize(12);
+        pickHint.setLetterSpacing(0.06f);
+        pickHint.setTypeface(Soma.body(this), Typeface.BOLD);
+        pickHint.setPadding(p, dp(10), p, dp(6));
+        col.addView(pickHint);
+
+        RecyclerView rv = new RecyclerView(this);
+        rv.setNestedScrollingEnabled(false);
+        rv.setPadding(dp(6), 0, dp(6), 0);
+        GridLayoutManager glm = new GridLayoutManager(this, 4);
+        rv.setLayoutManager(glm);
+        grid = new PhotoGridAdapter(this, timelineOfAll());
+        grid.setSpanCount(4);
+        grid.setContinuous(true);
+        grid.setIgnoreGuestFilter(true);
+        grid.enterSelection();                       // permanent multi-select
+        grid.setSelectionListener(count -> {});
+        grid.setSelectionOverride(chosen, () -> updateChosen());
+        glm.setSpanSizeLookup(grid.spanSizeLookup());
+        rv.setAdapter(grid);
+        rv.setItemAnimator(null);
+        LinearLayout.LayoutParams rvlp = new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, dp(360));
+        col.addView(rv, rvlp);
+        syncGrid();
+
+        // PIN
+        LinearLayout pinBox = new LinearLayout(this);
+        pinBox.setOrientation(LinearLayout.VERTICAL);
+        pinBox.setPadding(p, dp(16), p, dp(6));
+        TextView pinTitle = new TextView(this);
+        pinTitle.setText(GuestMode.hasPin(this) ? "Guest PIN" : "Set a Guest PIN");
+        pinTitle.setTextColor(soma.ink);
+        pinTitle.setTextSize(15);
+        pinTitle.setTypeface(Soma.body(this), Typeface.BOLD);
+        pinBox.addView(pinTitle);
+        pin1 = pinField(GuestMode.hasPin(this) ? "Enter your Guest PIN" : "Choose a PIN (4–6 digits)");
+        pinBox.addView(pin1);
+        if (GuestMode.hasPin(this)) {
+            TextView forgot = new TextView(this);
+            forgot.setText("Forgot PIN? Reset it");
+            forgot.setTextColor(soma.accent);
+            forgot.setTextSize(12.5f);
+            forgot.setPadding(0, dp(8), 0, 0);
+            forgot.setOnClickListener(v -> new androidx.appcompat.app.AlertDialog.Builder(this)
+                    .setTitle("Reset Guest PIN?")
+                    .setMessage("This clears the Guest PIN. Set a new one below.")
+                    .setPositiveButton("Reset", (d, w) -> { GuestMode.clearPin(this); recreate(); })
+                    .setNegativeButton("Cancel", null)
+                    .show());
+            pinBox.addView(forgot);
+        }
+        col.addView(pinBox);
+
+        // start button
+        startBtn = new TextView(this);
+        startBtn.setText("Start Guest Mode");
+        startBtn.setTextColor(0xFFFFFFFF);
+        startBtn.setTextSize(16);
+        startBtn.setTypeface(Soma.display(this), Typeface.BOLD);
+        startBtn.setGravity(Gravity.CENTER);
+        startBtn.setPadding(0, dp(16), 0, dp(16));
+        GradientDrawable sb = new GradientDrawable(GradientDrawable.Orientation.LEFT_RIGHT,
+                new int[]{ 0xFF7C4DFF, 0xFFB14CE0, 0xFFFF6FA3 });
+        sb.setCornerRadius(dp(18));
+        startBtn.setBackground(sb);
+        startBtn.setOnClickListener(v -> start());
+        LinearLayout.LayoutParams sblp = new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        sblp.setMargins(p, dp(8), p, dp(28));
+        col.addView(startBtn, sblp);
+
+        updateChosen();
+    }
+
+    /* ---------- data ---------- */
+
+    private List<AlbumItem> allItems() {
+        List<AlbumItem> all = new ArrayList<>();
+        HashSet<String> seen = new HashSet<>();
+        ArrayList<Album> albums = MediaProvider.getAlbumsWithVirtualDirectories(this);
+        if (albums != null) for (Album a : albums)
+            if (a.getAlbumItems() != null) for (AlbumItem it : a.getAlbumItems())
+                if (it != null && it.getPath() != null && seen.add(it.getPath())) all.add(it);
+        java.util.Collections.sort(all, (x, y) -> Long.compare(y.getDate(), x.getDate()));
+        return all;
+    }
+
+    private PhotoTimeline timelineOfAll() {
+        Album a = new Album();
+        a.setPath("guest-pick");
+        a.getAlbumItems().addAll(allItems());
+        ArrayList<Album> l = new ArrayList<>();
+        l.add(a);
+        return PhotoTimeline.from(l);
+    }
+
+    private void syncGrid() {
+        if (grid != null) grid.setSelectionOverride(chosen, this::updateChosen);
+    }
+
+    private void updateChosen() {
+        int n = chosen.size();
+        chosenLabel.setText(n == 0
+                ? "No photos chosen yet — guests will see an empty gallery."
+                : n + (n == 1 ? " photo" : " photos") + " will be visible to guests.");
+    }
+
+    /* ---------- start ---------- */
+
+    private void start() {
+        String a = pin1.getText().toString().trim();
+        if (GuestMode.hasPin(this)) {
+            if (!GuestMode.checkPin(this, a)) { Toast.makeText(this, "Wrong PIN", Toast.LENGTH_SHORT).show(); return; }
+        } else {
+            if (a.length() < 4 || a.length() > 6) { Toast.makeText(this, "PIN must be 4–6 digits", Toast.LENGTH_SHORT).show(); return; }
+            GuestMode.setPin(this, a);
+        }
+        if (chosen.isEmpty()) {
+            new androidx.appcompat.app.AlertDialog.Builder(this)
+                    .setTitle("Start with no photos?")
+                    .setMessage("Guests will see an empty gallery. You can still start.")
+                    .setPositiveButton("Start", (d, w) -> commit())
+                    .setNegativeButton("Pick photos", null)
+                    .show();
+            return;
+        }
+        commit();
+    }
+
+    private void commit() {
+        GuestMode.setAllowed(this, chosen);
+        GuestMode.enter(this);
+        // lock-closing flourish, then drop back to the (now filtered) gallery
+        lockGlyph.setText("🔒");
+        startBtn.setEnabled(false);
+        startBtn.setText("Locking…");
+        ValueAnimator va = ValueAnimator.ofFloat(1f, 0.7f, 1.15f, 1f);
+        va.setDuration(520);
+        va.addUpdateListener(x -> {
+            float f = (float) x.getAnimatedValue();
+            lockGlyph.setScaleX(f); lockGlyph.setScaleY(f);
+        });
+        va.start();
+        lockGlyph.postDelayed(() -> {
+            android.content.Intent i = new android.content.Intent(this, MainActivity.class);
+            i.addFlags(android.content.Intent.FLAG_ACTIVITY_CLEAR_TOP
+                    | android.content.Intent.FLAG_ACTIVITY_SINGLE_TOP);
+            startActivity(i);
+            finish();
+        }, 560);
+    }
+
+    /* ---------- widgets ---------- */
+
+    private EditText pinField(String hint) {
+        EditText e = new EditText(this);
+        e.setHint(hint);
+        e.setInputType(InputType.TYPE_CLASS_NUMBER | InputType.TYPE_NUMBER_VARIATION_PASSWORD);
+        e.setTextColor(soma.ink);
+        e.setHintTextColor(soma.inkMute);
+        return e;
+    }
+
+    private TextView chip(String label, Runnable r) {
+        TextView t = new TextView(this);
+        t.setText(label);
+        t.setTextColor(soma.ink);
+        t.setTextSize(13);
+        t.setTypeface(Soma.body(this), Typeface.BOLD);
+        t.setGravity(Gravity.CENTER);
+        t.setPadding(dp(14), dp(11), dp(14), dp(11));
+        GradientDrawable g = new GradientDrawable();
+        g.setColor(soma.surfaceStrong);
+        g.setCornerRadius(dp(14));
+        t.setBackground(g);
+        t.setOnClickListener(v -> r.run());
+        return t;
+    }
+
+    private LinearLayout.LayoutParams lpWeight() {
+        return new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f);
+    }
+
+    private int dp(float v) { return Math.round(v * getResources().getDisplayMetrics().density); }
+}

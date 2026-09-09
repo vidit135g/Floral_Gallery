@@ -200,6 +200,10 @@
             android:launchMode="singleTop"
             android:theme="@style/CameraRoll.Theme" />
         <activity
+            android:name="com.absolute.floral.ui.GuestModeActivity"
+            android:launchMode="singleTop"
+            android:theme="@style/CameraRoll.Theme" />
+        <activity
             android:name="com.absolute.floral.ui.PlacesActivity"
             android:launchMode="singleTop"
             android:theme="@style/CameraRoll.Theme" />

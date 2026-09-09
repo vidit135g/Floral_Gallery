@@ -61,7 +61,10 @@ public final class CollectionsScreen {
 
     /** Everything the screen renders from — populated by MainActivity.refreshPhotos(). */
     public static final class Providers {
+        /** what the bento screens display — already Guest-Mode filtered. */
         public List<Album> albums = new ArrayList<>();
+        /** the unfiltered scan result. */
+        public List<Album> rawAlbums = new ArrayList<>();
         public List<Memories.Memory> memories = new ArrayList<>();
         public List<PeopleIndex.Person> people = new ArrayList<>();
         public List<PlacesIndex.Place> places = new ArrayList<>();
@@ -71,6 +74,24 @@ public final class CollectionsScreen {
          *  when album counts are unchanged. */
         public int version = 0;
         public boolean favoritesDirty = false;
+
+        /** Store the raw scan and (re)compute the displayed {@link #albums}.
+         *  Pass the Guest-Mode allow-list to hide everything else, or null. */
+        public void setAlbums(List<Album> raw, java.util.Set<String> guestAllow) {
+            this.rawAlbums = raw != null ? raw : new ArrayList<>();
+            if (guestAllow == null) { this.albums = this.rawAlbums; return; }
+            List<Album> f = new ArrayList<>();
+            for (Album a : this.rawAlbums) {
+                if (a == null || a.getAlbumItems() == null) continue;
+                Album copy = new Album();
+                copy.setPath(a.getPath());
+                for (AlbumItem it : a.getAlbumItems())
+                    if (it != null && it.getPath() != null && guestAllow.contains(it.getPath()))
+                        copy.getAlbumItems().add(it);
+                if (!copy.getAlbumItems().isEmpty()) f.add(copy);
+            }
+            this.albums = f;
+        }
     }
 
     public static final class Holder {

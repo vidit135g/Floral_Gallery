@@ -425,8 +425,8 @@ public class MainActivity extends ThemeableActivity implements CheckRefreshClick
         // seed the bento screens from the (possibly cached) list so Home/Collections
         // don't read "0 items" on a cold start
         if (albums != null && !albums.isEmpty()) {
-            providers.albums = albums;
-            providers.memories = com.absolute.floral.data.Memories.build(albums);
+            providers.setAlbums(albums, guestAllow());
+            providers.memories = com.absolute.floral.data.Memories.build(providers.albums);
         }
         photoAdapter.setSelectionListener(count -> {
             if (photoAdapter.isSelectionMode()) showSelectionBar(count);
@@ -762,8 +762,8 @@ public class MainActivity extends ThemeableActivity implements CheckRefreshClick
                     photoAdapter.setTimeline(com.absolute.floral.data.PhotoTimeline.from(cached));
                     photoAdapter.setFavoritePaths(
                             com.absolute.floral.data.FlagStore.favorites(this).all());
-                    providers.albums = cached;
-                    providers.memories = com.absolute.floral.data.Memories.build(cached);
+                    providers.setAlbums(cached, guestAllow());
+                    providers.memories = com.absolute.floral.data.Memories.build(providers.albums);
                     com.absolute.floral.people.PeopleIndex.get().ensure(this, ppl -> {
                         providers.people = ppl; syncCollections();
                     });
@@ -802,9 +802,9 @@ public class MainActivity extends ThemeableActivity implements CheckRefreshClick
                                         com.absolute.floral.data.PhotoTimeline.from(albumsWithVirtualDirs));
                                 photoAdapter.setFavoritePaths(
                                         com.absolute.floral.data.FlagStore.favorites(MainActivity.this).all());
-                                providers.albums = albumsWithVirtualDirs;
+                                providers.setAlbums(albumsWithVirtualDirs, guestAllow());
                                 providers.memories =
-                                        com.absolute.floral.data.Memories.build(albumsWithVirtualDirs);
+                                        com.absolute.floral.data.Memories.build(providers.albums);
                                 syncCollections();
                                 com.absolute.floral.people.PeopleIndex.get().ensure(MainActivity.this, ppl -> {
                                     providers.people = ppl; syncCollections();
@@ -855,17 +855,38 @@ public class MainActivity extends ThemeableActivity implements CheckRefreshClick
         mediaProvider.loadAlbums(MainActivity.this, hiddenFolders, callback);
     }
 
+    private java.util.Set<String> guestAllow() {
+        return com.absolute.floral.data.GuestMode.active(this)
+                ? com.absolute.floral.data.GuestMode.allowed(this) : null;
+    }
+
     private void syncCollections() {
+        // re-apply the guest filter to whatever raw list we last stored
+        providers.setAlbums(providers.rawAlbums, guestAllow());
         if (collections != null) collections.refresh(providers);
         if (home != null) home.refresh(providers);
     }
 
     private int lastFavSig = Integer.MIN_VALUE;
 
+    private int lastGuestVersion = -1;
+    private View guestPill;
+
     @Override
     protected void onStart() {
         super.onStart();
         if (profileAvatar != null) profileAvatar.refresh();
+
+        // Guest Mode toggled while we were away -> rebuild cleanly with the filter
+        int gv = (com.absolute.floral.data.GuestMode.active(this) ? 1 : 0) * 1_000_000
+                + com.absolute.floral.data.GuestMode.version;
+        if (lastGuestVersion != -1 && gv != lastGuestVersion) {
+            lastGuestVersion = gv;
+            recreate();
+            return;
+        }
+        lastGuestVersion = gv;
+        updateGuestPill();
 
         boolean noData = MediaProvider.getAlbums() == null;
         boolean mediaChanged = MediaProvider.dataChanged;
@@ -890,6 +911,69 @@ public class MainActivity extends ThemeableActivity implements CheckRefreshClick
             providers.version++;
             syncCollections();
         }
+    }
+
+    /** The slim "Guest Mode — tap to exit" pill at the top while a guest session is on. */
+    private void updateGuestPill() {
+        boolean on = com.absolute.floral.data.GuestMode.active(this);
+        final ViewGroup host = (ViewGroup) recyclerView.getParent();
+        if (!on) {
+            if (guestPill != null) guestPill.setVisibility(View.GONE);
+            return;
+        }
+        float d = getResources().getDisplayMetrics().density;
+        if (guestPill == null) {
+            TextView pill = new TextView(this);
+            pill.setText("🔒  Guest Mode · tap to exit");
+            pill.setTextColor(0xFFFFFFFF);
+            pill.setTextSize(12.5f);
+            pill.setTypeface(com.absolute.floral.soma.Soma.body(this), Typeface.BOLD);
+            pill.setGravity(android.view.Gravity.CENTER);
+            pill.setPadding(Math.round(16 * d), Math.round(8 * d), Math.round(16 * d), Math.round(8 * d));
+            android.graphics.drawable.GradientDrawable bg = new android.graphics.drawable.GradientDrawable(
+                    android.graphics.drawable.GradientDrawable.Orientation.LEFT_RIGHT,
+                    new int[]{ 0xFF7C4DFF, 0xFFB14CE0, 0xFFFF6FA3 });
+            bg.setCornerRadius(Math.round(20 * d));
+            pill.setBackground(bg);
+            pill.setElevation(14 * d);
+            pill.setOnClickListener(v -> promptExitGuest());
+            FrameLayout.LayoutParams lp = new FrameLayout.LayoutParams(
+                    ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+            lp.gravity = android.view.Gravity.TOP | android.view.Gravity.CENTER_HORIZONTAL;
+            lp.topMargin = Math.round(52 * d);
+            host.addView(pill, lp);
+            guestPill = pill;
+            pill.setAlpha(0f);
+            pill.setTranslationY(-12 * d);
+            pill.animate().alpha(1f).translationY(0f).setDuration(320).start();
+        }
+        guestPill.setVisibility(View.VISIBLE);
+        guestPill.bringToFront();
+    }
+
+    private void promptExitGuest() {
+        final android.widget.EditText in = new android.widget.EditText(this);
+        in.setInputType(android.text.InputType.TYPE_CLASS_NUMBER
+                | android.text.InputType.TYPE_NUMBER_VARIATION_PASSWORD);
+        in.setHint("Guest PIN");
+        int pad = Math.round(20 * getResources().getDisplayMetrics().density);
+        FrameLayout wrap = new FrameLayout(this);
+        wrap.setPadding(pad, pad / 2, pad, 0);
+        wrap.addView(in);
+        new androidx.appcompat.app.AlertDialog.Builder(this)
+                .setTitle("Exit Guest Mode")
+                .setMessage("Enter the PIN to show all your photos again.")
+                .setView(wrap)
+                .setPositiveButton("Unlock", (di, w) -> {
+                    if (com.absolute.floral.data.GuestMode.checkPin(this, in.getText().toString())) {
+                        com.absolute.floral.data.GuestMode.exit(this);
+                        recreate();
+                    } else {
+                        Toast.makeText(this, "Wrong PIN", Toast.LENGTH_SHORT).show();
+                    }
+                })
+                .setNegativeButton("Cancel", null)
+                .show();
     }
 
     @Override
