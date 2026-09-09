@@ -923,19 +923,48 @@ public class MainActivity extends ThemeableActivity implements CheckRefreshClick
         }
         float d = getResources().getDisplayMetrics().density;
         if (guestPill == null) {
+            final com.absolute.floral.soma.Soma soma = com.absolute.floral.soma.SomaSkin.read(this);
+            final boolean light = soma.lightBase;
+            final float r = 22 * d;
+
             TextView pill = new TextView(this);
             pill.setText("🔒  Guest Mode · tap to exit");
-            pill.setTextColor(0xFF3C3651);
+            pill.setTextColor(light ? 0xFF3B3550 : 0xFFF3EEFF);
             pill.setTextSize(12.5f);
             pill.setTypeface(com.absolute.floral.soma.Soma.body(this), Typeface.BOLD);
+            pill.setLetterSpacing(0.01f);
             pill.setGravity(android.view.Gravity.CENTER);
-            pill.setPadding(Math.round(16 * d), Math.round(8 * d), Math.round(16 * d), Math.round(8 * d));
-            android.graphics.drawable.GradientDrawable bg = new android.graphics.drawable.GradientDrawable(
-                    android.graphics.drawable.GradientDrawable.Orientation.LEFT_RIGHT,
-                    new int[]{ 0xFF9AA6DF, 0xFFB9A6D8, 0xFFDBB2CE });
-            bg.setCornerRadius(Math.round(20 * d));
-            pill.setBackground(bg);
-            pill.setElevation(14 * d);
+            pill.setPadding(Math.round(18 * d), Math.round(9 * d), Math.round(18 * d), Math.round(9 * d));
+
+            // iOS-18 glass pill: a faintly tinted translucent fill, a bright rim,
+            // a top sheen — no hard colour.
+            android.graphics.drawable.GradientDrawable body = new android.graphics.drawable.GradientDrawable();
+            body.setShape(android.graphics.drawable.GradientDrawable.RECTANGLE);
+            body.setCornerRadius(r);
+            body.setColor(light ? 0x59EDEAFA : 0x4D2A2740);
+            body.setStroke(Math.max(1, Math.round(1.1f * d)), light ? 0x80FFFFFF : 0x40FFFFFF);
+
+            android.graphics.drawable.GradientDrawable sheen = new android.graphics.drawable.GradientDrawable(
+                    android.graphics.drawable.GradientDrawable.Orientation.TOP_BOTTOM,
+                    new int[]{ light ? 0x63FFFFFF : 0x38FFFFFF, 0x0FFFFFFF, 0x00FFFFFF });
+            sheen.setCornerRadius(r);
+
+            android.graphics.drawable.LayerDrawable glass = new android.graphics.drawable.LayerDrawable(
+                    new android.graphics.drawable.Drawable[]{ body, sheen });
+            int inset = Math.round(1.2f * d);
+            glass.setLayerInset(1, inset, inset, inset, Math.round(10 * d));
+            pill.setBackground(glass);
+            pill.setClipToOutline(true);
+            pill.setOutlineProvider(new android.view.ViewOutlineProvider() {
+                @Override public void getOutline(View v, android.graphics.Outline o) {
+                    o.setRoundRect(0, 0, v.getWidth(), v.getHeight(), r);
+                }
+            });
+            pill.setElevation(10 * d);
+            if (android.os.Build.VERSION.SDK_INT >= 28) {
+                pill.setOutlineSpotShadowColor(0x59000000);
+                pill.setOutlineAmbientShadowColor(0x33000000);
+            }
             pill.setOnClickListener(v -> promptExitGuest());
             FrameLayout.LayoutParams lp = new FrameLayout.LayoutParams(
                     ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
