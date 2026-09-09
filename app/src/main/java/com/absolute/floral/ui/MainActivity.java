@@ -173,6 +173,10 @@ public class MainActivity extends ThemeableActivity implements CheckRefreshClick
         //load media
         albums = MediaProvider.getAlbumsWithVirtualDirectories(this);
         if (albums == null) {
+            // cold start — show last session's photos instantly while the scan runs
+            albums = com.absolute.floral.data.GridCache.restore(this);
+        }
+        if (albums == null) {
             albums = new ArrayList<>();
         }
 
@@ -418,6 +422,12 @@ public class MainActivity extends ThemeableActivity implements CheckRefreshClick
                 com.absolute.floral.data.PhotoTimeline.from(albums));
         photoAdapter.setSpanCount(photoSpan);
         photoAdapter.setContinuous(true);
+        // seed the bento screens from the (possibly cached) list so Home/Collections
+        // don't read "0 items" on a cold start
+        if (albums != null && !albums.isEmpty()) {
+            providers.albums = albums;
+            providers.memories = com.absolute.floral.data.Memories.build(albums);
+        }
         photoAdapter.setSelectionListener(count -> {
             if (photoAdapter.isSelectionMode()) showSelectionBar(count);
             else hideSelectionBar();
@@ -785,6 +795,8 @@ public class MainActivity extends ThemeableActivity implements CheckRefreshClick
                         public void run() {
                             MainActivity.this.albums = albumsWithVirtualDirs;
                             recyclerViewAdapter.setData(albumsWithVirtualDirs);
+                            com.absolute.floral.data.GridCache.save(
+                                    MainActivity.this, MediaProvider.getAlbums());
                             if (photoAdapter != null) {
                                 photoAdapter.setTimeline(
                                         com.absolute.floral.data.PhotoTimeline.from(albumsWithVirtualDirs));
