@@ -930,13 +930,24 @@ public class MainActivity extends ThemeableActivity implements CheckRefreshClick
             final float r = 22 * d;
 
             TextView pill = new TextView(this);
-            pill.setText("🔒  Guest Mode · tap to exit");
-            pill.setTextColor(light ? 0xFF3B3550 : 0xFFF3EEFF);
+            int ink = light ? 0xFF3B3550 : 0xFFF3EEFF;
+            pill.setText("Guest Mode · tap to exit");
+            pill.setTextColor(ink);
             pill.setTextSize(12.5f);
             pill.setTypeface(com.absolute.floral.soma.Soma.body(this), Typeface.BOLD);
             pill.setLetterSpacing(0.01f);
-            pill.setGravity(android.view.Gravity.CENTER);
-            pill.setPadding(Math.round(18 * d), Math.round(9 * d), Math.round(18 * d), Math.round(9 * d));
+            pill.setGravity(android.view.Gravity.CENTER_VERTICAL);
+            pill.setPadding(Math.round(15 * d), Math.round(9 * d), Math.round(18 * d), Math.round(9 * d));
+            android.graphics.drawable.Drawable lk = androidx.core.content.ContextCompat
+                    .getDrawable(this, R.drawable.ic_lock_glyph);
+            if (lk != null) {
+                lk = androidx.core.graphics.drawable.DrawableCompat.wrap(lk).mutate();
+                androidx.core.graphics.drawable.DrawableCompat.setTint(lk, ink);
+                int sz = Math.round(15 * d);
+                lk.setBounds(0, 0, sz, sz);
+                pill.setCompoundDrawablesRelative(lk, null, null, null);
+                pill.setCompoundDrawablePadding(Math.round(6 * d));
+            }
 
             // iOS-18 glass pill: a faintly tinted translucent fill, a bright rim,
             // a top sheen — no hard colour.

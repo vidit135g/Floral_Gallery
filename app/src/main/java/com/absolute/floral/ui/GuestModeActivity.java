@@ -10,16 +10,20 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.EditText;
 import android.widget.FrameLayout;
+import android.widget.ImageView;
 import android.widget.LinearLayout;
-import android.widget.ScrollView;
 import android.widget.TextView;
 import android.widget.Toast;
+
+import androidx.core.content.ContextCompat;
+import androidx.core.graphics.drawable.DrawableCompat;
 
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.absolute.floral.R;
 import com.absolute.floral.adapter.photos.PhotoGridAdapter;
 import com.absolute.floral.data.FlagStore;
 import com.absolute.floral.data.GuestMode;
@@ -48,7 +52,8 @@ public class GuestModeActivity extends AppCompatActivity {
 
     private Soma soma;
     private final Set<String> chosen = new HashSet<>();
-    private TextView chosenLabel, startBtn, lockGlyph;
+    private TextView chosenLabel, startBtn;
+    private ImageView lockGlyph;
     private EditText pin1;
     private PhotoGridAdapter grid;
 
@@ -91,12 +96,10 @@ public class GuestModeActivity extends AppCompatActivity {
                 ViewGroup.LayoutParams.MATCH_PARENT, dp(96));
         hlp.setMargins(p, dp(8), p, dp(6));
         col.addView(hero, hlp);
-        lockGlyph = new TextView(this);
-        lockGlyph.setText("🔓");
-        lockGlyph.setTextSize(30);
-        FrameLayout.LayoutParams lg = new FrameLayout.LayoutParams(
-                ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-        lg.gravity = Gravity.CENTER_VERTICAL; lg.leftMargin = dp(18);
+        lockGlyph = new ImageView(this);
+        lockGlyph.setImageDrawable(tintedLock(R.drawable.ic_lock_open_glyph, 0xFF3C3651));
+        FrameLayout.LayoutParams lg = new FrameLayout.LayoutParams(dp(32), dp(32));
+        lg.gravity = Gravity.CENTER_VERTICAL; lg.leftMargin = dp(20);
         hero.addView(lockGlyph, lg);
         TextView heroText = new TextView(this);
         heroText.setText("Only the photos you choose stay visible.\nEverything else is hidden until you unlock.");
@@ -255,7 +258,7 @@ public class GuestModeActivity extends AppCompatActivity {
         GuestMode.setAllowed(this, chosen);
         GuestMode.enter(this);
         // lock-closing flourish, then drop back to the (now filtered) gallery
-        lockGlyph.setText("🔒");
+        lockGlyph.setImageDrawable(tintedLock(R.drawable.ic_lock_glyph, 0xFF3C3651));
         startBtn.setEnabled(false);
         startBtn.setText("Locking…");
         ValueAnimator va = ValueAnimator.ofFloat(1f, 0.7f, 1.15f, 1f);
@@ -275,6 +278,14 @@ public class GuestModeActivity extends AppCompatActivity {
     }
 
     /* ---------- widgets ---------- */
+
+    private android.graphics.drawable.Drawable tintedLock(int res, int color) {
+        android.graphics.drawable.Drawable d = ContextCompat.getDrawable(this, res);
+        if (d == null) return null;
+        d = DrawableCompat.wrap(d).mutate();
+        DrawableCompat.setTint(d, color);
+        return d;
+    }
 
     private EditText pinField(String hint) {
         EditText e = new EditText(this);
