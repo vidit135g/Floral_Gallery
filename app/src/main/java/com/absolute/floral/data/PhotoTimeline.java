@@ -83,6 +83,21 @@ public class PhotoTimeline {
         return t;
     }
 
+    /** A copy with the given item paths removed (headers left even if now empty — harmless). */
+    public PhotoTimeline without(java.util.Set<String> paths) {
+        PhotoTimeline t = new PhotoTimeline();
+        if (paths == null || paths.isEmpty()) {
+            t.rows.addAll(rows); t.items.addAll(items); return t;
+        }
+        for (Row r : rows) {
+            if (!r.header && r.item != null && r.item.getPath() != null
+                    && paths.contains(r.item.getPath())) continue;
+            t.rows.add(r);
+            if (!r.header && r.item != null) t.items.add(r.item);
+        }
+        return t;
+    }
+
     private static String headerLabel(Calendar cal, long dateMs, boolean byMonth) {
         if (dateMs <= 0) return "Undated";
         Calendar now = Calendar.getInstance();

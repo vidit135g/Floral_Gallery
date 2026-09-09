@@ -90,6 +90,9 @@ public class ItemActivity extends ThemeableActivity {
     public static final String ALBUM_ITEM = "ALBUM_ITEM";
     public static final String ALBUM_ITEM_PATH = "ALBUM_ITEM_PATH";
     public static final String ALBUM = "ALBUM";
+    /** Sentinel ALBUM_PATH: use the album handed over in {@link #PROVIDED} (buckets, search, home). */
+    public static final String PROVIDED_PATH = "__floral_provided__";
+    public static com.absolute.floral.data.models.Album PROVIDED;
     public static final String ALBUM_PATH = "ALBUM_PATH";
     public static final String ITEM_POSITION = "ITEM_POSITION";
     public static final String VIEW_ONLY = "VIEW_ONLY";
@@ -265,15 +268,22 @@ public class ItemActivity extends ThemeableActivity {
                 path = getIntent().getStringExtra(ALBUM_PATH);
             }
             Log.d("ItemActivity", "loadAlbum() " + path);
-            MediaProvider.loadAlbum(this, path,
-                    new MediaProvider.OnAlbumLoadedCallback() {
-                        @Override
-                        public void onAlbumLoaded(Album album) {
-                            Log.d("ItemActivity", "onAlbumLoaded()");
-                            ItemActivity.this.album = album;
-                            ItemActivity.this.onAlbumLoaded(savedInstanceState);
-                        }
-                    });
+            if (PROVIDED_PATH.equals(path)) {
+                if (PROVIDED == null) { finish(); return; }   // e.g. recreated after process death
+                this.album = PROVIDED;
+                PROVIDED = null;   // consumed
+                onAlbumLoaded(savedInstanceState);
+            } else {
+                MediaProvider.loadAlbum(this, path,
+                        new MediaProvider.OnAlbumLoadedCallback() {
+                            @Override
+                            public void onAlbumLoaded(Album album) {
+                                Log.d("ItemActivity", "onAlbumLoaded()");
+                                ItemActivity.this.album = album;
+                                ItemActivity.this.onAlbumLoaded(savedInstanceState);
+                            }
+                        });
+            }
         } else {
             album = getIntent().getExtras().getParcelable(ALBUM);
             onAlbumLoaded(savedInstanceState);

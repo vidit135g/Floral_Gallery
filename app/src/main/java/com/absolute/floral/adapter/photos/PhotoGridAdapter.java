@@ -147,6 +147,19 @@ public class PhotoGridAdapter extends RecyclerView.Adapter<RecyclerView.ViewHold
     public void setSpanCount(int s) { this.spanCount = s; recomputeThumb(); }
     public void setSelectionListener(SelectionListener l) { this.selectionListener = l; }
 
+    /** When set, taps open the viewer against this exact list (buckets, search, home). */
+    private com.absolute.floral.data.models.Album providedAlbum;
+    public void setProvidedAlbum(com.absolute.floral.data.models.Album a) { this.providedAlbum = a; }
+
+    /** Optimistically drop items (e.g. right after a confirmed delete) so the grid updates now. */
+    public void removePaths(java.util.Collection<String> paths) {
+        if (paths == null || paths.isEmpty() || fullTimeline == null) return;
+        fullTimeline = fullTimeline.without(new java.util.HashSet<>(paths));
+        this.timeline = apply(fullTimeline);
+        lastAnimated = -1;
+        notifyDataSetChanged();
+    }
+
     /** Library uses continuous (no headers); Bucket / Search keep the date headers. */
     public void setContinuous(boolean c) {
         if (this.continuous == c) return;
@@ -307,7 +320,12 @@ public class PhotoGridAdapter extends RecyclerView.Adapter<RecyclerView.ViewHold
             if (selectionMode) { toggle(item.getPath(), pos); return; }
             Intent intent = new Intent(activity, ItemActivity.class);
             intent.putExtra(ItemActivity.ALBUM_ITEM, item);
-            intent.putExtra(ItemActivity.ALBUM_PATH, albumPath);
+            if (providedAlbum != null) {
+                ItemActivity.PROVIDED = providedAlbum;
+                intent.putExtra(ItemActivity.ALBUM_PATH, ItemActivity.PROVIDED_PATH);
+            } else {
+                intent.putExtra(ItemActivity.ALBUM_PATH, albumPath);
+            }
             try {
                 ActivityOptionsCompat opts = ActivityOptionsCompat
                         .makeSceneTransitionAnimation(activity, h.image, item.getPath());

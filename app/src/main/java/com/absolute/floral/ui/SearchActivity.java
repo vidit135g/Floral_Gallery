@@ -363,6 +363,7 @@ public class SearchActivity extends AppCompatActivity {
         a.getAlbumItems().addAll(hits);
         ArrayList<Album> bucket = new ArrayList<>();
         bucket.add(a);
+        adapter.setProvidedAlbum(a);
         adapter.setTimeline(PhotoTimeline.from(bucket));
     }
 

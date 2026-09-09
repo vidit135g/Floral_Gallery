@@ -1108,14 +1108,17 @@ public class MainActivity extends ThemeableActivity implements CheckRefreshClick
         syncCollections();
     }
 
+    private java.util.List<String> pendingBulkDelete;
+
     private void bulkDelete() {
-        java.util.List<String> paths = photoAdapter.selectedPaths();
+        java.util.List<String> paths = new java.util.ArrayList<>(photoAdapter.selectedPaths());
         if (paths.isEmpty()) return;
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
             android.app.PendingIntent pi = com.absolute.floral.util.MediaOps.deleteRequest(
                     this, com.absolute.floral.util.MediaOps.urisFor(this, paths));
             if (pi != null) {
                 try {
+                    pendingBulkDelete = paths;
                     startIntentSenderForResult(pi.getIntentSender(), REQUEST_CODE_BULK_DELETE, null, 0, 0, 0);
                     return;
                 } catch (android.content.IntentSender.SendIntentException e) { e.printStackTrace(); }
@@ -1220,7 +1223,17 @@ public class MainActivity extends ThemeableActivity implements CheckRefreshClick
                 break;
             case REQUEST_CODE_BULK_DELETE:
                 if (photoAdapter != null) photoAdapter.clearSelection();
-                if (resultCode == RESULT_OK) refreshPhotos();
+                if (resultCode == RESULT_OK) {
+                    // update the grid now — a rescan may not see the deletion yet
+                    if (photoAdapter != null && pendingBulkDelete != null) {
+                        photoAdapter.removePaths(pendingBulkDelete);
+                    }
+                    MediaProvider.dataChanged = true;
+                    providers.version++;
+                    syncCollections();
+                    refreshPhotos();
+                }
+                pendingBulkDelete = null;
                 break;
             case AlbumActivity.FILE_OP_DIALOG_REQUEST:
                 if (resultCode == RESULT_OK) {
@@ -1401,6 +1414,16 @@ public class MainActivity extends ThemeableActivity implements CheckRefreshClick
         return new BroadcastReceiver() {
             @Override
             public void onReceive(Context context, final Intent intent) {
+                if (AlbumActivity.ALBUM_ITEM_REMOVED.equals(intent.getAction())) {
+                    String path = intent.getStringExtra(ItemActivity.ALBUM_ITEM_PATH);
+                    if (path != null && photoAdapter != null) {
+                        photoAdapter.removePaths(java.util.Collections.singletonList(path));
+                    }
+                    MediaProvider.dataChanged = true;
+                    providers.version++;
+                    syncCollections();
+                    return;
+                }
                 switch (intent.getAction()) {
                     case FileOperation.RESULT_DONE:
                     case FileOperation.FAILED:
@@ -1424,6 +1447,7 @@ public class MainActivity extends ThemeableActivity implements CheckRefreshClick
         IntentFilter filter = FileOperation.Util.getIntentFilter(super.getBroadcastIntentFilter());
         filter.addAction(RESORT);
         filter.addAction(DATA_CHANGED);
+        filter.addAction(AlbumActivity.ALBUM_ITEM_REMOVED);
         return filter;
     }
 }
