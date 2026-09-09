@@ -167,14 +167,30 @@ public class PhotoSelectionBar {
     }
 
     private void bulkShare() {
-        ArrayList<Uri> uris = new ArrayList<>(selectedUris());
-        if (uris.isEmpty()) return;
-        RecentStore.markShared(a, adapter.selectedPaths());
-        Intent send = new Intent(Intent.ACTION_SEND_MULTIPLE);
-        send.setType("*/*");
-        send.putParcelableArrayListExtra(Intent.EXTRA_STREAM, uris);
-        send.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
-        a.startActivity(Intent.createChooser(send, "Share"));
+        final java.util.List<String> paths = new ArrayList<>(adapter.selectedPaths());
+        if (paths.isEmpty()) return;
+        new androidx.appcompat.app.AlertDialog.Builder(a)
+                .setTitle("Share " + paths.size() + (paths.size() == 1 ? " item" : " items"))
+                .setItems(new CharSequence[]{ "Share", "Share without location & metadata" }, (d, which) -> {
+                    RecentStore.markShared(a, paths);
+                    if (which == 0) {
+                        ArrayList<Uri> uris = new ArrayList<>(selectedUris());
+                        if (uris.isEmpty()) return;
+                        Intent send = new Intent(Intent.ACTION_SEND_MULTIPLE);
+                        send.setType("*/*");
+                        send.putParcelableArrayListExtra(Intent.EXTRA_STREAM, uris);
+                        send.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                        a.startActivity(Intent.createChooser(send, "Share"));
+                    } else {
+                        Toast.makeText(a, "Cleaning metadata…", Toast.LENGTH_SHORT).show();
+                        com.absolute.floral.util.SafeShare.prepare(a, paths, (uris, stripped) -> {
+                            if (uris.isEmpty()) return;
+                            a.startActivity(com.absolute.floral.util.SafeShare.chooser(a, uris));
+                        });
+                    }
+                    adapter.clearSelection();
+                })
+                .show();
     }
 
     private void bulkFavourite() {

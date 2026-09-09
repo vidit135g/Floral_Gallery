@@ -1184,14 +1184,30 @@ public class MainActivity extends ThemeableActivity implements CheckRefreshClick
     }
 
     private void bulkShare() {
-        java.util.ArrayList<Uri> uris = new java.util.ArrayList<>(selectedUris());
-        if (uris.isEmpty()) return;
-        com.absolute.floral.data.RecentStore.markShared(this, photoAdapter.selectedPaths());
-        Intent send = new Intent(Intent.ACTION_SEND_MULTIPLE);
-        send.setType("*/*");
-        send.putParcelableArrayListExtra(Intent.EXTRA_STREAM, uris);
-        send.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
-        startActivity(Intent.createChooser(send, "Share"));
+        final java.util.List<String> paths = new java.util.ArrayList<>(photoAdapter.selectedPaths());
+        if (paths.isEmpty()) return;
+        new androidx.appcompat.app.AlertDialog.Builder(this)
+                .setTitle("Share " + paths.size() + (paths.size() == 1 ? " item" : " items"))
+                .setItems(new CharSequence[]{ "Share", "Share without location & metadata" }, (d, which) -> {
+                    com.absolute.floral.data.RecentStore.markShared(this, paths);
+                    if (which == 0) {
+                        java.util.ArrayList<Uri> uris = new java.util.ArrayList<>(selectedUris());
+                        if (uris.isEmpty()) return;
+                        Intent send = new Intent(Intent.ACTION_SEND_MULTIPLE);
+                        send.setType("*/*");
+                        send.putParcelableArrayListExtra(Intent.EXTRA_STREAM, uris);
+                        send.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                        startActivity(Intent.createChooser(send, "Share"));
+                    } else {
+                        Toast.makeText(this, "Cleaning metadata…", Toast.LENGTH_SHORT).show();
+                        com.absolute.floral.util.SafeShare.prepare(this, paths, (uris, stripped) -> {
+                            if (!uris.isEmpty()) startActivity(
+                                    com.absolute.floral.util.SafeShare.chooser(this, uris));
+                        });
+                    }
+                    photoAdapter.clearSelection();
+                })
+                .show();
     }
 
     private void bulkFavourite() {
