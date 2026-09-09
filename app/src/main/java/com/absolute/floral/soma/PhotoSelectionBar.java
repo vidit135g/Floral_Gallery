@@ -75,7 +75,7 @@ public class PhotoSelectionBar {
         bottomBar.setVisibility(View.VISIBLE);
         topBar.setVisibility(View.VISIBLE);
         String label = count == 0 ? "Select Items" : count + " Selected";
-        countText.setText(label);
+        countText.setText(count == 0 ? "" : String.valueOf(count));
         titleText.setText(label);
     }
 
@@ -95,9 +95,19 @@ public class PhotoSelectionBar {
 
     private TextView action(String label, Runnable r) {
         TextView t = text(label, soma.ink, false);
-        t.setPadding(dp(10), dp(8), dp(10), dp(8));
+        t.setPadding(dp(9), dp(8), dp(9), dp(8));
         t.setOnClickListener(v -> r.run());
         return t;
+    }
+
+    private void bulkGuest() {
+        java.util.ArrayList<String> paths = new java.util.ArrayList<>(adapter.selectedPaths());
+        if (paths.isEmpty()) return;
+        Intent i = new Intent(a, com.absolute.floral.ui.GuestModeActivity.class);
+        i.putStringArrayListExtra(
+                com.absolute.floral.ui.GuestModeActivity.EXTRA_ADD_PATHS, paths);
+        a.startActivity(i);
+        adapter.clearSelection();
     }
 
     private void build() {
@@ -112,10 +122,11 @@ public class PhotoSelectionBar {
         bg.setColor(soma.lightBase ? 0xF7FFFFFF : 0xF71E1F20);
         bar.setBackground(bg);
         bar.setElevation(dp(10));
-        countText = text("1 Selected", soma.ink, false);
+        countText = text("1", soma.ink, false);
         bar.addView(countText, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
         bar.addView(action("Share", this::bulkShare));
-        bar.addView(action("Favourite", this::bulkFavourite));
+        bar.addView(action("Guest", this::bulkGuest));
+        bar.addView(action("♥", this::bulkFavourite));
         bar.addView(action("Delete", this::bulkDelete));
         TextView done = text("Done", blue, true);
         done.setPadding(dp(12), dp(8), dp(4), dp(8));

@@ -13,6 +13,7 @@ import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
+import android.os.Looper;
 import android.provider.MediaStore;
 import androidx.annotation.RequiresApi;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
@@ -882,11 +883,12 @@ public class MainActivity extends ThemeableActivity implements CheckRefreshClick
                 + com.absolute.floral.data.GuestMode.version;
         if (lastGuestVersion != -1 && gv != lastGuestVersion) {
             lastGuestVersion = gv;
-            recreate();
+            // let this lifecycle callback finish before tearing the Activity down
+            new Handler(Looper.getMainLooper()).post(this::recreate);
             return;
         }
         lastGuestVersion = gv;
-        updateGuestPill();
+        recyclerView.post(this::updateGuestPill);
 
         boolean noData = MediaProvider.getAlbums() == null;
         boolean mediaChanged = MediaProvider.dataChanged;
@@ -1114,11 +1116,12 @@ public class MainActivity extends ThemeableActivity implements CheckRefreshClick
             bar.setBackground(bg);
             bar.setElevation(10 * d);
 
-            selectionCount = mkBarText("1 selected", soma.ink, false);
+            selectionCount = mkBarText("1", soma.ink, false);
             bar.addView(selectionCount, new LinearLayout.LayoutParams(0,
                     ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
             bar.addView(mkBarAction("Share", soma, () -> bulkShare()));
-            bar.addView(mkBarAction("Favourite", soma, () -> bulkFavourite()));
+            bar.addView(mkBarAction("Guest", soma, () -> bulkGuest()));
+            bar.addView(mkBarAction("♥", soma, () -> bulkFavourite()));
             bar.addView(mkBarAction("Delete", soma, () -> bulkDelete()));
             TextView done = mkBarText("Done", getResources().getColor(R.color.ios_blue), true);
             done.setPadding(Math.round(12 * d), Math.round(8 * d), Math.round(4 * d), Math.round(8 * d));
@@ -1169,7 +1172,7 @@ public class MainActivity extends ThemeableActivity implements CheckRefreshClick
         selectionBar.setTranslationY(0f);
         selectionTop.setVisibility(View.VISIBLE);
         String label = count == 0 ? "Select Items" : count + " Selected";
-        if (selectionCount != null) selectionCount.setText(label);
+        if (selectionCount != null) selectionCount.setText(count == 0 ? "" : String.valueOf(count));
         if (selectionTitle != null) selectionTitle.setText(label);
         if (photoNav != null) photoNav.setVisibility(View.GONE);
         if (searchFab != null) searchFab.setVisibility(View.GONE);
@@ -1195,9 +1198,19 @@ public class MainActivity extends ThemeableActivity implements CheckRefreshClick
     private View mkBarAction(String label, com.absolute.floral.soma.Soma soma, Runnable r) {
         float d = getResources().getDisplayMetrics().density;
         TextView t = mkBarText(label, soma.ink, false);
-        t.setPadding(Math.round(10 * d), Math.round(8 * d), Math.round(10 * d), Math.round(8 * d));
+        t.setPadding(Math.round(9 * d), Math.round(8 * d), Math.round(9 * d), Math.round(8 * d));
         t.setOnClickListener(v -> r.run());
         return t;
+    }
+
+    private void bulkGuest() {
+        java.util.ArrayList<String> paths =
+                new java.util.ArrayList<>(photoAdapter.selectedPaths());
+        if (paths.isEmpty()) return;
+        Intent i = new Intent(this, GuestModeActivity.class);
+        i.putStringArrayListExtra(GuestModeActivity.EXTRA_ADD_PATHS, paths);
+        startActivity(i);
+        photoAdapter.clearSelection();
     }
 
     private List<Uri> selectedUris() {

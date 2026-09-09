@@ -395,7 +395,7 @@ public class PhotoGridAdapter extends RecyclerView.Adapter<RecyclerView.ViewHold
     @Override
     public void onViewAttachedToWindow(@NonNull RecyclerView.ViewHolder holder) {
         super.onViewAttachedToWindow(holder);
-        if (selectionMode || !(holder instanceof ItemHolder)) return;
+        if (selectionMode || pickInto != null || !(holder instanceof ItemHolder)) return;
         int pos = holder.getBindingAdapterPosition();
         if (pos <= lastAnimated) return;
         // don't chase a fast fling — only the first sweep gets the entrance
@@ -406,6 +406,31 @@ public class PhotoGridAdapter extends RecyclerView.Adapter<RecyclerView.ViewHold
         v.setTranslationY(v.getResources().getDisplayMetrics().density * 14f);
         v.animate().alpha(1f).translationY(0f).setDuration(240)
                 .setInterpolator(Anim.ease()).start();
+    }
+
+    // A running entrance/selection animation must be stopped and the view reset
+    // before RecyclerView tries to detach or recycle it, otherwise it throws
+    // "Tmp detached view should be removed ... before it can be recycled".
+    private void resetAnim(RecyclerView.ViewHolder holder) {
+        View v = holder.itemView;
+        v.animate().cancel();
+        v.setAlpha(1f);
+        v.setTranslationX(0f);
+        v.setTranslationY(0f);
+        v.setScaleX(1f);
+        v.setScaleY(1f);
+    }
+
+    @Override
+    public void onViewDetachedFromWindow(@NonNull RecyclerView.ViewHolder holder) {
+        resetAnim(holder);
+        super.onViewDetachedFromWindow(holder);
+    }
+
+    @Override
+    public void onViewRecycled(@NonNull RecyclerView.ViewHolder holder) {
+        resetAnim(holder);
+        super.onViewRecycled(holder);
     }
 
     static class HeaderHolder extends RecyclerView.ViewHolder {

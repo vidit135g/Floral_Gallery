@@ -43,6 +43,9 @@ import java.util.Set;
  */
 public class GuestModeActivity extends AppCompatActivity {
 
+    /** Optional: paths to pre-add to the allow-list (from a Select ▸ Guest action). */
+    public static final String EXTRA_ADD_PATHS = "add_paths";
+
     private Soma soma;
     private final Set<String> chosen = new HashSet<>();
     private TextView chosenLabel, startBtn, lockGlyph;
@@ -53,76 +56,63 @@ public class GuestModeActivity extends AppCompatActivity {
         super.onCreate(s);
         soma = SomaSkin.read(this);
         chosen.addAll(GuestMode.allowed(this));
-
-        FrameLayout host = new FrameLayout(this);
-        host.setBackgroundColor(soma.ground[0]);
-        setContentView(host);
-        SomaSkin.statusBarIcons(this, soma);
-
-        ScrollView sv = new ScrollView(this);
-        sv.setFillViewport(true);
-        host.addView(sv, new FrameLayout.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
-        LinearLayout col = new LinearLayout(this);
-        col.setOrientation(LinearLayout.VERTICAL);
-        sv.addView(col, new FrameLayout.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+        ArrayList<String> add = getIntent().getStringArrayListExtra(EXTRA_ADD_PATHS);
+        if (add != null) chosen.addAll(add);
 
         int p = dp(20);
+
+        // root: fixed header + hero + chips, a scrolling grid, a fixed footer
+        LinearLayout col = new LinearLayout(this);
+        col.setOrientation(LinearLayout.VERTICAL);
+        col.setBackgroundColor(soma.ground[0]);
+        setContentView(col);
+        SomaSkin.statusBarIcons(this, soma);
 
         // header
         LinearLayout head = new LinearLayout(this);
         head.setOrientation(LinearLayout.VERTICAL);
-        head.setPadding(p, dp(44), p, dp(6));
+        head.setPadding(p, dp(40), p, dp(4));
         TextView title = new TextView(this);
         title.setText("Guest Mode");
         title.setTextColor(soma.ink);
-        title.setTextSize(30);
+        title.setTextSize(28);
         title.setTypeface(Soma.display(this), Typeface.BOLD);
         title.setLetterSpacing(-0.02f);
         head.addView(title);
-        TextView sub = new TextView(this);
-        sub.setText("Lend your phone without lending your whole gallery.");
-        sub.setTextColor(soma.inkMute);
-        sub.setTextSize(13.5f);
-        sub.setTypeface(Soma.body(this));
-        head.addView(sub);
         col.addView(head);
-        Anim.enter(head, 20);
 
-        // hero bento card
+        // hero bento card (compact)
         FrameLayout hero = new FrameLayout(this);
         GradientDrawable hg = new GradientDrawable(GradientDrawable.Orientation.TL_BR,
                 new int[]{ 0xFF9AA6DF, 0xFFB9A6D8, 0xFFDBB2CE });
-        hg.setCornerRadius(dp(24));
+        hg.setCornerRadius(dp(22));
         hero.setBackground(hg);
         LinearLayout.LayoutParams hlp = new LinearLayout.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT, dp(150));
-        hlp.setMargins(p, dp(10), p, dp(8));
+                ViewGroup.LayoutParams.MATCH_PARENT, dp(96));
+        hlp.setMargins(p, dp(8), p, dp(6));
         col.addView(hero, hlp);
         lockGlyph = new TextView(this);
-        lockGlyph.setText("🔓");           // 🔓 -> 🔒 on start
-        lockGlyph.setTextSize(40);
+        lockGlyph.setText("🔓");
+        lockGlyph.setTextSize(30);
         FrameLayout.LayoutParams lg = new FrameLayout.LayoutParams(
                 ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-        lg.gravity = Gravity.CENTER_VERTICAL; lg.leftMargin = dp(20);
+        lg.gravity = Gravity.CENTER_VERTICAL; lg.leftMargin = dp(18);
         hero.addView(lockGlyph, lg);
         TextView heroText = new TextView(this);
-        heroText.setText("Only the photos you choose\nwill be visible. Everything\nelse stays private.");
+        heroText.setText("Only the photos you choose stay visible.\nEverything else is hidden until you unlock.");
         heroText.setTextColor(0xFF3C3651);
-        heroText.setTextSize(14);
+        heroText.setTextSize(13);
         heroText.setLineSpacing(dp(3), 1f);
         heroText.setTypeface(Soma.body(this), Typeface.BOLD);
         FrameLayout.LayoutParams ht = new FrameLayout.LayoutParams(
                 ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-        ht.gravity = Gravity.CENTER_VERTICAL; ht.leftMargin = dp(96);
+        ht.gravity = Gravity.CENTER_VERTICAL; ht.leftMargin = dp(72); ht.rightMargin = dp(16);
         hero.addView(heroText, ht);
-        Anim.enter(hero, 60);
 
         // quick actions
         LinearLayout quick = new LinearLayout(this);
         quick.setOrientation(LinearLayout.HORIZONTAL);
-        quick.setPadding(p, dp(4), p, dp(4));
+        quick.setPadding(p, dp(4), p, dp(2));
         quick.addView(chip("Add all Favourites", () -> {
             chosen.addAll(FlagStore.favorites(this).all());
             syncGrid(); updateChosen();
@@ -135,84 +125,73 @@ public class GuestModeActivity extends AppCompatActivity {
         chosenLabel.setTextColor(soma.inkMute);
         chosenLabel.setTextSize(12);
         chosenLabel.setTypeface(Soma.body(this));
-        chosenLabel.setPadding(p, dp(6), p, dp(4));
+        chosenLabel.setPadding(p, dp(6), p, dp(6));
         col.addView(chosenLabel);
 
-        // the picker grid
-        TextView pickHint = new TextView(this);
-        pickHint.setText("Tap photos to include them");
-        pickHint.setTextColor(soma.inkMute);
-        pickHint.setTextSize(12);
-        pickHint.setLetterSpacing(0.06f);
-        pickHint.setTypeface(Soma.body(this), Typeface.BOLD);
-        pickHint.setPadding(p, dp(10), p, dp(6));
-        col.addView(pickHint);
-
+        // the picker grid — takes the remaining height and scrolls
         RecyclerView rv = new RecyclerView(this);
-        rv.setNestedScrollingEnabled(false);
-        rv.setPadding(dp(6), 0, dp(6), 0);
+        rv.setPadding(dp(6), 0, dp(6), dp(6));
+        rv.setClipToPadding(false);
         GridLayoutManager glm = new GridLayoutManager(this, 4);
         rv.setLayoutManager(glm);
         grid = new PhotoGridAdapter(this, timelineOfAll());
         grid.setSpanCount(4);
         grid.setContinuous(true);
         grid.setIgnoreGuestFilter(true);
-        grid.enterSelection();                       // permanent multi-select
+        grid.enterSelection();
         grid.setSelectionListener(count -> {});
-        grid.setSelectionOverride(chosen, () -> updateChosen());
+        grid.setSelectionOverride(chosen, this::updateChosen);
         glm.setSpanSizeLookup(grid.spanSizeLookup());
         rv.setAdapter(grid);
         rv.setItemAnimator(null);
-        LinearLayout.LayoutParams rvlp = new LinearLayout.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT, dp(360));
-        col.addView(rv, rvlp);
-        syncGrid();
+        rv.setHasFixedSize(true);
+        col.addView(rv, new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, 0, 1f));
 
-        // PIN
-        LinearLayout pinBox = new LinearLayout(this);
-        pinBox.setOrientation(LinearLayout.VERTICAL);
-        pinBox.setPadding(p, dp(16), p, dp(6));
-        TextView pinTitle = new TextView(this);
-        pinTitle.setText(GuestMode.hasPin(this) ? "Guest PIN" : "Set a Guest PIN");
-        pinTitle.setTextColor(soma.ink);
-        pinTitle.setTextSize(15);
-        pinTitle.setTypeface(Soma.body(this), Typeface.BOLD);
-        pinBox.addView(pinTitle);
+        // footer: PIN + Start
+        LinearLayout footer = new LinearLayout(this);
+        footer.setOrientation(LinearLayout.VERTICAL);
+        footer.setPadding(p, dp(8), p, dp(14));
+        GradientDrawable fbg = new GradientDrawable();
+        fbg.setColor(soma.surface);
+        fbg.setCornerRadii(new float[]{ dp(22), dp(22), dp(22), dp(22), 0, 0, 0, 0 });
+        footer.setBackground(fbg);
+        footer.setElevation(dp(12));
+
         pin1 = pinField(GuestMode.hasPin(this) ? "Enter your Guest PIN" : "Choose a PIN (4–6 digits)");
-        pinBox.addView(pin1);
+        footer.addView(pin1);
         if (GuestMode.hasPin(this)) {
             TextView forgot = new TextView(this);
             forgot.setText("Forgot PIN? Reset it");
             forgot.setTextColor(soma.accent);
-            forgot.setTextSize(12.5f);
-            forgot.setPadding(0, dp(8), 0, 0);
+            forgot.setTextSize(12f);
+            forgot.setPadding(0, dp(6), 0, 0);
             forgot.setOnClickListener(v -> new androidx.appcompat.app.AlertDialog.Builder(this)
                     .setTitle("Reset Guest PIN?")
                     .setMessage("This clears the Guest PIN. Set a new one below.")
                     .setPositiveButton("Reset", (d, w) -> { GuestMode.clearPin(this); recreate(); })
                     .setNegativeButton("Cancel", null)
                     .show());
-            pinBox.addView(forgot);
+            footer.addView(forgot);
         }
-        col.addView(pinBox);
 
-        // start button
         startBtn = new TextView(this);
         startBtn.setText("Start Guest Mode");
         startBtn.setTextColor(0xFF322C46);
         startBtn.setTextSize(16);
         startBtn.setTypeface(Soma.display(this), Typeface.BOLD);
         startBtn.setGravity(Gravity.CENTER);
-        startBtn.setPadding(0, dp(16), 0, dp(16));
+        startBtn.setPadding(0, dp(15), 0, dp(15));
         GradientDrawable sb = new GradientDrawable(GradientDrawable.Orientation.LEFT_RIGHT,
                 new int[]{ 0xFF9AA6DF, 0xFFB9A6D8, 0xFFDBB2CE });
-        sb.setCornerRadius(dp(18));
+        sb.setCornerRadius(dp(16));
         startBtn.setBackground(sb);
         startBtn.setOnClickListener(v -> start());
         LinearLayout.LayoutParams sblp = new LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-        sblp.setMargins(p, dp(8), p, dp(28));
-        col.addView(startBtn, sblp);
+        sblp.topMargin = dp(10);
+        footer.addView(startBtn, sblp);
+        col.addView(footer);
 
         updateChosen();
     }
