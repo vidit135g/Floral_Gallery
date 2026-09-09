@@ -93,7 +93,7 @@ public class GuestModeActivity extends AppCompatActivity {
         // hero bento card
         FrameLayout hero = new FrameLayout(this);
         GradientDrawable hg = new GradientDrawable(GradientDrawable.Orientation.TL_BR,
-                new int[]{ 0xFF7C4DFF, 0xFFB14CE0, 0xFFFF6FA3 });
+                new int[]{ 0xFF9AA6DF, 0xFFB9A6D8, 0xFFDBB2CE });
         hg.setCornerRadius(dp(24));
         hero.setBackground(hg);
         LinearLayout.LayoutParams hlp = new LinearLayout.LayoutParams(
@@ -109,7 +109,7 @@ public class GuestModeActivity extends AppCompatActivity {
         hero.addView(lockGlyph, lg);
         TextView heroText = new TextView(this);
         heroText.setText("Only the photos you choose\nwill be visible. Everything\nelse stays private.");
-        heroText.setTextColor(0xFFFFFFFF);
+        heroText.setTextColor(0xFF3C3651);
         heroText.setTextSize(14);
         heroText.setLineSpacing(dp(3), 1f);
         heroText.setTypeface(Soma.body(this), Typeface.BOLD);
@@ -199,13 +199,13 @@ public class GuestModeActivity extends AppCompatActivity {
         // start button
         startBtn = new TextView(this);
         startBtn.setText("Start Guest Mode");
-        startBtn.setTextColor(0xFFFFFFFF);
+        startBtn.setTextColor(0xFF322C46);
         startBtn.setTextSize(16);
         startBtn.setTypeface(Soma.display(this), Typeface.BOLD);
         startBtn.setGravity(Gravity.CENTER);
         startBtn.setPadding(0, dp(16), 0, dp(16));
         GradientDrawable sb = new GradientDrawable(GradientDrawable.Orientation.LEFT_RIGHT,
-                new int[]{ 0xFF7C4DFF, 0xFFB14CE0, 0xFFFF6FA3 });
+                new int[]{ 0xFF9AA6DF, 0xFFB9A6D8, 0xFFDBB2CE });
         sb.setCornerRadius(dp(18));
         startBtn.setBackground(sb);
         startBtn.setOnClickListener(v -> start());

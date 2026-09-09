@@ -925,14 +925,14 @@ public class MainActivity extends ThemeableActivity implements CheckRefreshClick
         if (guestPill == null) {
             TextView pill = new TextView(this);
             pill.setText("🔒  Guest Mode · tap to exit");
-            pill.setTextColor(0xFFFFFFFF);
+            pill.setTextColor(0xFF3C3651);
             pill.setTextSize(12.5f);
             pill.setTypeface(com.absolute.floral.soma.Soma.body(this), Typeface.BOLD);
             pill.setGravity(android.view.Gravity.CENTER);
             pill.setPadding(Math.round(16 * d), Math.round(8 * d), Math.round(16 * d), Math.round(8 * d));
             android.graphics.drawable.GradientDrawable bg = new android.graphics.drawable.GradientDrawable(
                     android.graphics.drawable.GradientDrawable.Orientation.LEFT_RIGHT,
-                    new int[]{ 0xFF7C4DFF, 0xFFB14CE0, 0xFFFF6FA3 });
+                    new int[]{ 0xFF9AA6DF, 0xFFB9A6D8, 0xFFDBB2CE });
             bg.setCornerRadius(Math.round(20 * d));
             pill.setBackground(bg);
             pill.setElevation(14 * d);
