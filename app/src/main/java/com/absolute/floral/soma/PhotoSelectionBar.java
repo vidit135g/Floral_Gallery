@@ -75,7 +75,7 @@ public class PhotoSelectionBar {
         bottomBar.setVisibility(View.VISIBLE);
         topBar.setVisibility(View.VISIBLE);
         String label = count == 0 ? "Select Items" : count + " Selected";
-        countText.setText(count == 0 ? "" : String.valueOf(count));
+        countText.setText(label);
         titleText.setText(label);
     }
 
@@ -95,19 +95,9 @@ public class PhotoSelectionBar {
 
     private TextView action(String label, Runnable r) {
         TextView t = text(label, soma.ink, false);
-        t.setPadding(dp(9), dp(8), dp(9), dp(8));
+        t.setPadding(dp(10), dp(8), dp(10), dp(8));
         t.setOnClickListener(v -> r.run());
         return t;
-    }
-
-    private void bulkGuest() {
-        java.util.ArrayList<String> paths = new java.util.ArrayList<>(adapter.selectedPaths());
-        if (paths.isEmpty()) return;
-        Intent i = new Intent(a, com.absolute.floral.ui.GuestModeActivity.class);
-        i.putStringArrayListExtra(
-                com.absolute.floral.ui.GuestModeActivity.EXTRA_ADD_PATHS, paths);
-        a.startActivity(i);
-        adapter.clearSelection();
     }
 
     private void build() {
@@ -122,11 +112,10 @@ public class PhotoSelectionBar {
         bg.setColor(soma.lightBase ? 0xF7FFFFFF : 0xF71E1F20);
         bar.setBackground(bg);
         bar.setElevation(dp(10));
-        countText = text("1", soma.ink, false);
+        countText = text("1 Selected", soma.ink, false);
         bar.addView(countText, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
         bar.addView(action("Share", this::bulkShare));
-        bar.addView(action("Guest", this::bulkGuest));
-        bar.addView(action("♥", this::bulkFavourite));
+        bar.addView(action("Favourite", this::bulkFavourite));
         bar.addView(action("Delete", this::bulkDelete));
         TextView done = text("Done", blue, true);
         done.setPadding(dp(12), dp(8), dp(4), dp(8));
@@ -178,30 +167,14 @@ public class PhotoSelectionBar {
     }
 
     private void bulkShare() {
-        final java.util.List<String> paths = new ArrayList<>(adapter.selectedPaths());
-        if (paths.isEmpty()) return;
-        new androidx.appcompat.app.AlertDialog.Builder(a)
-                .setTitle("Share " + paths.size() + (paths.size() == 1 ? " item" : " items"))
-                .setItems(new CharSequence[]{ "Share", "Share without location & metadata" }, (d, which) -> {
-                    RecentStore.markShared(a, paths);
-                    if (which == 0) {
-                        ArrayList<Uri> uris = new ArrayList<>(selectedUris());
-                        if (uris.isEmpty()) return;
-                        Intent send = new Intent(Intent.ACTION_SEND_MULTIPLE);
-                        send.setType("*/*");
-                        send.putParcelableArrayListExtra(Intent.EXTRA_STREAM, uris);
-                        send.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
-                        a.startActivity(Intent.createChooser(send, "Share"));
-                    } else {
-                        Toast.makeText(a, "Cleaning metadata…", Toast.LENGTH_SHORT).show();
-                        com.absolute.floral.util.SafeShare.prepare(a, paths, (uris, stripped) -> {
-                            if (uris.isEmpty()) return;
-                            a.startActivity(com.absolute.floral.util.SafeShare.chooser(a, uris));
-                        });
-                    }
-                    adapter.clearSelection();
-                })
-                .show();
+        ArrayList<Uri> uris = new ArrayList<>(selectedUris());
+        if (uris.isEmpty()) return;
+        RecentStore.markShared(a, adapter.selectedPaths());
+        Intent send = new Intent(Intent.ACTION_SEND_MULTIPLE);
+        send.setType("*/*");
+        send.putParcelableArrayListExtra(Intent.EXTRA_STREAM, uris);
+        send.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+        a.startActivity(Intent.createChooser(send, "Share"));
     }
 
     private void bulkFavourite() {

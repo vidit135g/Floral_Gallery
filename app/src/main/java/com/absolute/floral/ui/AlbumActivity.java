@@ -395,23 +395,11 @@ public class AlbumActivity extends ThemeableActivity
                 new MediaProvider.OnAlbumLoadedCallback() {
                     @Override
                     public void onAlbumLoaded(Album album) {
-                        AlbumActivity.this.album = guestFilter(album);
+                        AlbumActivity.this.album = album;
                         AlbumActivity.this.onAlbumLoaded(savedInstanceState);
                     }
                 });
 
-    }
-
-    /** In Guest Mode, a folder shows only the photos the guest is allowed to see. */
-    private Album guestFilter(Album src) {
-        if (src == null || !com.absolute.floral.data.GuestMode.active(this)) return src;
-        java.util.Set<String> ok = com.absolute.floral.data.GuestMode.allowed(this);
-        Album copy = new Album();
-        copy.setPath(src.getPath());
-        for (AlbumItem it : src.getAlbumItems())
-            if (it != null && it.getPath() != null && ok.contains(it.getPath()))
-                copy.getAlbumItems().add(it);
-        return copy;
     }
 
     private void onAlbumLoaded(Bundle savedInstanceState) {

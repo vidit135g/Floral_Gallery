@@ -301,17 +301,6 @@ public class ItemActivity extends ThemeableActivity {
     }
 
     private void onAlbumLoaded(Bundle savedInstanceState) {
-        // Guest Mode: never let the viewer page onto photos the guest can't see
-        if (album != null && com.absolute.floral.data.GuestMode.active(this)) {
-            java.util.Set<String> ok = com.absolute.floral.data.GuestMode.allowed(this);
-            Album filtered = new Album();
-            filtered.setPath(album.getPath());
-            for (AlbumItem ai : album.getAlbumItems())
-                if (ai != null && ai.getPath() != null && ok.contains(ai.getPath()))
-                    filtered.getAlbumItems().add(ai);
-            if (filtered.getAlbumItems().isEmpty()) { finish(); return; }
-            this.album = filtered;
-        }
         if (albumItem == null) {
             if (savedInstanceState == null) {
                 // prefer the exact item that was tapped (grid passes it as a Parcelable)

@@ -61,7 +61,6 @@ public class SettingsActivity extends ThemeableActivity {
         });
 
         buildHeader();
-        buildPrivacy();
         buildDisplay();
         buildViewOptions();
         buildLibraryReading();
@@ -170,16 +169,6 @@ public class SettingsActivity extends ThemeableActivity {
         });
     }
 
-    private void buildPrivacy() {
-        sectionHeader("PRIVACY");
-        LinearLayout card = groupCard();
-        boolean on = com.absolute.floral.data.GuestMode.active(this);
-        addNav(card, "Guest Mode",
-                on ? "On — " + com.absolute.floral.data.GuestMode.allowed(this).size() + " photos" : "Off",
-                false, () -> startActivity(new Intent(this, GuestModeActivity.class)));
-        col.addView(card);
-    }
-
     private void buildDisplay() {
         sectionHeader("DISPLAY");
         LinearLayout card = groupCard();
@@ -211,18 +200,12 @@ public class SettingsActivity extends ThemeableActivity {
     }
 
     private void buildLibraryReading() {
-        sectionHeader("READING YOUR LIBRARY");
+        sectionHeader("LIBRARY");
         LinearLayout card = groupCard();
         Settings st = Settings.getInstance(this);
-        addSwitch(card, "MediaStore Retriever", st.useStorageRetriever(),
-                v -> { st.useStorageRetriever(this, v); mark(); }, true);
-        addSwitch(card, "8-bit Colour", st.use8BitColor(),
-                v -> { st.use8BitColor(this, v); mark(); }, true);
-        addSwitch(card, "Camera Shortcut", st.getCameraShortcut(),
-                v -> { st.setCameraShortcut(this, v); mark(); }, true);
         addSwitch(card, "Max Brightness in Viewer", st.isMaxBrightness(),
                 v -> { st.setMaxBrightness(this, v); mark(); }, true);
-        addNav(card, "Excluded Paths", "", true,
+        addNav(card, "Excluded Folders", "", true,
                 () -> startActivity(new Intent(this, ExcludePathsActivity.class)));
         addNav(card, "Virtual Albums", "", false,
                 () -> startActivity(new Intent(this, VirtualAlbumsActivity.class)));

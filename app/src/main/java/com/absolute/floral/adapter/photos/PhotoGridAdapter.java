@@ -78,25 +78,6 @@ public class PhotoGridAdapter extends RecyclerView.Adapter<RecyclerView.ViewHold
     private final java.util.LinkedHashSet<String> selected = new java.util.LinkedHashSet<>();
     private SelectionListener selectionListener;
 
-    /** Persistent-picker mode (Guest Mode setup): taps toggle membership in an
-     *  external set instead of opening the viewer; selection can't be exited. */
-    private java.util.Set<String> pickInto;
-    private Runnable pickCallback;
-    public void setSelectionOverride(java.util.Set<String> target, Runnable onChange) {
-        this.pickInto = target;
-        this.pickCallback = onChange;
-        this.selectionMode = true;
-        notifyDataSetChanged();
-    }
-
-    /** The Guest-Mode setup picker must show the whole library, not the filtered view. */
-    private boolean ignoreGuest;
-    public void setIgnoreGuestFilter(boolean b) {
-        this.ignoreGuest = b;
-        this.timeline = apply(fullTimeline);
-        notifyDataSetChanged();
-    }
-
     private Soma skin;                 // cached palette — refreshed on data change, not per bind
     private int thumbPx = 320;         // Glide decode target for one grid cell
     private final RequestOptions gridOpts = new RequestOptions()
@@ -210,18 +191,14 @@ public class PhotoGridAdapter extends RecyclerView.Adapter<RecyclerView.ViewHold
         if (src == null) return null;
         List<AlbumItem> keep = new ArrayList<>();
         java.util.Map<String, String> pathAlbum = new java.util.HashMap<>();
-        boolean guest = !ignoreGuest && com.absolute.floral.data.GuestMode.active(activity);
-        java.util.Set<String> guestOk = guest
-                ? com.absolute.floral.data.GuestMode.allowed(activity) : null;
         for (PhotoTimeline.Row r : src.rows) {
             if (r.header || r.item == null) continue;
-            if (guest && (r.item.getPath() == null || !guestOk.contains(r.item.getPath()))) continue;
             if (!passesFilter(r.item)) continue;
             keep.add(r.item);
             if (r.item.getPath() != null) pathAlbum.put(r.item.getPath(), r.albumPath);
         }
         PhotoTimeline out;
-        if (continuous || filter != Filter.ALL || guest) {
+        if (continuous || filter != Filter.ALL) {
             out = PhotoTimeline.flat(keep, pathAlbum);
         } else {
             out = src;
@@ -282,13 +259,6 @@ public class PhotoGridAdapter extends RecyclerView.Adapter<RecyclerView.ViewHold
     }
     private void toggle(String path, int pos) {
         if (path == null) return;
-        if (pickInto != null) {
-            if (!pickInto.remove(path)) pickInto.add(path);
-            if (pickCallback != null) pickCallback.run();
-            if (pos != RecyclerView.NO_POSITION) notifyItemChanged(pos, PAYLOAD_SEL);
-            else notifyItemRangeChanged(0, getItemCount(), PAYLOAD_SEL);
-            return;
-        }
         if (!selected.remove(path)) selected.add(path);
         if (selected.isEmpty()) selectionMode = false;
         if (selectionListener != null) selectionListener.onSelectionChanged(selected.size());
@@ -376,13 +346,8 @@ public class PhotoGridAdapter extends RecyclerView.Adapter<RecyclerView.ViewHold
         });
     }
 
-    private boolean isSelected(String path) {
-        if (path == null) return false;
-        return pickInto != null ? pickInto.contains(path) : selected.contains(path);
-    }
-
     private void applySelectionVisual(ItemHolder h, String path) {
-        boolean sel = isSelected(path);
+        boolean sel = path != null && selected.contains(path);
         h.scrim.setVisibility(sel ? View.VISIBLE : View.GONE);
         float s = sel ? 0.88f : 1f;
         if (h.itemView.getScaleX() != s) {
@@ -395,7 +360,7 @@ public class PhotoGridAdapter extends RecyclerView.Adapter<RecyclerView.ViewHold
     @Override
     public void onViewAttachedToWindow(@NonNull RecyclerView.ViewHolder holder) {
         super.onViewAttachedToWindow(holder);
-        if (selectionMode || pickInto != null || !(holder instanceof ItemHolder)) return;
+        if (selectionMode || !(holder instanceof ItemHolder)) return;
         int pos = holder.getBindingAdapterPosition();
         if (pos <= lastAnimated) return;
         // don't chase a fast fling — only the first sweep gets the entrance
@@ -408,8 +373,8 @@ public class PhotoGridAdapter extends RecyclerView.Adapter<RecyclerView.ViewHold
                 .setInterpolator(Anim.ease()).start();
     }
 
-    // A running entrance/selection animation must be stopped and the view reset
-    // before RecyclerView tries to detach or recycle it, otherwise it throws
+    // Stop any in-flight entrance/selection animation and reset the view before
+    // RecyclerView detaches or recycles it — otherwise it can throw
     // "Tmp detached view should be removed ... before it can be recycled".
     private void resetAnim(RecyclerView.ViewHolder holder) {
         View v = holder.itemView;

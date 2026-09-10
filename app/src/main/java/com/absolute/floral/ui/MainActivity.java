@@ -13,7 +13,6 @@ import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
-import android.os.Looper;
 import android.provider.MediaStore;
 import androidx.annotation.RequiresApi;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
@@ -426,8 +425,8 @@ public class MainActivity extends ThemeableActivity implements CheckRefreshClick
         // seed the bento screens from the (possibly cached) list so Home/Collections
         // don't read "0 items" on a cold start
         if (albums != null && !albums.isEmpty()) {
-            providers.setAlbums(albums, guestAllow());
-            providers.memories = com.absolute.floral.data.Memories.build(providers.albums);
+            providers.albums = albums;
+            providers.memories = com.absolute.floral.data.Memories.build(albums);
         }
         photoAdapter.setSelectionListener(count -> {
             if (photoAdapter.isSelectionMode()) showSelectionBar(count);
@@ -763,8 +762,8 @@ public class MainActivity extends ThemeableActivity implements CheckRefreshClick
                     photoAdapter.setTimeline(com.absolute.floral.data.PhotoTimeline.from(cached));
                     photoAdapter.setFavoritePaths(
                             com.absolute.floral.data.FlagStore.favorites(this).all());
-                    providers.setAlbums(cached, guestAllow());
-                    providers.memories = com.absolute.floral.data.Memories.build(providers.albums);
+                    providers.albums = cached;
+                    providers.memories = com.absolute.floral.data.Memories.build(cached);
                     com.absolute.floral.people.PeopleIndex.get().ensure(this, ppl -> {
                         providers.people = ppl; syncCollections();
                     });
@@ -803,9 +802,9 @@ public class MainActivity extends ThemeableActivity implements CheckRefreshClick
                                         com.absolute.floral.data.PhotoTimeline.from(albumsWithVirtualDirs));
                                 photoAdapter.setFavoritePaths(
                                         com.absolute.floral.data.FlagStore.favorites(MainActivity.this).all());
-                                providers.setAlbums(albumsWithVirtualDirs, guestAllow());
+                                providers.albums = albumsWithVirtualDirs;
                                 providers.memories =
-                                        com.absolute.floral.data.Memories.build(providers.albums);
+                                        com.absolute.floral.data.Memories.build(albumsWithVirtualDirs);
                                 syncCollections();
                                 com.absolute.floral.people.PeopleIndex.get().ensure(MainActivity.this, ppl -> {
                                     providers.people = ppl; syncCollections();
@@ -856,39 +855,17 @@ public class MainActivity extends ThemeableActivity implements CheckRefreshClick
         mediaProvider.loadAlbums(MainActivity.this, hiddenFolders, callback);
     }
 
-    private java.util.Set<String> guestAllow() {
-        return com.absolute.floral.data.GuestMode.active(this)
-                ? com.absolute.floral.data.GuestMode.allowed(this) : null;
-    }
-
     private void syncCollections() {
-        // re-apply the guest filter to whatever raw list we last stored
-        providers.setAlbums(providers.rawAlbums, guestAllow());
         if (collections != null) collections.refresh(providers);
         if (home != null) home.refresh(providers);
     }
 
     private int lastFavSig = Integer.MIN_VALUE;
 
-    private int lastGuestVersion = -1;
-    private View guestPill;
-
     @Override
     protected void onStart() {
         super.onStart();
         if (profileAvatar != null) profileAvatar.refresh();
-
-        // Guest Mode toggled while we were away -> rebuild cleanly with the filter
-        int gv = (com.absolute.floral.data.GuestMode.active(this) ? 1 : 0) * 1_000_000
-                + com.absolute.floral.data.GuestMode.version;
-        if (lastGuestVersion != -1 && gv != lastGuestVersion) {
-            lastGuestVersion = gv;
-            // let this lifecycle callback finish before tearing the Activity down
-            new Handler(Looper.getMainLooper()).post(this::recreate);
-            return;
-        }
-        lastGuestVersion = gv;
-        recyclerView.post(this::updateGuestPill);
 
         boolean noData = MediaProvider.getAlbums() == null;
         boolean mediaChanged = MediaProvider.dataChanged;
@@ -913,109 +890,6 @@ public class MainActivity extends ThemeableActivity implements CheckRefreshClick
             providers.version++;
             syncCollections();
         }
-    }
-
-    /** The slim "Guest Mode — tap to exit" pill at the top while a guest session is on. */
-    private void updateGuestPill() {
-        boolean on = com.absolute.floral.data.GuestMode.active(this);
-        final ViewGroup host = (ViewGroup) recyclerView.getParent();
-        if (!on) {
-            if (guestPill != null) guestPill.setVisibility(View.GONE);
-            return;
-        }
-        float d = getResources().getDisplayMetrics().density;
-        if (guestPill == null) {
-            final com.absolute.floral.soma.Soma soma = com.absolute.floral.soma.SomaSkin.read(this);
-            final boolean light = soma.lightBase;
-            final float r = 22 * d;
-
-            TextView pill = new TextView(this);
-            int ink = light ? 0xFF3B3550 : 0xFFF3EEFF;
-            pill.setText("Guest Mode · tap to exit");
-            pill.setTextColor(ink);
-            pill.setTextSize(12.5f);
-            pill.setTypeface(com.absolute.floral.soma.Soma.body(this), Typeface.BOLD);
-            pill.setLetterSpacing(0.01f);
-            pill.setGravity(android.view.Gravity.CENTER_VERTICAL);
-            pill.setPadding(Math.round(15 * d), Math.round(9 * d), Math.round(18 * d), Math.round(9 * d));
-            android.graphics.drawable.Drawable lk = androidx.core.content.ContextCompat
-                    .getDrawable(this, R.drawable.ic_lock_glyph);
-            if (lk != null) {
-                lk = androidx.core.graphics.drawable.DrawableCompat.wrap(lk).mutate();
-                androidx.core.graphics.drawable.DrawableCompat.setTint(lk, ink);
-                int sz = Math.round(15 * d);
-                lk.setBounds(0, 0, sz, sz);
-                pill.setCompoundDrawablesRelative(lk, null, null, null);
-                pill.setCompoundDrawablePadding(Math.round(6 * d));
-            }
-
-            // iOS-18 glass pill: a faintly tinted translucent fill, a bright rim,
-            // a top sheen — no hard colour.
-            android.graphics.drawable.GradientDrawable body = new android.graphics.drawable.GradientDrawable();
-            body.setShape(android.graphics.drawable.GradientDrawable.RECTANGLE);
-            body.setCornerRadius(r);
-            body.setColor(light ? 0x59EDEAFA : 0x4D2A2740);
-            body.setStroke(Math.max(1, Math.round(1.1f * d)), light ? 0x80FFFFFF : 0x40FFFFFF);
-
-            android.graphics.drawable.GradientDrawable sheen = new android.graphics.drawable.GradientDrawable(
-                    android.graphics.drawable.GradientDrawable.Orientation.TOP_BOTTOM,
-                    new int[]{ light ? 0x63FFFFFF : 0x38FFFFFF, 0x0FFFFFFF, 0x00FFFFFF });
-            sheen.setCornerRadius(r);
-
-            android.graphics.drawable.LayerDrawable glass = new android.graphics.drawable.LayerDrawable(
-                    new android.graphics.drawable.Drawable[]{ body, sheen });
-            int inset = Math.round(1.2f * d);
-            glass.setLayerInset(1, inset, inset, inset, Math.round(10 * d));
-            pill.setBackground(glass);
-            pill.setClipToOutline(true);
-            pill.setOutlineProvider(new android.view.ViewOutlineProvider() {
-                @Override public void getOutline(View v, android.graphics.Outline o) {
-                    o.setRoundRect(0, 0, v.getWidth(), v.getHeight(), r);
-                }
-            });
-            pill.setElevation(10 * d);
-            if (android.os.Build.VERSION.SDK_INT >= 28) {
-                pill.setOutlineSpotShadowColor(0x59000000);
-                pill.setOutlineAmbientShadowColor(0x33000000);
-            }
-            pill.setOnClickListener(v -> promptExitGuest());
-            FrameLayout.LayoutParams lp = new FrameLayout.LayoutParams(
-                    ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-            lp.gravity = android.view.Gravity.TOP | android.view.Gravity.CENTER_HORIZONTAL;
-            lp.topMargin = Math.round(52 * d);
-            host.addView(pill, lp);
-            guestPill = pill;
-            pill.setAlpha(0f);
-            pill.setTranslationY(-12 * d);
-            pill.animate().alpha(1f).translationY(0f).setDuration(320).start();
-        }
-        guestPill.setVisibility(View.VISIBLE);
-        guestPill.bringToFront();
-    }
-
-    private void promptExitGuest() {
-        final android.widget.EditText in = new android.widget.EditText(this);
-        in.setInputType(android.text.InputType.TYPE_CLASS_NUMBER
-                | android.text.InputType.TYPE_NUMBER_VARIATION_PASSWORD);
-        in.setHint("Guest PIN");
-        int pad = Math.round(20 * getResources().getDisplayMetrics().density);
-        FrameLayout wrap = new FrameLayout(this);
-        wrap.setPadding(pad, pad / 2, pad, 0);
-        wrap.addView(in);
-        new androidx.appcompat.app.AlertDialog.Builder(this)
-                .setTitle("Exit Guest Mode")
-                .setMessage("Enter the PIN to show all your photos again.")
-                .setView(wrap)
-                .setPositiveButton("Unlock", (di, w) -> {
-                    if (com.absolute.floral.data.GuestMode.checkPin(this, in.getText().toString())) {
-                        com.absolute.floral.data.GuestMode.exit(this);
-                        recreate();
-                    } else {
-                        Toast.makeText(this, "Wrong PIN", Toast.LENGTH_SHORT).show();
-                    }
-                })
-                .setNegativeButton("Cancel", null)
-                .show();
     }
 
     @Override
@@ -1127,12 +1001,11 @@ public class MainActivity extends ThemeableActivity implements CheckRefreshClick
             bar.setBackground(bg);
             bar.setElevation(10 * d);
 
-            selectionCount = mkBarText("1", soma.ink, false);
+            selectionCount = mkBarText("1 selected", soma.ink, false);
             bar.addView(selectionCount, new LinearLayout.LayoutParams(0,
                     ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
             bar.addView(mkBarAction("Share", soma, () -> bulkShare()));
-            bar.addView(mkBarAction("Guest", soma, () -> bulkGuest()));
-            bar.addView(mkBarAction("♥", soma, () -> bulkFavourite()));
+            bar.addView(mkBarAction("Favourite", soma, () -> bulkFavourite()));
             bar.addView(mkBarAction("Delete", soma, () -> bulkDelete()));
             TextView done = mkBarText("Done", getResources().getColor(R.color.ios_blue), true);
             done.setPadding(Math.round(12 * d), Math.round(8 * d), Math.round(4 * d), Math.round(8 * d));
@@ -1183,7 +1056,7 @@ public class MainActivity extends ThemeableActivity implements CheckRefreshClick
         selectionBar.setTranslationY(0f);
         selectionTop.setVisibility(View.VISIBLE);
         String label = count == 0 ? "Select Items" : count + " Selected";
-        if (selectionCount != null) selectionCount.setText(count == 0 ? "" : String.valueOf(count));
+        if (selectionCount != null) selectionCount.setText(label);
         if (selectionTitle != null) selectionTitle.setText(label);
         if (photoNav != null) photoNav.setVisibility(View.GONE);
         if (searchFab != null) searchFab.setVisibility(View.GONE);
@@ -1209,19 +1082,9 @@ public class MainActivity extends ThemeableActivity implements CheckRefreshClick
     private View mkBarAction(String label, com.absolute.floral.soma.Soma soma, Runnable r) {
         float d = getResources().getDisplayMetrics().density;
         TextView t = mkBarText(label, soma.ink, false);
-        t.setPadding(Math.round(9 * d), Math.round(8 * d), Math.round(9 * d), Math.round(8 * d));
+        t.setPadding(Math.round(10 * d), Math.round(8 * d), Math.round(10 * d), Math.round(8 * d));
         t.setOnClickListener(v -> r.run());
         return t;
-    }
-
-    private void bulkGuest() {
-        java.util.ArrayList<String> paths =
-                new java.util.ArrayList<>(photoAdapter.selectedPaths());
-        if (paths.isEmpty()) return;
-        Intent i = new Intent(this, GuestModeActivity.class);
-        i.putStringArrayListExtra(GuestModeActivity.EXTRA_ADD_PATHS, paths);
-        startActivity(i);
-        photoAdapter.clearSelection();
     }
 
     private List<Uri> selectedUris() {
@@ -1237,30 +1100,14 @@ public class MainActivity extends ThemeableActivity implements CheckRefreshClick
     }
 
     private void bulkShare() {
-        final java.util.List<String> paths = new java.util.ArrayList<>(photoAdapter.selectedPaths());
-        if (paths.isEmpty()) return;
-        new androidx.appcompat.app.AlertDialog.Builder(this)
-                .setTitle("Share " + paths.size() + (paths.size() == 1 ? " item" : " items"))
-                .setItems(new CharSequence[]{ "Share", "Share without location & metadata" }, (d, which) -> {
-                    com.absolute.floral.data.RecentStore.markShared(this, paths);
-                    if (which == 0) {
-                        java.util.ArrayList<Uri> uris = new java.util.ArrayList<>(selectedUris());
-                        if (uris.isEmpty()) return;
-                        Intent send = new Intent(Intent.ACTION_SEND_MULTIPLE);
-                        send.setType("*/*");
-                        send.putParcelableArrayListExtra(Intent.EXTRA_STREAM, uris);
-                        send.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
-                        startActivity(Intent.createChooser(send, "Share"));
-                    } else {
-                        Toast.makeText(this, "Cleaning metadata…", Toast.LENGTH_SHORT).show();
-                        com.absolute.floral.util.SafeShare.prepare(this, paths, (uris, stripped) -> {
-                            if (!uris.isEmpty()) startActivity(
-                                    com.absolute.floral.util.SafeShare.chooser(this, uris));
-                        });
-                    }
-                    photoAdapter.clearSelection();
-                })
-                .show();
+        java.util.ArrayList<Uri> uris = new java.util.ArrayList<>(selectedUris());
+        if (uris.isEmpty()) return;
+        com.absolute.floral.data.RecentStore.markShared(this, photoAdapter.selectedPaths());
+        Intent send = new Intent(Intent.ACTION_SEND_MULTIPLE);
+        send.setType("*/*");
+        send.putParcelableArrayListExtra(Intent.EXTRA_STREAM, uris);
+        send.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+        startActivity(Intent.createChooser(send, "Share"));
     }
 
     private void bulkFavourite() {
