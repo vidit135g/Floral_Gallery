@@ -372,7 +372,7 @@ public final class CollectionsScreen {
             android.widget.FrameLayout wrap = new android.widget.FrameLayout(a);
             wrap.setPadding(pad, dp(a, 8), pad, 0);
             wrap.addView(in);
-            new androidx.appcompat.app.AlertDialog.Builder(a)
+            com.absolute.floral.soma.Dialogs.alert(a)
                     .setTitle("Name this person")
                     .setView(wrap)
                     .setPositiveButton("Save", (d, w) -> {

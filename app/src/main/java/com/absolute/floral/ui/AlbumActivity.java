@@ -997,7 +997,7 @@ public class AlbumActivity extends ThemeableActivity
         //deleteAlbumItemsSnackbar();
         final String[] selected_items = recyclerViewAdapter
                 .cancelSelectorMode(AlbumActivity.this);
-        new AlertDialog.Builder(AlbumActivity.this, theme.getDialogThemeRes())
+        com.absolute.floral.soma.Dialogs.alert(AlbumActivity.this)
                 .setTitle(getString(R.string.delete_files, selected_items.length) + "?")
                 .setNegativeButton(getString(R.string.no), null)
                 .setPositiveButton(getString(R.string.delete), new DialogInterface.OnClickListener() {

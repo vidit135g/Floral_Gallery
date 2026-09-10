@@ -159,7 +159,7 @@ public class Rename extends FileOperation {
             editText.setText(name);
             editText.setSelection(name.length());
 
-            AlertDialog dialog = new AlertDialog.Builder(wrapper)
+            AlertDialog dialog = com.absolute.floral.soma.Dialogs.alert(wrapper)
                     .setTitle(R.string.rename)
                     .setView(dialogLayout)
                     .setPositiveButton(R.string.rename, new DialogInterface.OnClickListener() {

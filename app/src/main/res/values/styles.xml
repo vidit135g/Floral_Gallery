@@ -328,6 +328,12 @@
         <item name="android:windowBackground">@drawable/background_dialog</item>
     </style>
 
-
+    <!-- Bento-styled AlertDialogs (see soma/Dialogs.java) -->
+    <style name="Soma.Dialog" parent="Theme.AppCompat.Light.Dialog.Alert">
+        <item name="colorAccent">@color/ios_blue</item>
+        <item name="android:windowBackground">@android:color/transparent</item>
+        <item name="android:windowMinWidthMajor">86%</item>
+        <item name="android:windowMinWidthMinor">92%</item>
+    </style>
 
 </resources>

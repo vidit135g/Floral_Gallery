@@ -349,7 +349,7 @@ public class NestedRecyclerViewAlbumHolder extends AlbumHolder
                     title = getContext().getString(R.string.delete_files, paths.length);
                 }
 
-                new AlertDialog.Builder(c, theme.getDialogThemeRes())
+                com.absolute.floral.soma.Dialogs.alert(c)
                         .setTitle(title)
                         .setNegativeButton(c.getString(R.string.no), null)
                         .setPositiveButton(c.getString(R.string.delete), new DialogInterface.OnClickListener() {

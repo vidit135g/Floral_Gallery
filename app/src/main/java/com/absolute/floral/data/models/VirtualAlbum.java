@@ -178,7 +178,7 @@ public class VirtualAlbum extends Album {
 
             Theme theme = Settings.getInstance(context).getThemeInstance(context);
 
-            final AlertDialog dialog = new AlertDialog.Builder(context, theme.getDialogThemeRes())
+            final AlertDialog dialog = com.absolute.floral.soma.Dialogs.alert(context)
                     .setTitle(R.string.create_virtual_album)
                     .setView(dialogLayout)
                     .setPositiveButton(R.string.create, new DialogInterface.OnClickListener() {
@@ -225,7 +225,7 @@ public class VirtualAlbum extends Album {
 
             Theme theme = Settings.getInstance(context).getThemeInstance(context);
 
-            final AlertDialog dialog = new AlertDialog.Builder(context, theme.getDialogThemeRes())
+            final AlertDialog dialog = com.absolute.floral.soma.Dialogs.alert(context)
                     .setTitle(R.string.add_path_to_virtual_album)
                     .setView(dialogLayout)
                     .setNeutralButton(R.string.create_virtual_album, new DialogInterface.OnClickListener() {

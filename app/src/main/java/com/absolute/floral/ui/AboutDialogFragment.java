@@ -23,7 +23,7 @@ public class AboutDialogFragment extends DialogFragment {
     @NonNull
     @Override
     public Dialog onCreateDialog(Bundle savedInstanceState) {
-        AlertDialog alertDialog = new AlertDialog.Builder(getActivity())
+        AlertDialog alertDialog = com.absolute.floral.soma.Dialogs.alert(getActivity())
                 .setView(R.layout.aboutlayout)
                 .create();
 

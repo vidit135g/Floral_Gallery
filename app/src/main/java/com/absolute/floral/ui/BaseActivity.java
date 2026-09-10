@@ -212,7 +212,7 @@ public abstract class BaseActivity extends AppCompatActivity {
                     case FileOperation.NEED_REMOVABLE_STORAGE_PERMISSION:
                         final Intent workIntent = intent.getParcelableExtra(FileOperation.WORK_INTENT);
                         if (workIntent != null) {
-                            new AlertDialog.Builder(BaseActivity.this)
+                            com.absolute.floral.soma.Dialogs.alert(BaseActivity.this)
                                     .setTitle(R.string.grant_removable_storage_permission)
                                     .setMessage(R.string.grant_removable_storage_permission_message)
                                     .setPositiveButton(getString(R.string.ok), new DialogInterface.OnClickListener() {

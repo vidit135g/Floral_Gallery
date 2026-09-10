@@ -626,7 +626,7 @@ public class ItemActivity extends ThemeableActivity {
     }
 
     public void showDeleteDialog() {
-        new AlertDialog.Builder(this, theme.getDialogThemeRes())
+        com.absolute.floral.soma.Dialogs.alert(this)
                 .setTitle(getString(R.string.delete_item, albumItem.getType(this)) + "?")
                 .setNegativeButton(getString(R.string.no), null)
                 .setPositiveButton(getString(R.string.delete), new DialogInterface.OnClickListener() {
@@ -784,7 +784,7 @@ public class ItemActivity extends ThemeableActivity {
         dialogLayout.setVisibility(View.GONE);
 
         AlertDialog.Builder builder
-                = new AlertDialog.Builder(this, theme.getDialogThemeRes())
+                = com.absolute.floral.soma.Dialogs.alert(this)
                 .setTitle(getString(R.string.info))
                 .setView(rootView)
                 .setPositiveButton(R.string.done, null)

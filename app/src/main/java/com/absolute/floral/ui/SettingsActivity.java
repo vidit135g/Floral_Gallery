@@ -151,7 +151,7 @@ public class SettingsActivity extends ThemeableActivity {
             android.widget.FrameLayout wrap = new android.widget.FrameLayout(this);
             wrap.setPadding(pad, dp(8), pad, 0);
             wrap.addView(in);
-            new androidx.appcompat.app.AlertDialog.Builder(this)
+            com.absolute.floral.soma.Dialogs.alert(this)
                     .setTitle("Profile name")
                     .setView(wrap)
                     .setPositiveButton("Save", (di, w) -> {

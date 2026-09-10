@@ -218,7 +218,7 @@ public class ExifEditorActivity extends ThemeableActivity {
                 saveChanges();
                 break;
             case R.id.clear_exif_data:
-                new AlertDialog.Builder(this)
+                com.absolute.floral.soma.Dialogs.alert(this)
                         .setTitle(R.string.clear_exif_data)
                         .setPositiveButton(R.string.remove, new DialogInterface.OnClickListener() {
                             @Override
