@@ -12,7 +12,7 @@ android {
         applicationId "com.absolute.floral"
         minSdk 21
         targetSdk 36
-        versionCode 29
+        versionCode 30
         versionName "4.6"
         vectorDrawables.useSupportLibrary = true
         testInstrumentationRunner 'androidx.test.runner.AndroidJUnitRunner'
