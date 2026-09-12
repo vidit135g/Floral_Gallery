@@ -3,6 +3,15 @@ plugins {
     id 'org.jetbrains.kotlin.android'
 }
 
+// Release signing credentials live in keystore.properties (git-ignored, not this file) so the
+// store/key password never lands in source control. Missing file = release build just won't be
+// signed (debug builds are unaffected).
+def keystorePropsFile = rootProject.file("keystore.properties")
+def keystoreProps = new Properties()
+if (keystorePropsFile.exists()) {
+    keystorePropsFile.withInputStream { keystoreProps.load(it) }
+}
+
 android {
     namespace "com.absolute.floral"
     compileSdk 36
@@ -21,12 +30,14 @@ android {
 
     signingConfigs {
         release {
-            def ks = file("/Users/viditgupta/Documents/Project fix/release.keystore")
-            if (ks.exists()) {
-                storeFile ks
-                storePassword "android123"
-                keyAlias "releaseKey"
-                keyPassword "android123"
+            if (keystoreProps.containsKey("storeFile")) {
+                def ks = file(keystoreProps["storeFile"])
+                if (ks.exists()) {
+                    storeFile ks
+                    storePassword keystoreProps["storePassword"]
+                    keyAlias keystoreProps["keyAlias"]
+                    keyPassword keystoreProps["keyPassword"]
+                }
             }
         }
     }
