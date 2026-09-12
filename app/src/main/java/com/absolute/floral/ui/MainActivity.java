@@ -969,7 +969,9 @@ public class MainActivity extends ThemeableActivity implements CheckRefreshClick
             else if (id == R.id.filter_screenshots) setFilter(com.absolute.floral.adapter.photos.PhotoGridAdapter.Filter.SCREENSHOTS);
             else if (id == R.id.view_zoom_in && photoSpan > 2) setLibrarySpan(photoSpan - 1);
             else if (id == R.id.view_zoom_out && photoSpan < 5) setLibrarySpan(photoSpan + 1);
-            else if (id == R.id.menu_settings) {
+            else if (id == R.id.menu_file_manager) {
+                startActivity(new Intent(this, com.absolute.floral.ui.FileExplorerActivity.class));
+            } else if (id == R.id.menu_settings) {
                 SettingsActivity.sChanged = false;
                 startActivityForResult(new Intent(this, SettingsActivity.class), SETTINGS_REQUEST_CODE);
             }

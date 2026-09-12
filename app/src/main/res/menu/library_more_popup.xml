@@ -28,6 +28,8 @@
         </menu>
     </item>
 
+    <item android:id="@+id/menu_file_manager" android:title="File Manager" />
+
     <item android:id="@+id/menu_settings" android:title="Settings" />
 
 </menu>

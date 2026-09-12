@@ -453,33 +453,24 @@ public abstract class FileOperation extends IntentService implements Parcelable 
                             Uri contentUri = MediaStore.Files.getContentUri("external");
                             ContentResolver resolver = context.getContentResolver();
                             if (new File(path).exists()) {
-                                AlbumItem albumItem = AlbumItem.getInstance(path);
-                                ContentValues values = new ContentValues();
-                                if (albumItem instanceof Video) {
-                                    values.put(MediaStore.Video.Media.DATA, path);
-                                    values.put(MediaStore.Video.Media.MIME_TYPE, MediaType.getMimeType(path));
-                                } else {
-                                    values.put(MediaStore.Images.Media.DATA, path);
-                                    values.put(MediaStore.Images.Media.MIME_TYPE, MediaType.getMimeType(path));
-                                    try {
-                                        ExifInterface exif = new ExifInterface(path);
-                                        Locale locale = com.absolute.floral.util.Util.getLocale(context);
-                                        String dateString = String.valueOf(ExifUtil.getCastValue(exif, ExifInterface.TAG_DATETIME));
-                                        try {
-                                            Date date = new SimpleDateFormat("yyyy:MM:dd HH:mm:ss", locale).parse(dateString);
-                                            long dateTaken = date.getTime();
-                                            values.put(MediaStore.Images.Media.DATE_TAKEN, dateTaken);
-                                        } catch (ParseException ignored) {
-                                        }
-                                    } catch (IOException e) {
-                                        e.printStackTrace();
-                                    }
+                                // Scoped storage (API 29+) rejects a raw ContentResolver.insert()
+                                // that sets MediaStore's DATA column directly ("Mutation of _data
+                                // is not allowed") — MediaScannerConnection is the supported way
+                                // to register a file that was written outside MediaStore.
+                                try {
+                                    android.media.MediaScannerConnection.scanFile(
+                                            context, new String[]{path}, null, null);
+                                } catch (Exception e) {
+                                    e.printStackTrace();
                                 }
-                                resolver.insert(contentUri, values);
                             } else {
-                                resolver.delete(contentUri,
-                                        MediaStore.MediaColumns.DATA + "='" + path + "'",
-                                        null);
+                                try {
+                                    resolver.delete(contentUri,
+                                            MediaStore.MediaColumns.DATA + "='" + path + "'",
+                                            null);
+                                } catch (Exception e) {
+                                    e.printStackTrace();
+                                }
                             }
                         }
 
