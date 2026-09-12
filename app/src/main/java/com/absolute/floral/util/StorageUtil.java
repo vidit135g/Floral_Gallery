@@ -61,7 +61,16 @@ public class StorageUtil {
             ContentValues values = new ContentValues();
             values.put(MediaStore.Images.Media.DATA, path);
             values.put(MediaStore.Images.Media.MIME_TYPE, MediaType.getMimeType(path));
-            return context.getContentResolver().insert(photoUri, values);
+            try {
+                return context.getContentResolver().insert(photoUri, values);
+            } catch (IllegalArgumentException e) {
+                // Scoped storage (API 29+) rejects a raw insert() that sets DATA directly for a
+                // path MediaStore hasn't indexed yet ("Mutation of _data is not allowed").
+                // Kick off an async scan so it's indexed for next time, and degrade to the same
+                // fallback already used above when the cursor itself is null.
+                android.media.MediaScannerConnection.scanFile(context, new String[]{path}, null, null);
+                return Uri.parse(path);
+            }
         } else {
             long id = cursor.getLong(cursor.getColumnIndex(BaseColumns._ID));
             Uri uri = ContentUris.withAppendedId(photoUri, id);
@@ -90,7 +99,12 @@ public class StorageUtil {
             ContentValues values = new ContentValues();
             values.put(MediaStore.Video.Media.DATA, path);
             values.put(MediaStore.Video.Media.MIME_TYPE, MediaType.getMimeType(path));
-            return context.getContentResolver().insert(videoUri, values);
+            try {
+                return context.getContentResolver().insert(videoUri, values);
+            } catch (IllegalArgumentException e) {
+                android.media.MediaScannerConnection.scanFile(context, new String[]{path}, null, null);
+                return Uri.parse(path);
+            }
         } else {
             int imageId = cursor.getInt(cursor.getColumnIndex(BaseColumns._ID));
             Uri uri = ContentUris.withAppendedId(videoUri, imageId);
